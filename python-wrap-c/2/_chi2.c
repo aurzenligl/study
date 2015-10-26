@@ -29,35 +29,33 @@ PyMODINIT_FUNC init_chi2(void)
 static PyObject* chi2_chi2(PyObject* self, PyObject* args)
 {
     double m, b;
-    PyObject* x_obj, *y_obj, *yerr_obj;
+    PyObject* x, *y, *yerr;
 
-    if (!PyArg_ParseTuple(args, "ddOOO", &m, &b, &x_obj, &y_obj, &yerr_obj))
+    if (!PyArg_ParseTuple(args, "ddOOO", &m, &b, &x, &y, &yerr))
     {
         return NULL;
     }
 
-    PyObject* x_array = PyArray_FROM_OTF(x_obj, NPY_DOUBLE, NPY_IN_ARRAY);
-    PyObject* y_array = PyArray_FROM_OTF(y_obj, NPY_DOUBLE, NPY_IN_ARRAY);
-    PyObject* yerr_array = PyArray_FROM_OTF(yerr_obj, NPY_DOUBLE, NPY_IN_ARRAY);
-    if (x_array == NULL || y_array == NULL || yerr_array == NULL)
+    x = PyArray_FROM_OTF(x, NPY_DOUBLE, NPY_IN_ARRAY);
+    y = PyArray_FROM_OTF(y, NPY_DOUBLE, NPY_IN_ARRAY);
+    yerr = PyArray_FROM_OTF(yerr, NPY_DOUBLE, NPY_IN_ARRAY);
+    if (x == NULL || y == NULL || yerr == NULL)
     {
-        Py_XDECREF(x_array);
-        Py_XDECREF(y_array);
-        Py_XDECREF(yerr_array);
+        Py_XDECREF(x);
+        Py_XDECREF(y);
+        Py_XDECREF(yerr);
         return NULL;
     }
 
-    int N = (int)PyArray_DIM(x_array, 0);
+    double value = chi2(m, b,
+        (double*)PyArray_DATA(x),
+        (double*)PyArray_DATA(y),
+        (double*)PyArray_DATA(yerr),
+        (int)PyArray_DIM(x, 0));
 
-    double* x = (double*)PyArray_DATA(x_array);
-    double* y = (double*)PyArray_DATA(y_array);
-    double* yerr = (double*)PyArray_DATA(yerr_array);
-
-    double value = chi2(m, b, x, y, yerr, N);
-
-    Py_DECREF(x_array);
-    Py_DECREF(y_array);
-    Py_DECREF(yerr_array);
+    Py_DECREF(x);
+    Py_DECREF(y);
+    Py_DECREF(yerr);
 
     if (value < 0.0)
     {
