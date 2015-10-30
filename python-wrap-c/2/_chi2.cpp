@@ -1,6 +1,9 @@
 #include <Python.h>
 #include <numpy/arrayobject.h>
-#include "chi2.h"
+#include "chi2.hpp"
+
+extern "C"
+{
 
 static char module_docstring[] =
     "This module provides an interface for calculating chi-squared using C.";
@@ -64,6 +67,7 @@ static PyObject* chi2_chi2(PyObject* self, PyObject* args)
         return NULL;
     }
 
-    PyObject* ret = Py_BuildValue("d", value);
-    return ret;
+    return Py_BuildValue("d", value);
+}
+
 }
