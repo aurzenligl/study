@@ -1,6 +1,7 @@
 #include <Python.h>
 #include <numpy/arrayobject.h>
 #include "chi2.hpp"
+#include "npywrap.hpp"
 
 extern "C"
 {
@@ -32,33 +33,22 @@ PyMODINIT_FUNC init_chi2(void)
 static PyObject* chi2_chi2(PyObject* self, PyObject* args)
 {
     double m, b;
-    PyObject* x, *y, *yerr;
+    PyObject* rx, *ry, *ryerr;
 
-    if (!PyArg_ParseTuple(args, "ddOOO", &m, &b, &x, &y, &yerr))
+    if (!PyArg_ParseTuple(args, "ddOOO", &m, &b, &rx, &ry, &ryerr))
     {
         return NULL;
     }
 
-    x = PyArray_FROM_OTF(x, NPY_DOUBLE, NPY_IN_ARRAY);
-    y = PyArray_FROM_OTF(y, NPY_DOUBLE, NPY_IN_ARRAY);
-    yerr = PyArray_FROM_OTF(yerr, NPY_DOUBLE, NPY_IN_ARRAY);
-    if (x == NULL || y == NULL || yerr == NULL)
+    npyarray<double> x(rx);
+    npyarray<double> y(ry);
+    npyarray<double> yerr(ryerr);
+    if (!(x && y && yerr))
     {
-        Py_XDECREF(x);
-        Py_XDECREF(y);
-        Py_XDECREF(yerr);
         return NULL;
     }
 
-    double value = chi2(m, b,
-        (double*)PyArray_DATA(x),
-        (double*)PyArray_DATA(y),
-        (double*)PyArray_DATA(yerr),
-        (int)PyArray_DIM(x, 0));
-
-    Py_DECREF(x);
-    Py_DECREF(y);
-    Py_DECREF(yerr);
+    double value = chi2(m, b, x.data(), y.data(), yerr.data(), x.size());
 
     if (value < 0.0)
     {
