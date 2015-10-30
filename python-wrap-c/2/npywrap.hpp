@@ -1,6 +1,8 @@
 #ifndef NPYWRAP_HPP_
 #define NPYWRAP_HPP_
 
+#include <numpy/arrayobject.h>
+
 template <typename T>
 struct npyarray_traits;
 

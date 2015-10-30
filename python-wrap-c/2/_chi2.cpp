@@ -1,7 +1,7 @@
 #include <Python.h>
-#include <numpy/arrayobject.h>
 #include "chi2.hpp"
 #include "npywrap.hpp"
+#include "parse_tuple.hpp"
 
 extern "C"
 {
@@ -35,7 +35,7 @@ static PyObject* chi2_chi2(PyObject* self, PyObject* args)
     double m, b;
     PyObject* rx, *ry, *ryerr;
 
-    if (!PyArg_ParseTuple(args, "ddOOO", &m, &b, &rx, &ry, &ryerr))
+    if (!parse_tuple(args, m, b, rx, ry, ryerr))
     {
         return NULL;
     }
