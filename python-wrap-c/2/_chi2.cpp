@@ -33,17 +33,8 @@ PyMODINIT_FUNC init_chi2(void)
 static PyObject* chi2_chi2(PyObject* self, PyObject* args)
 {
     double m, b;
-    PyObject* rx, *ry, *ryerr;
-
-    if (!parse_tuple(args, m, b, rx, ry, ryerr))
-    {
-        return NULL;
-    }
-
-    npyarray<double> x(rx);
-    npyarray<double> y(ry);
-    npyarray<double> yerr(ryerr);
-    if (!(x && y && yerr))
+    npyarray<double> x, y, yerr;
+    if (!parse_tuple(args, m, b, x, y, yerr))
     {
         return NULL;
     }
@@ -52,8 +43,7 @@ static PyObject* chi2_chi2(PyObject* self, PyObject* args)
 
     if (value < 0.0)
     {
-        PyErr_SetString(PyExc_RuntimeError,
-            "Chi-squared returned an impossible value.");
+        PyErr_SetString(PyExc_RuntimeError, "Chi-squared returned an impossible value.");
         return NULL;
     }
 

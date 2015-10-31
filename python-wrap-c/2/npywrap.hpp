@@ -15,15 +15,28 @@ struct npyarray_traits<double>
 template <typename T>
 struct npyarray
 {
+    npyarray(): array_(nullptr)
+    {
+    }
     npyarray(PyObject* obj)
     {
-        array_ = PyArray_FROM_OTF(obj, npyarray_traits<T>::npy_type, NPY_IN_ARRAY);
+        set(obj);
     }
     npyarray(const npyarray&) = delete;
     npyarray& operator=(const npyarray&) = delete;
     ~npyarray()
     {
         Py_XDECREF(array_);
+    }
+
+    void set(PyObject* obj)
+    {
+        array_ = PyArray_FROM_OTF(obj, npyarray_traits<T>::npy_type, NPY_IN_ARRAY);
+    }
+
+    PyObject*& internal()
+    {
+        return array_;
     }
 
     double* data()
