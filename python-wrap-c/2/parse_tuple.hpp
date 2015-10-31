@@ -1,7 +1,9 @@
 #ifndef PARSE_TUPLE_HPP_
 #define PARSE_TUPLE_HPP_
 
+#include <tuple>
 #include <Python.h>
+#include "call.hpp"
 #include "npywrap.hpp"
 
 namespace detail
@@ -59,36 +61,40 @@ struct parse_tuple_fmt
 };
 
 template <typename T>
-T* addr(T& t)
+T* ptr(T& t, PyObject**&)
 {
     return &t;
 }
 
 template <typename T>
-PyObject** addr(npyarray<T>& t)
+PyObject** ptr(npyarray<T>&, PyObject**& it)
 {
-    return &t.internal();
+    return it++;
 }
 
-template <typename T>
-bool parse_npy(T&)
+template <typename P, typename T>
+bool parse(P*, T&)
 {
     return true;
 }
 
-template <typename T, typename ...Ts>
-bool parse_npy(npyarray<T>& value)
+template <typename T>
+bool parse(PyObject** obj, npyarray<T>& value)
 {
-    value.set(value.internal());
+    npyarray<T>(*obj).swap(value);
     return !!value;
 }
 
-template <typename T, typename ...Ts>
-bool parse_npy(T& value, Ts&... values)
+template <int N = 0, typename Tuple>
+bool parse_npy(Tuple&& t)
 {
-    bool r1 = parse_npy(value);
-    bool r2 = parse_npy(values...);
-    return r1 && r2;
+    return true;
+}
+
+template <int N = 0, typename Tuple, typename T, typename ...Ts>
+bool parse_npy(Tuple&& t, T& value, Ts&... values)
+{
+    return parse(std::get<N>(t), value) && parse_npy<N + 1>(t, values...);
 }
 
 }  // namespace detail
@@ -97,9 +103,14 @@ template <typename ...Ts>
 inline bool parse_tuple(PyObject* args, Ts&... values)
 {
     using namespace detail;
-    if (PyArg_ParseTuple(args, parse_tuple_fmt<Ts...>::value, addr(values)...))
+
+    PyObject* objs[sizeof...(Ts)] = {};
+    PyObject** it = objs;
+    auto preamble = std::make_pair(args, parse_tuple_fmt<Ts...>::value);
+    auto parseptrs = std::make_tuple(ptr(values, it)...);
+    if (call(PyArg_ParseTuple, std::tuple_cat(preamble, parseptrs)))
     {
-        return parse_npy(values...);
+        return parse_npy(parseptrs, values...);
     }
     return true;
 }

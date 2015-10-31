@@ -1,6 +1,7 @@
 #ifndef NPYWRAP_HPP_
 #define NPYWRAP_HPP_
 
+#include <algorithm>
 #include <numpy/arrayobject.h>
 
 template <typename T>
@@ -20,7 +21,7 @@ struct npyarray
     }
     npyarray(PyObject* obj)
     {
-        set(obj);
+        array_ = PyArray_FROM_OTF(obj, npyarray_traits<T>::npy_type, NPY_IN_ARRAY);
     }
     npyarray(const npyarray&) = delete;
     npyarray& operator=(const npyarray&) = delete;
@@ -29,14 +30,9 @@ struct npyarray
         Py_XDECREF(array_);
     }
 
-    void set(PyObject* obj)
+    void swap(npyarray& other)
     {
-        array_ = PyArray_FROM_OTF(obj, npyarray_traits<T>::npy_type, NPY_IN_ARRAY);
-    }
-
-    PyObject*& internal()
-    {
-        return array_;
+        std::swap(other.array_, array_);
     }
 
     double* data()
