@@ -6,8 +6,6 @@
 
 struct timer
 {
-    timer(): timer("")
-    {}
     timer(const char* fmt): fmt(fmt)
     {
         t0 = std::chrono::high_resolution_clock::now();
@@ -15,8 +13,9 @@ struct timer
 
     ~timer()
     {
-        auto t1 = std::chrono::high_resolution_clock::now();
-        int t = std::chrono::duration_cast<std::chrono::microseconds>(t1-t0).count();
+        using namespace std::chrono;
+        auto t1 = high_resolution_clock::now();
+        int t = duration_cast<microseconds>(t1-t0).count();
         printf("%s: %d[usec] \n", fmt, t);
     }
 
