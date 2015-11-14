@@ -3,9 +3,9 @@
 \mode<presentation>
 {
   \usetheme{Warsaw}
+  \usecolortheme{seahorse}
   \setbeamercovered{transparent}
 }
-
 
 \usepackage[english]{babel}
 \usepackage[latin1]{inputenc}
@@ -28,9 +28,9 @@
   \tableofcontents
 \end{frame}
 
-\section{Finding My Way Around}
+\section{Finding my way around}
 
-\subsection{First Steps}
+\subsection{First steps}
 
 \begin{frame}{How to itemize}
   	\begin{itemize}
@@ -51,27 +51,58 @@
 	\begin{columns}
 		\column{.5\textwidth}
 			This program \texttt{return}s 0.
-
 \begin{verbatim}
 int main()
 {
     return 0;
 }
 \end{verbatim}
-
 		\column{.5\textwidth}
 			This program \texttt{return}s 1.
-
 \begin{verbatim}
 int main()
 {
     return 1;
 }
 \end{verbatim}
-
 	\end{columns}
 \end{frame}
 
-\section{Summary}
+\begin{frame}[fragile]{Putting large portion of code}
+\tiny
+\begin{verbatim}
+struct Keeper
+{
+    Keeper(int keeping, int keptout);
+
+    void doing();
+    int done();
+    const Keeper& didnt() const;
+
+private:
+    int kept_;
+};
+
+struct Another
+{
+    typedef Keeper the_keeper;
+
+    int one;
+    int two;
+    int three;
+};
+\end{verbatim}
+\end{frame}
+
+\subsection{Things missing}
+
+\begin{frame}
+	\begin{itemize}
+		\item How to newline?
+		\item How to draw plantuml diagram?
+		\item How to put arbitrary picture?
+		\item How to draw vector graphics?
+	\end{itemize}
+\end{frame}
 
 \end{document}
