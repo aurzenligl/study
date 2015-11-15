@@ -1,0 +1,26 @@
+@startuml
+
+box "Arm 1"
+    participant Abc
+end box
+box "Arm 2"
+    participant Def
+    participant App
+end box
+
+Abc->>Def : Msg4
+activate Def
+Def->App : foo4()
+activate App
+App->Def : foo2()
+activate Def
+Def->> Abc : Msg6
+Def-->>App :
+deactivate Def
+App-->>Def :
+deactivate App
+deactivate Def
+
+hide footbox
+
+@enduml
