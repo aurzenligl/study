@@ -1,7 +1,9 @@
 epss := $(patsubst %.uml,build/%.eps,$(wildcard *.uml))
 odgs := $(patsubst %.odg,build/%.pdf,$(wildcard *.odg))
 
-all: $(epss) $(odgs)
+all: build/umls.pdf
+
+build/umls.pdf: umls.tex $(epss) $(odgs)
 	pdflatex --output-directory build umls.tex
 
 build/%.eps: %.uml
