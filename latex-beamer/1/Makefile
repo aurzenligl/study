@@ -5,6 +5,7 @@ all: build/umls.pdf
 
 build/umls.pdf: umls.tex $(epss) $(odgs)
 	pdflatex --output-directory build umls.tex
+	pdflatex --output-directory build umls.tex
 
 build/%.eps: %.uml
 	@echo 'Building target: $< $@'
