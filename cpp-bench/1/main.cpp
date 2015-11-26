@@ -4,74 +4,7 @@
 #include <algorithm>
 #include <vector>
 
-struct timer
-{
-    timer(const char* fmt): fmt(fmt)
-    {
-        t0 = std::chrono::high_resolution_clock::now();
-    }
-
-    ~timer()
-    {
-        using namespace std::chrono;
-        auto t1 = high_resolution_clock::now();
-        int t = duration_cast<microseconds>(t1-t0).count();
-        printf("%s: %d[usec] \n", fmt, t);
-    }
-
-    const char* fmt;
-    std::chrono::system_clock::time_point t0;
-};
-
-enum { NUMBERS = 10 };
-enum { LOOPS = 1000 * 1000 / NUMBERS };
-
-static void clobber()
-{
-    asm volatile("" : : : "memory");
-}
-
-struct randint
-{
-    randint(int min, int max): dist(min, max) {}
-    int operator()()
-    {
-        return dist(re);
-    }
-    std::random_device re;
-    std::uniform_int_distribution<> dist;
-};
-
-template <typename C>
-void randomize(C& c, int min, int max)
-{
-    randint r(min, max);
-    std::generate(c.begin(), c.end(), [&] () { return r(); } );
-}
-
-template <class Div>
-void __attribute__ ((noinline)) critical_loop(int& res, std::vector<int>& xs, std::vector<int>& ys)
-{
-    for (int j=0; j<LOOPS; j++)
-    {
-        for (int i=0; i<NUMBERS; i++)
-        {
-            res += Div::div(xs[i], ys[i]);
-            clobber();
-        }
-    }
-}
-
-template <class Div>
-void test(std::vector<int>& xs, std::vector<int>& ys)
-{
-    int res = 0;
-    {
-        timer _(Div::name);
-        critical_loop<Div>(res, xs, ys);
-    }
-    printf("result: %d\n", res);
-}
+#include <benchmark/benchmark.h>
 
 struct warm_up
 {
@@ -203,19 +136,46 @@ const div_virtual::dividor* div_virtual::divs[] = {
     &dividor_impl<15>::inst
 };
 
-int main()
+static void clobber()
 {
-    std::vector<int> xs(NUMBERS);
-    std::vector<int> ys(NUMBERS);
-    randomize(xs, 1*1000*1000*1000, 2*1000*1000*1000);
-    randomize(ys, 1, 15);
-
-    test<warm_up>(xs, ys);
-    test<div_operator>(xs, ys);
-    test<div_switchocasilla>(xs, ys);
-    test<div_binsearch>(xs, ys);
-    test<div_virtual>(xs, ys);
-
-    return 0;
+    asm volatile("" : : : "memory");
 }
 
+struct randint
+{
+    randint(int min, int max): dist(min, max) {}
+    int operator()()
+    {
+        return dist(re);
+    }
+    std::random_device re;
+    std::uniform_int_distribution<> dist;
+};
+
+template <typename C>
+void randomize(C& c, int min, int max)
+{
+    randint r(min, max);
+    std::generate(c.begin(), c.end(), [&] () { return r(); } );
+}
+
+enum { NUMBERS = 100 };
+
+template <class Div, int Loops>
+void __attribute__ ((noinline)) critical_loop(int& res, std::vector<int>& xs, std::vector<int>& ys)
+{
+    for (int j=0; j<Loops; j++)
+    {
+        for (int i=0; i<NUMBERS; i++)
+        {
+            res += Div::div(xs[i], ys[i]);
+            clobber();
+        }
+    }
+}
+
+#ifndef GOOGLE_BENCHMARK
+#include "bench_hand.hpp"
+#else
+#include "bench_google.hpp"
+#endif  // GOOGLE_BENCHMARK
