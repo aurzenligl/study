@@ -1,3 +1,5 @@
 *.so
 *.out
 build
+perf.data*
+.cproject
