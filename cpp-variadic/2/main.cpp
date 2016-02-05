@@ -30,9 +30,9 @@ shared_names_t get_shared_names()
 template <typename ...Args>
 void multicall(const char* symbol_name, Args... args)
 {
-    for (const char* name : detail::get_shared_names())
+    for (const char* shared_name : detail::get_shared_names())
     {
-        void* obj = dlopen(name, RTLD_LAZY);
+        void* obj = dlopen(shared_name, RTLD_LAZY);
         if (void* sym = dlsym(obj, symbol_name))
         {
             typedef void (*fun_t)(Args...);
