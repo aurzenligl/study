@@ -3,11 +3,14 @@
 #include <vector>
 #include <cstdio>
 
+namespace detail
+{
+
 typedef std::vector<const char*> shared_names_t;
 
 shared_names_t get_shared_names()
 {
-    auto clbk = [](dl_phdr_info* info, size_t, void* arg)
+    auto cb = [](dl_phdr_info* info, size_t, void* arg)
     {
         shared_names_t& names = *static_cast<shared_names_t*>(arg);
         if (*info->dlpi_name)
@@ -18,14 +21,16 @@ shared_names_t get_shared_names()
     };
 
     shared_names_t names;
-    dl_iterate_phdr(clbk, &names);
+    dl_iterate_phdr(cb, &names);
     return names;
 }
+
+}  // namespace detail
 
 template <typename ...Args>
 void multicall(const char* symbol_name, Args... args)
 {
-    for (const char* name : get_shared_names())
+    for (const char* name : detail::get_shared_names())
     {
         void* obj = dlopen(name, RTLD_LAZY);
         if (void* sym = dlsym(obj, symbol_name))

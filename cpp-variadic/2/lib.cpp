@@ -25,3 +25,16 @@ void lib_nano_init(double x, float y, int z, void* p)
 #pragma GCC visibility pop
 
 }
+
+struct global_object_t
+{
+    global_object_t()
+    {
+        printf("%s:%s\n", magic, __FUNCTION__);
+    }
+    ~global_object_t()
+    {
+        printf("%s:%s\n", magic, __FUNCTION__);
+    }
+}
+global_object;
