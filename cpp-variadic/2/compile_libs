@@ -1,0 +1,6 @@
+#!/bin/bash
+
+GCCARGS="lib.cpp -shared -fPIC -fvisibility=hidden"
+g++ $GCCARGS -o lib1.so -DMAGIC='"lib1"'
+g++ $GCCARGS -o lib2.so -DMAGIC='"lib2"'
+g++ $GCCARGS -o lib3.so -DMAGIC='"lib3"'

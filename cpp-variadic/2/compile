@@ -1,0 +1,3 @@
+#!/bin/bash
+
+g++ -Wall -Werror -Og -std=c++14 main.cpp -ldl -Wl,--no-as-needed -Wl,-rpath=. -L. -l1 -l2 -l3

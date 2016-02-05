@@ -1,0 +1,45 @@
+#include <dlfcn.h>
+#include <link.h>
+#include <vector>
+#include <cstdio>
+
+typedef std::vector<const char*> shared_names_t;
+
+shared_names_t get_shared_names()
+{
+    auto clbk = [](dl_phdr_info* info, size_t, void* arg)
+    {
+        shared_names_t& names = *static_cast<shared_names_t*>(arg);
+        if (*info->dlpi_name)
+        {
+            names.push_back(info->dlpi_name);
+        }
+        return 0;
+    };
+
+    shared_names_t names;
+    dl_iterate_phdr(clbk, &names);
+    return names;
+}
+
+template <typename ...Args>
+void multicall(const char* symbol_name, Args... args)
+{
+    for (const char* name : get_shared_names())
+    {
+        void* obj = dlopen(name, RTLD_LAZY);
+        if (void* sym = dlsym(obj, symbol_name))
+        {
+            typedef void (*fun_t)(Args...);
+            ((fun_t)sym)(args...);
+        }
+    }
+}
+
+int main()
+{
+    multicall("lib_global_init");
+    multicall("lib_local_init", 42);
+    multicall("lib_nano_init", 12.34, 56.78f, 90, &printf);
+    return 0;
+}
