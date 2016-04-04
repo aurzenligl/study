@@ -1,0 +1,65 @@
+buy microsd card
+
+DEVICE TREE
+---------------------------------
+https://en.wikipedia.org/wiki/Advanced_Configuration_and_Power_Interface
+http://uefi.org/sites/default/files/resources/ACPI_5.pdf
+http://free-electrons.com/~thomas/pub/Power_ePAPR_APPROVED_v1.0.pdf
++ https://events.linuxfoundation.org/sites/events/files/slides/petazzoni-device-tree-dummies.pdf
++ https://lwn.net/Articles/448499/
++ https://lwn.net/Articles/448502/
++ http://xillybus.com/tutorials/device-tree-zynq-1
++ http://devicetree.org/Device_Tree_Usage
++ debian for odroid C1+
++ yocto for odroid C1+
+
+device tree for dummies
+linux ports, board file, old powerpc
+ACPI
+
+WORKSHOP
+---------------------------------
+buy hardware
+    http://www.morele.net/komputer-raspberry-pi-2-model-b-rb-pi-2-modell-b-722001/
+    http://www.morele.net/karta-microsd-kingston-sdhc-16gb-class-4-adapter-sdc4-16gb-362474/
+    http://www.morele.net/gembird-patch-cord-rj45-cross-over-rj45-kat-5e-utp-2m-szary-pp13-2m-222246/
+    http://www.conrad.pl/Kabel-USB-do-Raspberry-Pi%26reg;-USB-RB-TTL-USB-RB-TTL.htm?websale8=conrad&pi=409202&ci=SHOP_AREA_857031_0413100
+use serial console
+    __OK__ http://elinux.org/RPi_Serial_Connection
+    __OK__ https://learn.adafruit.com/downloads/pdf/adafruits-raspberry-pi-lesson-5-using-a-console-cable.pdf
+use ssh over ethernet
+    __OK__ https://www.raspberrypi.org/documentation/remote-access/ssh/unix.md
+install and sdboot raspbian
+    https://www.raspberrypi.org/documentation/
+    http://www.whaleblubber.ca/raspberry-pi-intro/
+netboot raspberry pi
+    __OK__ http://blogs.wcode.org/2013/09/howto-netboot-a-raspberry-pi/
+    __OK__ http://cellux.github.io/articles/moving-to-nfs-root/
+    __OK__ http://www.whaleblubber.ca/boot-raspberry-pi-nfs/
+yocto jethro build and boot
+    http://www.cnx-software.com/2013/07/05/12mb-minimal-image-for-raspberry-pi-using-the-yocto-project/
+    http://www.jumpnowtek.com/rpi/Raspberry-Pi-Systems-with-Yocto.html
+use yocto sdk to compile something
+
+FAQ
+---------------------------------
+do I even need any display, keyboard, mouse?
+boot over net or from sd?
+    do I need uboot for tftp?
+    what boots factory raspberry pi?
+is nfs possible over usb?
+how to manage nfs share?
+    nfs read only?
+    nfs looped from .img file?
+    can .img file be exteded?
+    rsync from yocto image dir?
+rootfs over net with internet access?
+    additional network card + crossover cable?
+    additional network card + regular cable?
+    plug in to router (boot over lan)?
+where to get sw from?
+    raspbian (sd boot + net boot)
+    debian (is it worth it once you have raspbian?)
+    yocto with raspberry meta
+    rasp-kernel (is it worth it once you have yocto?)
+
