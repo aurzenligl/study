@@ -3,7 +3,8 @@ DEVICE TREE
 https://en.wikipedia.org/wiki/Advanced_Configuration_and_Power_Interface
 http://uefi.org/sites/default/files/resources/ACPI_5.pdf
 http://free-electrons.com/~thomas/pub/Power_ePAPR_APPROVED_v1.0.pdf
-+ https://events.linuxfoundation.org/sites/events/files/slides/petazzoni-device-tree-dummies.pdf
+https://events.linuxfoundation.org/sites/events/files/slides/petazzoni-device-tree-dummies.pdf
++ http://www.devicetree.org/Main_Page
 + https://lwn.net/Articles/448499/
 + https://lwn.net/Articles/448502/
 + http://xillybus.com/tutorials/device-tree-zynq-1
