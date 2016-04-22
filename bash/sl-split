@@ -1,0 +1,48 @@
+#!/bin/bash -e
+
+PROGRAM=$(basename "$0")
+USAGE="usage: "$PROGRAM" <filename> [-d|--dir dirname]"
+
+die () {
+    echo "${PROGRAM}: $@"
+    exit 1
+}
+
+usage () {
+    echo "$USAGE"
+    exit 0
+}
+
+[ $# == 0 ] && usage
+
+export DIR=
+export INPUT=
+
+while [ $# != 0 ]
+do
+	case "$1" in
+        -h|--help)
+            usage
+            ;;
+	    -d|--dir)
+            [ $# -lt 2 ] && die "no dir argument"
+            DIR="$2"
+            shift 2
+            ;;
+	    *)
+            [ ! -z ${INPUT} ] && die "single input only"
+            INPUT="$1"
+            shift
+            ;;
+	esac
+done
+
+[ ! ${INPUT} ] && die "no input file"
+[ ! -f ${INPUT} ] && die "file not found"
+[ -z ${DIR} ] && die "no output dir"
+
+[ ! -d ${DIR} ] && mkdir ${DIR}
+
+nodes=$(cat ${INPUT} | cut -d' ' -f'1' | sort -u | grep -v '^$')
+echo "$nodes" | parallel 'grep "^{} " ${INPUT} | cut -d" " -f"2-" > "${DIR}/{}"'
+
