@@ -1,7 +1,7 @@
 #!/bin/bash -e
 
 PROGRAM=$(basename "$0")
-USAGE="usage: "$PROGRAM" <filename> [-d|--dir dirname]"
+USAGE="usage: "$PROGRAM" [-d|--dir dirname] <filename> [<filename> ...]"
 
 die () {
     echo "${PROGRAM}: $@"
@@ -16,7 +16,7 @@ usage () {
 [ $# == 0 ] && usage
 
 export DIR=
-export INPUT=
+export INPUTS=
 
 while [ $# != 0 ]
 do
@@ -30,19 +30,20 @@ do
             shift 2
             ;;
 	    *)
-            [ ! -z ${INPUT} ] && die "single input only"
-            INPUT="$1"
+            [ ! -f $1 ] && die "file not found" $1
+            INPUTS="$INPUTS $1"
             shift
             ;;
 	esac
 done
 
-[ ! ${INPUT} ] && die "no input file"
-[ ! -f ${INPUT} ] && die "file not found"
 [ -z ${DIR} ] && die "no output dir"
-
 [ ! -d ${DIR} ] && mkdir ${DIR}
 
-nodes=$(cat ${INPUT} | cut -d' ' -f'1' | sort -u | grep -v '^$')
-echo "$nodes" | parallel 'grep "^{} " ${INPUT} | cut -d" " -f"2-" > "${DIR}/{}"'
+export tmp=$(mktemp /tmp/${PROGRAM}.XXXXXX)
+trap "{ rm -f "$tmp"; exit 255; }" EXIT
+
+cat ${INPUTS} | dos2unix | cut -d' ' -f'8-' > "$tmp"
+nodes=$(cat "$tmp" | cut -d' ' -f'1' | sort -u | grep -v '^$')
+echo "$nodes" | parallel 'cat "$tmp" | grep "^{} " | cut -d" " -f"2-" > "${DIR}/{}"'
 
