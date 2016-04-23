@@ -4,8 +4,7 @@ PROGRAM=$(basename "$0")
 USAGE="Usage: $PROGRAM [options] <filename> [<filename> ...]
 Options:
     [-d|--dir dirname]             output dir, will create if doesn't exist
-    [-f|--filter-nodes command]    use favourite grep or awk combination,
-                                   example: -f 'grep FCT | grep HW'
+    [-f|--filter-nodes regex]      regular expression to filter nodes
     [-n|--dry-run]                 just show found nodes"
 
 die () {
@@ -100,7 +99,7 @@ combine_tmp ${INPUTS}
 
 # prepare nodes
 nodes=$(cut -d' ' -f'1' "$tmp" | sort -u)
-[ "$FILTER" ] && nodes=$(echo "$nodes" | eval "$FILTER")
+[ "$FILTER" ] && nodes=$(echo "$nodes" | grep -P "$FILTER")
 [ "$DRYRUN" ] && { echo "$nodes"; exit 0; }
 
 if [ ${DIR} ]
@@ -108,15 +107,17 @@ then
     [ ! -d ${DIR} ] && mkdir ${DIR}
     echo "$nodes" | parallel 'grep "^{} " "$tmp" | cut -d" " -f"2-" > "${DIR}/{}"'
 else
-    cat $tmp
+    awk -v F="${FILTER}" '{ if (match($1, F)) print $0 }' $tmp
+    # sort by timestamps
+    # align vertically
 fi
 
 # todo:
-# 2. sort by n-th column (and then learn to custom sort timestamps)
+# 1. sort by n-th column (and then learn to custom sort timestamps)
+# 2. timestamp aligned vertically
 # 3. make a stat output in split (5 columns, sorting)
 # *. --since
 # *. --until
 # *. --no-timestamp
 # *. --stat
 # *. --filter-logs
-# *. timestamp aligned vertically
