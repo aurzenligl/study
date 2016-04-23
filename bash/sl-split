@@ -112,9 +112,14 @@ fi
 if [ ${DIR} ]
 then
     [ ! -d ${DIR} ] && mkdir ${DIR}
-    echo "$(extract_nodes)" | parallel 'grep "^{} " "$tmp" | cut -d" " -f"2-" > "${DIR}/{}"'
+    echo "$(extract_nodes)" |
+        parallel 'awk -v N="{}" '"'"'
+            { if ($1 == N) print substr($0, index($0, $2)) }
+        '"'"' $tmp > "${DIR}/{}"'
 else
-    awk -v F="${FILTER}" '{ if (match($1, F)) print $0 }' $tmp
+    awk -v F="${FILTER}" '
+            { if (match($1, F)) print }
+        ' $tmp
     # sort by timestamps
     # align vertically
 fi
