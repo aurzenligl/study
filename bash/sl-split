@@ -1,4 +1,4 @@
-#!/bin/bash -e
+#!/bin/bash
 
 PROGRAM=$(basename "$0")
 USAGE="Usage: $PROGRAM [options] <filename> [<filename> ...]
@@ -53,51 +53,65 @@ do
 	esac
 done
 
-check_orig () {
+orig_pattern () {
     local i="[\d]+"
     local x="[\da-f]+"
     local a="[^\s]+"
     local s="[\s]+"
     local d="\."
-    local pattern="^$i$s$i$d$i$s$i:$i:$i$d$i$s\[$i$d$i$d$i$d$i\]$s$x$s$a$s<$a>"
-    [ $(head $1 -n 100 | grep -P "$pattern" -c) != 0 ]
+    echo "^$i$s$i$d$i$s$i:$i:$i$d$i$s\[$i$d$i$d$i$d$i\]$s$x$s$a$s<$a>"
+}
+
+nodetime_pattern () {
+    local a="[^\s]+"
+    local s="[\s]+"
+    echo "^$a$s<$a>"
+}
+
+check_orig () {
+    [ $(head $1 -n 100 | grep -P "$(orig_pattern)" -c) != 0 ]
 }
 
 check_nodetime () {
-    local a="[^\s]+"
-    local s="[\s]+"
-    local pattern="^$a$s<$a>"
-    [ $(head $1 -n 100 | grep -P "$pattern" -c) != 0 ]
+    [ $(head $1 -n 100 | grep -P "$(nodetime_pattern)" -c) != 0 ]
 }
 
-# prepare tmp
-export tmp=$(mktemp /tmp/${PROGRAM}.XXXXXX)
-trap "{ rm -f "$tmp"; exit 255; }" EXIT
-for x in ${INPUTS}
-do
-    check_orig $x && { cut -d' ' -f'8-' $x | dos2unix >> "$tmp"; continue; }
-    check_nodetime $x && { cat $x >> "$tmp"; continue; }
-    die "unknown file format:" $x
-done
+validate_inputs() {
+    for x
+    do
+        check_orig $x && continue
+        check_nodetime $x && continue
+        die "unknown file format:" $x
+    done
+}
 
-# prepare dir
-[ ${DIR} ] && [ ! -d ${DIR} ] && [ ! $DRYRUN ] && mkdir ${DIR}
+combine_tmp() {
+    export tmp=$(mktemp /tmp/${PROGRAM}.XXXXXX)
+    trap "{ rm -f $tmp; exit 255; }" EXIT
+    for x
+    do
+        check_orig $x && cut -d' ' -f'8-' $x | dos2unix | grep -v '^$' >> "$tmp"
+        check_nodetime $x && cat $x >> "$tmp"
+    done
+}
+
+validate_inputs ${INPUTS}
+combine_tmp ${INPUTS}
 
 # prepare nodes
-nodes=$(cut -d' ' -f'1' "$tmp" | sort -u | grep -v '^$')
+nodes=$(cut -d' ' -f'1' "$tmp" | sort -u)
 [ "$FILTER" ] && nodes=$(echo "$nodes" | eval "$FILTER")
 [ "$DRYRUN" ] && { echo "$nodes"; exit 0; }
 
 if [ ${DIR} ]
 then
+    [ ! -d ${DIR} ] && mkdir ${DIR}
     echo "$nodes" | parallel 'grep "^{} " "$tmp" | cut -d" " -f"2-" > "${DIR}/{}"'
 else
-    echo "$nodes" | parallel 'grep "^{} " "$tmp"'
+    cat $tmp
 fi
 
 # todo:
-# 0. check input type (orig, noded [nodeless, notime])
-# 1. filter by 1 column (see if it's faster than parallel grep)
 # 2. sort by n-th column (and then learn to custom sort timestamps)
 # 3. make a stat output in split (5 columns, sorting)
 # *. --since
