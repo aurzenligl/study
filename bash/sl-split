@@ -53,13 +53,38 @@ do
 	esac
 done
 
-[ ${DIR} ] && [ ! -d ${DIR} ] && [ ! $DRYRUN ] && mkdir ${DIR}
+check_orig () {
+    local i="[\d]+"
+    local x="[\da-f]+"
+    local a="[^\s]+"
+    local s="[\s]+"
+    local d="\."
+    local pattern="^$i$s$i$d$i$s$i:$i:$i$d$i$s\[$i$d$i$d$i$d$i\]$s$x$s$a$s<$a>"
+    [ $(head $1 -n 100 | grep -P "$pattern" -c) != 0 ]
+}
 
+check_nodetime () {
+    local a="[^\s]+"
+    local s="[\s]+"
+    local pattern="^$a$s<$a>"
+    [ $(head $1 -n 100 | grep -P "$pattern" -c) != 0 ]
+}
+
+# prepare tmp
 export tmp=$(mktemp /tmp/${PROGRAM}.XXXXXX)
 trap "{ rm -f "$tmp"; exit 255; }" EXIT
-cut -d' ' -f'8-' ${INPUTS} | dos2unix > "$tmp"
+for x in ${INPUTS}
+do
+    check_orig $x && { cut -d' ' -f'8-' $x | dos2unix >> "$tmp"; continue; }
+    check_nodetime $x && { cat $x >> "$tmp"; continue; }
+    die "unknown file format:" $x
+done
 
-nodes=$(cat "$tmp" | cut -d' ' -f'1' | sort -u | grep -v '^$')
+# prepare dir
+[ ${DIR} ] && [ ! -d ${DIR} ] && [ ! $DRYRUN ] && mkdir ${DIR}
+
+# prepare nodes
+nodes=$(cut -d' ' -f'1' "$tmp" | sort -u | grep -v '^$')
 [ "$FILTER" ] && nodes=$(echo "$nodes" | eval "$FILTER")
 [ "$DRYRUN" ] && { echo "$nodes"; exit 0; }
 
@@ -71,6 +96,7 @@ else
 fi
 
 # todo:
+# 0. check input type (orig, noded [nodeless, notime])
 # 1. filter by 1 column (see if it's faster than parallel grep)
 # 2. sort by n-th column (and then learn to custom sort timestamps)
 # 3. make a stat output in split (5 columns, sorting)
