@@ -94,18 +94,25 @@ combine_tmp() {
     done
 }
 
+extract_nodes() {
+    local nodes=$(cut -d' ' -f'1' "$tmp" | sort -u)
+    [ "$FILTER" ] && nodes=$(echo "$nodes" | grep -P "$FILTER")
+    echo "$nodes"
+}
+
 validate_inputs ${INPUTS}
 combine_tmp ${INPUTS}
 
-# prepare nodes
-nodes=$(cut -d' ' -f'1' "$tmp" | sort -u)
-[ "$FILTER" ] && nodes=$(echo "$nodes" | grep -P "$FILTER")
-[ "$DRYRUN" ] && { echo "$nodes"; exit 0; }
+if [ "$DRYRUN" ]
+then
+    echo "$(extract_nodes)"
+    exit 0
+fi
 
 if [ ${DIR} ]
 then
     [ ! -d ${DIR} ] && mkdir ${DIR}
-    echo "$nodes" | parallel 'grep "^{} " "$tmp" | cut -d" " -f"2-" > "${DIR}/{}"'
+    echo "$(extract_nodes)" | parallel 'grep "^{} " "$tmp" | cut -d" " -f"2-" > "${DIR}/{}"'
 else
     awk -v F="${FILTER}" '{ if (match($1, F)) print $0 }' $tmp
     # sort by timestamps
