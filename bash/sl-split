@@ -70,3 +70,12 @@ else
     echo "$nodes" | parallel 'grep "^{} " "$tmp"'
 fi
 
+# todo:
+# 1. filter by 1 column (see if it's faster than parallel grep)
+# 2. sort by n-th column (and then learn to custom sort timestamps)
+# 3. make a stat output in split (5 columns, sorting)
+# *. --since
+# *. --until
+# *. --no-timestamp
+# *. --stat
+# *. --filter-logs
