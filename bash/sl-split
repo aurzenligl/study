@@ -1,7 +1,11 @@
 #!/bin/bash -e
 
 PROGRAM=$(basename "$0")
-USAGE="usage: "$PROGRAM" [-d|--dir dirname] <filename> [<filename> ...]"
+USAGE="Usage: $PROGRAM [options] <filename> [<filename> ...]
+Options:
+    [-d|--dir dirname]             output dir, will create if doesn't exist
+    [-f|--filter-nodes command]    use favourite grep or awk combination,
+                                   example: -f 'grep FCT | grep HW'"
 
 die () {
     echo "${PROGRAM}: $@"
@@ -17,6 +21,7 @@ usage () {
 
 export DIR=
 export INPUTS=
+export FILTER=
 
 while [ $# != 0 ]
 do
@@ -27,6 +32,11 @@ do
 	    -d|--dir)
             [ $# -lt 2 ] && die "no dir argument"
             DIR="$2"
+            shift 2
+            ;;
+	    -f|--filter-nodes)
+            [ $# -lt 2 ] && die "no filter command"
+            FILTER="$2"
             shift 2
             ;;
 	    *)
@@ -43,7 +53,8 @@ done
 export tmp=$(mktemp /tmp/${PROGRAM}.XXXXXX)
 trap "{ rm -f "$tmp"; exit 255; }" EXIT
 
-cat ${INPUTS} | dos2unix | cut -d' ' -f'8-' > "$tmp"
+cut -d' ' -f'8-' ${INPUTS} | dos2unix > "$tmp"
 nodes=$(cat "$tmp" | cut -d' ' -f'1' | sort -u | grep -v '^$')
-echo "$nodes" | parallel 'cat "$tmp" | grep "^{} " | cut -d" " -f"2-" > "${DIR}/{}"'
+[ "$FILTER" ] && nodes=$(echo "$nodes" | eval "$FILTER")
+echo "$nodes" | parallel 'grep "^{} " "$tmp" | cut -d" " -f"2-" > "${DIR}/{}"'
 
