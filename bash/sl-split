@@ -79,3 +79,4 @@ fi
 # *. --no-timestamp
 # *. --stat
 # *. --filter-logs
+# *. timestamp aligned vertically
