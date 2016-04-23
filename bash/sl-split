@@ -32,7 +32,7 @@ do
             usage
             ;;
 	    -d|--dir)
-            [ $# -lt 2 ] && die "no dir argument"
+            [ $# -lt 2 ] && die "no dir name"
             DIR="$2"
             shift 2
             ;;
@@ -53,15 +53,20 @@ do
 	esac
 done
 
-[ -z ${DIR} ] && die "no output dir"
-[ ! -d ${DIR} ] && [ ! $DRYRUN ] && mkdir ${DIR}
+[ ${DIR} ] && [ ! -d ${DIR} ] && [ ! $DRYRUN ] && mkdir ${DIR}
 
 export tmp=$(mktemp /tmp/${PROGRAM}.XXXXXX)
 trap "{ rm -f "$tmp"; exit 255; }" EXIT
-
 cut -d' ' -f'8-' ${INPUTS} | dos2unix > "$tmp"
+
 nodes=$(cat "$tmp" | cut -d' ' -f'1' | sort -u | grep -v '^$')
 [ "$FILTER" ] && nodes=$(echo "$nodes" | eval "$FILTER")
 [ "$DRYRUN" ] && { echo "$nodes"; exit 0; }
-echo "$nodes" | parallel 'grep "^{} " "$tmp" | cut -d" " -f"2-" > "${DIR}/{}"'
+
+if [ ${DIR} ]
+then
+    echo "$nodes" | parallel 'grep "^{} " "$tmp" | cut -d" " -f"2-" > "${DIR}/{}"'
+else
+    echo "$nodes" | parallel 'grep "^{} " "$tmp"'
+fi
 
