@@ -95,7 +95,7 @@ combine_tmp() {
 }
 
 extract_nodes() {
-    local nodes=$(cut -d' ' -f'1' "$tmp" | sort -u)
+    local nodes=$(cut -d' ' -f'1' "$tmp" | uniq | sort -u)
     [ "$FILTER" ] && nodes=$(echo "$nodes" | grep -P "$FILTER")
     echo "$nodes"
 }
@@ -117,11 +117,10 @@ then
             { if ($1 == N) print substr($0, index($0, $2)) }
         '"'"' $tmp > "${DIR}/{}"'
 else
-    awk -v F="${FILTER}" '
-            { if (match($1, F)) print }
+    maxlen=$(echo "$(extract_nodes)" | wc -L)
+    awk -v F="${FILTER}" -v M="$maxlen" '
+            { if (match($1, F)) { printf "%-"M"s ", $1; print substr($0, index($0, $2)) } }
         ' $tmp
-    # sort by timestamps
-    # align vertically
 fi
 
 # todo:
