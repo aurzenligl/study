@@ -2,42 +2,148 @@
 
 import os
 import sys
+import argparse
+from itertools import islice
 import re
 
-def read_into_table(fileobj):
+def emit_error(msg):
+    sys.exit('hatchet' + ': error: ' + msg)
+
+def parse_options():
+    def potential_dir(name):
+        if os.path.isfile(name):
+            raise argparse.ArgumentTypeError("%s is an existing file" % name)
+        return name
+
+    def readable_file(name):
+        if not os.path.isfile(name):
+            raise argparse.ArgumentTypeError("%s file not found" % name)
+        return name
+
+    class ArgumentParser(argparse.ArgumentParser):
+        def error(self, msg):
+            emit_error(msg)
+
+    parser = ArgumentParser('hatchet', description = 'Cuts logs.')
+    parser.add_argument('inputs',
+                        type = readable_file,
+                        nargs = '*',
+                        help = ('Input in syslog or nodetime format.'))
+    parser.add_argument('-d', '--dir',
+                        type = potential_dir,
+                        help = 'Dir to split logs into by nodes.')
+    parser.add_argument('-f', '--filter-nodes',
+                        help = 'Regex to filter nodes.')
+    parser.add_argument('-n', '--nodes',
+                        action = 'store_true',
+                        help = 'Prints nodes.')
+    parser.add_argument('-nt', '--no-time',
+                        action = 'store_true',
+                        help = 'Does not print timestamps in output.')
+    parser.add_argument('-nta', '--no-time-align',
+                        action = 'store_true',
+                        help = 'Does not align timestamps in output.')
+    parser.add_argument('-nts', '--no-time-sort',
+                        action = 'store_true',
+                        help = 'Does not sort timestamps in output.')
+    opts = parser.parse_args()
+    if not opts.inputs:
+        parser.print_help()
+        sys.exit()
+    return opts
+
+def read_into_table(filenames):
+    def check_file(filename):
+        orig = '\d+\s+\d+.\d+\s+\d+:\d+:\d+.\d+\s+\[\d+.\d+.\d+.\d+\]\s+\w+\s+\S+\s+<[-:.TZ\d]*>\s+'
+        nodetime = '\S+\s+<[-:.TZ\d]*>\s+'
+
+        for line in islice(open(filename), 100):
+            if re.match(orig, line):
+                return 5
+
+        for line in islice(open(filename), 100):
+            if re.match(nodetime, line):
+                return 0
+
+        emit_error(filename + " has unknown format")
+
     lines = []
     pattern = re.compile('\s+')
-    for line in fileobj:
-        x, y, z = pattern.split(line, 2)
-        lines.append((x, y, z.rstrip()))
+    for filename in filenames:
+        to_ignore = check_file(filename)
+        for line in open(filename):
+            elems = pattern.split(line, 2 + to_ignore)[to_ignore:]
+            if elems:
+                node, tst, log = elems
+                lines.append((node, tst, log.rstrip('\r\n')))
     return lines
 
-def max_node_len(lines):
-    return max((len(node) for node, _, _ in lines))
+def extract_nodes(lines):
+    nodes = set()
+    for node, _, _ in lines:
+        nodes.add(node)
+    return sorted(nodes)
 
-def fmt_time_align(lines):
-    return "{0:%ss} {1} {2}" % max_node_len(lines)
+def split_into_nodes(lines):
+    nodes = {}
+    for line in lines:
+        node, _, _ = line
+        nodes.setdefault(node, []).append(line)
+    return nodes
 
-def print_all(lines, fmt):
+def sort_by_timestamp(lines):
+    lines.sort(key=lambda x: x[1])
+
+def lines_fmt(lines, with_node = True, time_align = True, with_time = True):
+    def max_node_len(lines):
+        return max((len(node) for node, _, _ in lines))
+
+    elems = []
+    if with_node:
+        if time_align:
+            elems += ['{0:%ss}' % max_node_len(lines)]
+        else:
+            elems += ['{0}']
+    if with_time:
+        elems += ['{1}']
+    elems += ['{2}']
+    return ' '.join(elems) + '\n'
+
+def write_lines(lines, fileobj, fmt):
     for node, tst, log in lines:
-        print fmt.format(node, tst, log)
+        fileobj.write(fmt.format(node, tst, log))
 
-lines = read_into_table(open('enb'))
-lines.sort(key=lambda x: x[1])
-print_all(lines, fmt_time_align(lines))
+def do_nodes(lines):
+    for node in extract_nodes(lines):
+        print node
 
-#for line in lines:
-#    print line
+def do_dir(lines, outdir, time_sort, with_time):
+    if not os.path.isdir(outdir):
+        os.mkdir(outdir)
+    for node, lines in split_into_nodes(lines).iteritems():
+        if time_sort:
+            sort_by_timestamp(lines)
+        output = open(os.path.join(outdir, node), 'w')
+        fmt = lines_fmt(lines, with_node=False, with_time=with_time)
+        write_lines(lines, output, fmt)
 
-#import pdb;pdb.set_trace()
+def do_stdout(lines, time_sort, time_align, with_time):
+    if time_sort:
+        sort_by_timestamp(lines)
+    fmt = lines_fmt(lines, time_align=time_align, with_time=with_time)
+    write_lines(lines, sys.stdout, fmt)
 
-#for x in sys.stdin:
-
-#for line in open("enb"):
-#    x, y, z = re.split('\s+', line, 2)
-#    lines.append((x, y, z.rstrip()))
-
-#for line in open("enb"):
-#    import pdb;pdb.set_trace()
-#    lines.append(line.split())
+opts = parse_options()
+lines = read_into_table((opts.inputs))
+if opts.nodes:
+    do_nodes(lines)
+elif opts.dir:
+    do_dir(lines, opts.dir,
+        time_sort=not opts.no_time_sort,
+        with_time=not opts.no_time)
+else:
+    do_stdout(lines,
+        time_sort=not opts.no_time_sort,
+        time_align=not opts.no_time_align,
+        with_time=not opts.no_time)
 
