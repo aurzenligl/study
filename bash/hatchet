@@ -83,7 +83,7 @@ def parse_options():
         sys.exit()
     return opts
 
-def read_into_table(filenames):
+def read_into_table(filenames, node_re):
     def check_file(filename):
         orig = '\d+\s+\d+.\d+\s+\d+:\d+:\d+.\d+\s+\[\d+.\d+.\d+.\d+\]\s+\w+\s+\S+\s+<[-:.TZ\d]*>\s+'
         nodetime = '\S+\s+<[-:.TZ\d]*>\s+'
@@ -100,12 +100,16 @@ def read_into_table(filenames):
 
     lines = []
     pattern = re.compile('\s+')
+    nodepat = node_re and re.compile(node_re)
     for filename in filenames:
         to_ignore = check_file(filename)
         for line in open(filename):
             elems = pattern.split(line, 2 + to_ignore)[to_ignore:]
             if elems:
                 node, tst, log = elems
+                if nodepat:
+                    if not nodepat.search(node):
+                        continue
                 lines.append((node, tst, log.rstrip('\r\n')))
     return lines
 
@@ -167,7 +171,7 @@ def sort_by_timestamp(lines):
 
 def lines_fmt(lines, with_node = True, time_align = True, with_time = True):
     def max_node_len(lines):
-        return max((len(node) for node, _, _ in lines))
+        return lines and max((len(node) for node, _, _ in lines)) or 0
 
     elems = []
     if with_node:
@@ -190,9 +194,10 @@ def do_nodes(lines):
 
 def do_stat(lines, sort_col):
     nodes = make_stat_nodes(lines)
-    rows, fmt = make_stat_rows(nodes, sort_col)
-    for row in rows:
-        print fmt % row
+    if nodes:
+        rows, fmt = make_stat_rows(nodes, sort_col)
+        for row in rows:
+            print fmt % row
 
 def do_dir(lines, outdir, time_sort, with_time):
     if not os.path.isdir(outdir):
@@ -211,7 +216,8 @@ def do_stdout(lines, time_sort, time_align, with_time):
     write_lines(lines, sys.stdout, fmt)
 
 opts = parse_options()
-lines = read_into_table((opts.inputs))
+lines = read_into_table(opts.inputs,
+    node_re=opts.filter_nodes)
 if opts.nodes:
     do_nodes(lines)
 elif opts.stat is not None:
