@@ -6,6 +6,8 @@ import argparse
 from itertools import islice
 import re
 
+__version__ = '0.1'
+
 description = """\
      ;:,,,::::.                                                           
      +++++++++++                                                          
@@ -46,6 +48,9 @@ def parse_options():
                         type = readable_file,
                         nargs = '*',
                         help = ('Input in syslog or nodetime format.'))
+    parser.add_argument('-v', '--version',
+                        action = 'store_true',
+                        help = 'Prints version.')
     parser.add_argument('-d', '--dir',
                         type = potential_dir,
                         help = 'Dir to split logs into by nodes.')
@@ -67,6 +72,8 @@ def parse_options():
                         action = 'store_true',
                         help = 'Does not sort timestamps in output.')
     opts = parser.parse_args()
+    if opts.version:
+        sys.exit(__version__)
     if not opts.inputs:
         parser.print_help()
         sys.exit()
