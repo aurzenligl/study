@@ -5,6 +5,7 @@ import sys
 import argparse
 from itertools import islice
 import re
+import dateutil.parser
 
 __version__ = '0.1'
 
@@ -145,12 +146,42 @@ def do_nodes(lines):
         print node
 
 def do_stat(lines):
-    print "implement me..."
+    nodes = []
+    for node, lines in sorted(split_into_nodes(lines).items(), key=lambda x: x[0]):
+        times = sorted((tst.strip('<>') for _, tst, _ in lines if tst.startswith('<')))
+        if times:
+            nodes.append((node, sorted(times)))
+
+    def dpar(tst):
+        return dateutil.parser.parse(tst)
+    def ddur(dttd):
+        return '{}.{:0>6}'.format(dttd.seconds, dttd.microseconds)
+
+    cols = (
+        [node for node, _ in nodes],
+        [len(times) for _, times in nodes],
+        [ddur(dpar(times[-1]) - dpar(times[0])) for _, times in nodes],
+        [times[0] for _, times in nodes],
+        [times[-1] for _, times in nodes]
+    )
+
+    maxlen = (
+        max((len(str(node)) for node in cols[0])),
+        max((len(str(logcount)) for logcount in cols[1])),
+        max((len(str(duration)) for duration in cols[2])),
+        len(cols[3][0]),
+        len(cols[4][0])
+    )
+
+    rowfmt = "%%-%ss %%%ss %%%ss %%%ss %%%ss" % maxlen
+
+    for row in zip(*cols[:]):
+        print rowfmt % row
 
 def do_dir(lines, outdir, time_sort, with_time):
     if not os.path.isdir(outdir):
         os.mkdir(outdir)
-    for node, lines in split_into_nodes(lines).iteritems():
+    for node, lines in split_into_nodes(lines).items():
         if time_sort:
             sort_by_timestamp(lines)
         output = open(os.path.join(outdir, node), 'w')
