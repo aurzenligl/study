@@ -157,7 +157,8 @@ else
         }'
     fi
     awk -v F="${FILTER}" -v M="$maxlen" "$awkcode" $tmp |
-        { [ ! ${NOTIMESORT} ] && sort -s -k2,2 || cat; }
+        { [ ! ${NOTIMESORT} ] && sort -s -k2,2 || cat; } |
+        { [ ${NOTIME} ] && sed 's/<.*T.*:.*:.*Z> //' || cat; }
 fi
 
 # todo:
