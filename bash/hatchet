@@ -37,6 +37,9 @@ def parse_options():
     parser.add_argument('-n', '--nodes',
                         action = 'store_true',
                         help = 'Prints nodes.')
+    parser.add_argument('-s', '--stat',
+                        action = 'store_true',
+                        help = 'Prints statistics.')
     parser.add_argument('-nt', '--no-time',
                         action = 'store_true',
                         help = 'Does not print timestamps in output.')
@@ -117,6 +120,9 @@ def do_nodes(lines):
     for node in extract_nodes(lines):
         print node
 
+def do_stat(lines):
+    print "implement me..."
+
 def do_dir(lines, outdir, time_sort, with_time):
     if not os.path.isdir(outdir):
         os.mkdir(outdir)
@@ -137,6 +143,8 @@ opts = parse_options()
 lines = read_into_table((opts.inputs))
 if opts.nodes:
     do_nodes(lines)
+elif opts.stat:
+    do_stat(lines)
 elif opts.dir:
     do_dir(lines, opts.dir,
         time_sort=not opts.no_time_sort,
@@ -146,4 +154,22 @@ else:
         time_sort=not opts.no_time_sort,
         time_align=not opts.no_time_align,
         with_time=not opts.no_time)
+
+"""
+TODO:
+
+1. stat
+
+node      logs  seconds histogram        start timestamp               stop timestamp
+ABC-1235  2342   988224 xx....x..x....xx <2016-04-19T11:46:36.124528Z> <2016-04-19T11:46:36.124528Z>
+ABC-1235  2342   988224 ..........xxxXXX <2016-04-19T11:46:36.124528Z> <2016-04-19T11:46:36.124528Z>
+
+2. filtering:
+
+node
+log
+since
+until
+
+"""
 
