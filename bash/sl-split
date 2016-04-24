@@ -6,6 +6,7 @@ Options:
     [-d|--dir dirname]             output dir, will create if doesn't exist
     [-f|--filter-nodes regex]      regular expression to filter nodes
     [-n|--dry-run]                 just show found nodes
+    [-nt|--no-time]                doesn't print timestamps in output
     [-nta|--no-time-align]         doesn't align timestamps in output
     [-nts|--no-time-sort]          doesn't sort timestamps in output"
 
@@ -25,6 +26,7 @@ export DIR=
 export INPUTS=
 export FILTER=
 export DRYRUN=
+export NOTIME=
 export NOTIMEALIGN=
 export NOTIMESORT=
 
@@ -46,6 +48,10 @@ do
             ;;
 	    -n|--dry-run)
             DRYRUN=1
+            shift
+            ;;
+        -nt|--no-time)
+            NOTIME=1
             shift
             ;;
         -nta|--no-time-align)
@@ -132,7 +138,8 @@ then
             hastime=$(grep "^{} " -m1 $tmp | grep -P '"'$(nodetime_pattern)'"' -c);
             grep "^{} " $tmp |
                 { [ ! ${NOTIMESORT} ] && [ ${hastime} != 0 ] && sort -s -k2,2 || cat; } |
-                cut -d" " -f"2-" > "${DIR}/{}"'
+                cut -d" " -f"2-" |
+                { [ ${NOTIME} ] && [ ${hastime} != 0 ] && cut -d" " -f"2-" || cat; } > "${DIR}/{}"'
 else
     if [ ${NOTIMEALIGN} ]
     then
