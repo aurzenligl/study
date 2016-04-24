@@ -235,15 +235,14 @@ else:
 """
 TODO:
 
-1. stat
+1. stat histogram
 
-node      logs  seconds histogram        start timestamp               stop timestamp
-ABC-1235  2342   988224 xx....x..x....xx <2016-04-19T11:46:36.124528Z> <2016-04-19T11:46:36.124528Z>
-ABC-1235  2342   988224 ..........xxxXXX <2016-04-19T11:46:36.124528Z> <2016-04-19T11:46:36.124528Z>
+node     logs seconds histogram        start timestamp             stop timestamp
+ABC-1235 2342  988224 xx....x..x....xx 2016-04-19T11:46:36.124528Z 2016-04-19T11:46:36.124528Z
+ABC-1235 2342  988224 ..........xxxXXX 2016-04-19T11:46:36.124528Z 2016-04-19T11:46:36.124528Z
 
 2. filtering:
 
-node
 log
 since
 until
