@@ -61,7 +61,9 @@ def parse_options():
                         action = 'store_true',
                         help = 'Prints nodes.')
     parser.add_argument('-s', '--stat',
-                        action = 'store_true',
+                        type = int,
+                        const = 0,
+                        nargs = '?',
                         help = 'Prints statistics.')
     parser.add_argument('-nt', '--no-time',
                         action = 'store_true',
@@ -72,6 +74,7 @@ def parse_options():
     parser.add_argument('-nts', '--no-time-sort',
                         action = 'store_true',
                         help = 'Does not sort timestamps in output.')
+
     opts = parser.parse_args()
     if opts.version:
         sys.exit(__version__)
@@ -145,7 +148,7 @@ def do_nodes(lines):
     for node in extract_nodes(lines):
         print node
 
-def do_stat(lines):
+def do_stat(lines, sort_col):
     nodes = []
     for node, lines in sorted(split_into_nodes(lines).items(), key=lambda x: x[0]):
         times = sorted((tst.strip('<>') for _, tst, _ in lines if tst.startswith('<')))
@@ -173,9 +176,15 @@ def do_stat(lines):
         len(cols[4][0])
     )
 
+    sort_type = (str, int, float, str, str)
+
+    rows = zip(*cols[:])
+    if sort_col < len(sort_type):
+        rows.sort(key=lambda x: sort_type[sort_col](x[sort_col]))
+
     rowfmt = "%%-%ss %%%ss %%%ss %%%ss %%%ss" % maxlen
 
-    for row in zip(*cols[:]):
+    for row in rows:
         print rowfmt % row
 
 def do_dir(lines, outdir, time_sort, with_time):
@@ -198,8 +207,8 @@ opts = parse_options()
 lines = read_into_table((opts.inputs))
 if opts.nodes:
     do_nodes(lines)
-elif opts.stat:
-    do_stat(lines)
+elif opts.stat is not None:
+    do_stat(lines, opts.stat)
 elif opts.dir:
     do_dir(lines, opts.dir,
         time_sort=not opts.no_time_sort,
