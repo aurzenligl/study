@@ -122,39 +122,15 @@ def split_into_nodes(lines):
         nodes.setdefault(node, []).append(line)
     return nodes
 
-def sort_by_timestamp(lines):
-    lines.sort(key=lambda x: x[1])
-
-def lines_fmt(lines, with_node = True, time_align = True, with_time = True):
-    def max_node_len(lines):
-        return max((len(node) for node, _, _ in lines))
-
-    elems = []
-    if with_node:
-        if time_align:
-            elems += ['{0:%ss}' % max_node_len(lines)]
-        else:
-            elems += ['{0}']
-    if with_time:
-        elems += ['{1}']
-    elems += ['{2}']
-    return ' '.join(elems) + '\n'
-
-def write_lines(lines, fileobj, fmt):
-    for node, tst, log in lines:
-        fileobj.write(fmt.format(node, tst, log))
-
-def do_nodes(lines):
-    for node in extract_nodes(lines):
-        print node
-
-def do_stat(lines, sort_col):
+def make_stat_nodes(lines):
     nodes = []
     for node, lines in sorted(split_into_nodes(lines).items(), key=lambda x: x[0]):
         times = sorted((tst.strip('<>') for _, tst, _ in lines if tst.startswith('<')))
         if times:
             nodes.append((node, sorted(times)))
+    return nodes
 
+def make_stat_rows(nodes, sort_col):
     def dpar(tst):
         return dateutil.parser.parse(tst)
     def ddur(dttd):
@@ -182,10 +158,41 @@ def do_stat(lines, sort_col):
     if sort_col < len(sort_type):
         rows.sort(key=lambda x: sort_type[sort_col](x[sort_col]))
 
-    rowfmt = "%%-%ss %%%ss %%%ss %%%ss %%%ss" % maxlen
+    fmt = "%%-%ss %%%ss %%%ss %%%ss %%%ss" % maxlen
 
+    return rows, fmt
+
+def sort_by_timestamp(lines):
+    lines.sort(key=lambda x: x[1])
+
+def lines_fmt(lines, with_node = True, time_align = True, with_time = True):
+    def max_node_len(lines):
+        return max((len(node) for node, _, _ in lines))
+
+    elems = []
+    if with_node:
+        if time_align:
+            elems += ['{0:%ss}' % max_node_len(lines)]
+        else:
+            elems += ['{0}']
+    if with_time:
+        elems += ['{1}']
+    elems += ['{2}']
+    return ' '.join(elems) + '\n'
+
+def write_lines(lines, fileobj, fmt):
+    for node, tst, log in lines:
+        fileobj.write(fmt.format(node, tst, log))
+
+def do_nodes(lines):
+    for node in extract_nodes(lines):
+        print node
+
+def do_stat(lines, sort_col):
+    nodes = make_stat_nodes(lines)
+    rows, fmt = make_stat_rows(nodes, sort_col)
     for row in rows:
-        print rowfmt % row
+        print fmt % row
 
 def do_dir(lines, outdir, time_sort, with_time):
     if not os.path.isdir(outdir):
