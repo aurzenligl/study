@@ -135,7 +135,7 @@ then
             hastime=$(grep "^{} " -m1 $tmp | grep -P '"'$(nodetime_pattern)'"' -c);
             grep "^{} " $tmp |
                 { [ ! ${NOTIMESORT} ] && [ ${hastime} != 0 ] && sort -s -k2,2 || cat; } |
-                cut -d" " -f"2-" |
+                grep -Po " <\K.*" |
                 { [ ${NOTIME} ] && [ ${hastime} != 0 ] && cut -d" " -f"2-" || cat; } > "${DIR}/{}"'
 else
     if [ ${NOTIMEALIGN} ]
