@@ -130,9 +130,6 @@ fi
 if [ ${DIR} ]
 then
     [ ! -d ${DIR} ] && mkdir ${DIR}
-    awkcode='{
-        if ($1 == N) print substr($0, index($0, $2))
-    }'
     echo "$(extract_nodes)" |
         parallel '
             hastime=$(grep "^{} " -m1 $tmp | grep -P '"'$(nodetime_pattern)'"' -c);
@@ -162,8 +159,7 @@ else
 fi
 
 # todo:
-# 1. --no-timestamp : remove timestamp from output
-# 2. --stat : make a stat output in split (5 columns, sorting)
-# *. --filter-logs
-# *. --since
-# *. --until
+# 1. --stat : make a stat output in split (5 columns, sorting)
+# 2. --filter-logs
+# 3. --since
+# 4. --until
