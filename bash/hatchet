@@ -6,6 +6,21 @@ import argparse
 from itertools import islice
 import re
 
+description = """\
+     ;:,,,::::.                                                           
+     +++++++++++                                                          
+     ++++++++++#:                     Cuts                                
+    `+++++++++++++#;,`                                                    
+    ;+++++++++++++++:':+#+;:.`                                            
+    ++++++++++++#+##+++: ..,.`.;+'+###+'';.:;''';;:.                      
+   ;+++++++++++          `,';''++++++++';+;'+''+'++';;:;+;,.              
+   ++++++++++++                     `:;+`;;;';;:::;;;''+#+'+';;'':.       
+  +++++++++++++,                             ```,:;'+';';;';++#+'#';;;;,;;
+ '+++++++++++++#          logs.                          :;'';''++;++';'+ 
+.'++++++++++++++'                                             .;';;:',;'  
+  ``.:;''''';:,.`                                                 .+''.   
+"""
+
 def emit_error(msg):
     sys.exit('hatchet' + ': error: ' + msg)
 
@@ -24,7 +39,9 @@ def parse_options():
         def error(self, msg):
             emit_error(msg)
 
-    parser = ArgumentParser('hatchet', description = 'Cuts logs.')
+    parser = ArgumentParser('hatchet',
+                            description=description,
+                            formatter_class=argparse.RawTextHelpFormatter)
     parser.add_argument('inputs',
                         type = readable_file,
                         nargs = '*',
