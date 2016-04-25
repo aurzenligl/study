@@ -38,6 +38,12 @@ def parse_options():
             raise argparse.ArgumentTypeError("%s file not found" % name)
         return name
 
+    def timestamp(name):
+        tst_pat = '\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}.\d{6}Z$'
+        if not re.match(tst_pat, name):
+            raise argparse.ArgumentTypeError("%s is not a timestamp" % name)
+        return name
+
     class ArgumentParser(argparse.ArgumentParser):
         def error(self, msg):
             emit_error(msg)
@@ -59,6 +65,12 @@ def parse_options():
                         help = 'Regex to filter nodes.')
     parser.add_argument('-l', '--filter-logs',
                         help = 'Regex to filter logs.')
+    parser.add_argument('--since',
+                        type = timestamp,
+                        help = 'Ignore logs before timestamp.')
+    parser.add_argument('--until',
+                        type = timestamp,
+                        help = 'Ignore logs after timestamp.')
     parser.add_argument('-n', '--nodes',
                         action = 'store_true',
                         help = 'Prints nodes.')
@@ -89,7 +101,7 @@ def stty_cols():
     rows, columns = os.popen('stty size', 'r').read().split()
     return int(columns)
 
-def read_into_table(filenames, node_re, log_re):
+def read_into_table(filenames, node_re, log_re, since, until):
     def check_file(filename):
         orig = '\d+\s+\d+.\d+\s+\d+:\d+:\d+.\d+\s+\[\d+.\d+.\d+.\d+\]\s+\w+\s+\S+\s+<[-:.TZ\d]*>\s+'
         nodetime = '\S+\s+<[-:.TZ\d]*>\s+'
@@ -108,6 +120,8 @@ def read_into_table(filenames, node_re, log_re):
     pattern = re.compile('\s+')
     nodepat = node_re and re.compile(node_re)
     logpat = log_re and re.compile(log_re)
+    sincepat = since and '<' + since + '>'
+    untilpat = until and '<' + until + '>'
     for filename in filenames:
         to_ignore = check_file(filename)
         for line in open(filename):
@@ -119,6 +133,12 @@ def read_into_table(filenames, node_re, log_re):
                         continue
                 if logpat:
                     if not logpat.search(log):
+                        continue
+                if sincepat:
+                    if tst < sincepat:
+                        continue
+                if untilpat:
+                    if tst > untilpat:
                         continue
                 lines.append((node, tst, log.rstrip('\r\n')))
     return lines
@@ -273,7 +293,9 @@ def do_stdout(lines, time_sort, time_align, with_time):
 opts = parse_options()
 lines = read_into_table(opts.inputs,
     node_re=opts.filter_nodes,
-    log_re=opts.filter_logs)
+    log_re=opts.filter_logs,
+    since=opts.since,
+    until=opts.until)
 if opts.nodes:
     do_nodes(lines)
 elif opts.stat is not None:
@@ -287,14 +309,4 @@ else:
         time_sort=not opts.no_time_sort,
         time_align=not opts.no_time_align,
         with_time=not opts.no_time)
-
-"""
-TODO:
-
-1. filtering:
-
-since
-until
-
-"""
 
