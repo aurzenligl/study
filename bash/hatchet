@@ -57,6 +57,8 @@ def parse_options():
                         help = 'Dir to split logs into by nodes.')
     parser.add_argument('-f', '--filter-nodes',
                         help = 'Regex to filter nodes.')
+    parser.add_argument('-l', '--filter-logs',
+                        help = 'Regex to filter logs.')
     parser.add_argument('-n', '--nodes',
                         action = 'store_true',
                         help = 'Prints nodes.')
@@ -87,7 +89,7 @@ def stty_cols():
     rows, columns = os.popen('stty size', 'r').read().split()
     return int(columns)
 
-def read_into_table(filenames, node_re):
+def read_into_table(filenames, node_re, log_re):
     def check_file(filename):
         orig = '\d+\s+\d+.\d+\s+\d+:\d+:\d+.\d+\s+\[\d+.\d+.\d+.\d+\]\s+\w+\s+\S+\s+<[-:.TZ\d]*>\s+'
         nodetime = '\S+\s+<[-:.TZ\d]*>\s+'
@@ -105,6 +107,7 @@ def read_into_table(filenames, node_re):
     lines = []
     pattern = re.compile('\s+')
     nodepat = node_re and re.compile(node_re)
+    logpat = log_re and re.compile(log_re)
     for filename in filenames:
         to_ignore = check_file(filename)
         for line in open(filename):
@@ -113,6 +116,9 @@ def read_into_table(filenames, node_re):
                 node, tst, log = elems
                 if nodepat:
                     if not nodepat.search(node):
+                        continue
+                if logpat:
+                    if not logpat.search(log):
                         continue
                 lines.append((node, tst, log.rstrip('\r\n')))
     return lines
@@ -266,7 +272,8 @@ def do_stdout(lines, time_sort, time_align, with_time):
 
 opts = parse_options()
 lines = read_into_table(opts.inputs,
-    node_re=opts.filter_nodes)
+    node_re=opts.filter_nodes,
+    log_re=opts.filter_logs)
 if opts.nodes:
     do_nodes(lines)
 elif opts.stat is not None:
@@ -286,7 +293,6 @@ TODO:
 
 1. filtering:
 
-log
 since
 until
 
