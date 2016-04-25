@@ -135,36 +135,31 @@ def make_stat_nodes(lines):
     return nodes
 
 def make_stat_rows(nodes, sort_col):
+    def make_rows(*colgens):
+        cols = [[gen(node, times) for node, times in nodes] for _, _, gen in colgens]
+        def maxlen(col):
+            return max([len(str(x)) for x in col])
+        def colfmt(col, colgen):
+            return '%%%s%ss' % (colgen[1], maxlen(col))
+        fmt = ' '.join([colfmt(col, colgen) for col, colgen in zip(cols, colgens)])
+        rows = zip(*cols[:])
+        if sort_col < len(colgens):
+            rows.sort(key=lambda x: colgens[sort_col][0](x[sort_col]))
+        return rows, fmt
+
     def dpar(tst):
         return dateutil.parser.parse(tst)
     def ddur(dttd):
         return '{}.{:0>6}'.format(dttd.seconds, dttd.microseconds)
 
-    cols = (
-        [node for node, _ in nodes],
-        [len(times) for _, times in nodes],
-        [ddur(dpar(times[-1]) - dpar(times[0])) for _, times in nodes],
-        [times[0] for _, times in nodes],
-        [times[-1] for _, times in nodes]
+    return make_rows(
+        (str,   '-', lambda node, _: node),
+        (int,   '',  lambda _, times: len(times)),
+        (float, '',  lambda _, times: ddur(dpar(times[-1]) - dpar(times[0]))),
+        (str,   '',  lambda _, times: 'abc'),
+        (str,   '',  lambda _, times: times[0]),
+        (str,   '',  lambda _, times: times[-1])
     )
-
-    maxlen = (
-        max((len(str(node)) for node in cols[0])),
-        max((len(str(logcount)) for logcount in cols[1])),
-        max((len(str(duration)) for duration in cols[2])),
-        len(cols[3][0]),
-        len(cols[4][0])
-    )
-
-    sort_type = (str, int, float, str, str)
-
-    rows = zip(*cols[:])
-    if sort_col < len(sort_type):
-        rows.sort(key=lambda x: sort_type[sort_col](x[sort_col]))
-
-    fmt = "%%-%ss %%%ss %%%ss %%%ss %%%ss" % maxlen
-
-    return rows, fmt
 
 def sort_by_timestamp(lines):
     lines.sort(key=lambda x: x[1])
