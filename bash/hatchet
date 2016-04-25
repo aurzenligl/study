@@ -83,6 +83,10 @@ def parse_options():
         sys.exit()
     return opts
 
+def stty_cols():
+    rows, columns = os.popen('stty size', 'r').read().split()
+    return int(columns)
+
 def read_into_table(filenames, node_re):
     def check_file(filename):
         orig = '\d+\s+\d+.\d+\s+\d+:\d+:\d+.\d+\s+\[\d+.\d+.\d+.\d+\]\s+\w+\s+\S+\s+<[-:.TZ\d]*>\s+'
@@ -135,14 +139,16 @@ def make_stat_nodes(lines):
     return nodes
 
 def make_stat_rows(nodes, sort_col):
-    def make_rows(*colgens):
+    def col_maxlen(col):
+        return max([len(str(x)) for x in col])
+    def make_cols(colgens):
         def gen_column(gen):
             return [gen(i, node, times) for i, (node, times) in enumerate(nodes)]
-        cols = [gen_column(gen) for _, _, gen in colgens]
-        def maxlen(col):
-            return max([len(str(x)) for x in col])
+        return [gen_column(gen) for _, _, gen in colgens]
+    def make_rows(colgens):
+        cols = make_cols(colgens)
         def colfmt(col, colgen):
-            return '%%%s%ss' % (colgen[1], maxlen(col))
+            return '%%%s%ss' % (colgen[1], col_maxlen(col))
         fmt = ' '.join([colfmt(col, colgen) for col, colgen in zip(cols, colgens)])
         rows = zip(*cols[:])
         if sort_col < len(colgens):
@@ -189,14 +195,25 @@ def make_stat_rows(nodes, sort_col):
             return val and (val < bigpoint and 'x' or 'X') or '.'
         return ''.join(glyph(val) for val in hist)
 
-    hists, bigpoint = make_histograms(nodes, 20)
-
-    return make_rows(
+    colgens = [
         (str,   '-', lambda _, node, __: node),
         (int,   '',  lambda _, __, times: len(times)),
         (float, '',  lambda _, __, times: duration(times[0], times[-1])),
-        (str,   '',  lambda i, __, ___: render_hist(hists[i], bigpoint))
-    )
+        (str,   '',  lambda _, __, times: times[0]),
+        (str,   '',  lambda _, __, times: times[-1])
+    ]
+
+    def hist_maxlen():
+        collens = [col_maxlen(col) for col in make_cols(colgens)]
+        usedlen = sum(collens) + len(collens)
+        return stty_cols() - usedlen
+
+    hists, bigpoint = make_histograms(nodes, hist_maxlen() - 2)
+
+    colgens.insert(3,
+        (str,   '',  lambda i, __, ___: render_hist(hists[i], bigpoint)))
+
+    return make_rows(colgens)
 
 def sort_by_timestamp(lines):
     lines.sort(key=lambda x: x[1])
