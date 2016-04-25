@@ -1,0 +1,41 @@
+#!/usr/bin/env python
+
+import os
+import sys
+
+def to_float(x):
+    from dateutil.parser import parse
+    from dateutil.tz import tzlocal
+    y = parse(x).replace(tzinfo=tzlocal())
+    return float(y.strftime('%s.%f'))
+
+def from_float(x):
+    from datetime import datetime
+    return datetime.fromtimestamp(x).isoformat()
+
+def histogram(v1, v2, data, bins):
+    def calc_points(x1, x2):
+        span = x2 - x1
+        interval = span / bins
+        points = [x1 + (interval * i) for i in range(1, bins)]
+        return points
+    from bisect import bisect_right
+    points = [from_float(x) for x in calc_points(to_float(v1), to_float(v2))]
+    indexes = [bisect_right(data, point) for point in points] + [len(data)]
+    hist = indexes[:1] + [y - x for x, y in zip(indexes[:-1], indexes[1:])]
+    return hist
+
+tsts = [
+    '2016-04-19T11:46:54.800004Z',
+    '2016-04-19T11:46:54.800010Z',
+    '2016-04-19T11:46:54.800011Z',
+    '2016-04-19T11:46:54.800011Z',
+    '2016-04-19T11:46:54.800011Z',
+    '2016-04-19T11:46:54.800012Z',
+    '2016-04-19T11:46:54.800014Z',
+    '2016-04-19T11:46:54.800016Z',
+    '2016-04-19T11:46:54.800016Z'
+]
+
+print histogram('2016-04-19T11:46:54.800000Z', '2016-04-19T11:46:54.800020Z', tsts, 10)
+
