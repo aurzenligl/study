@@ -3,9 +3,7 @@
 import os
 import sys
 import argparse
-from itertools import islice
 import re
-import dateutil.parser
 
 __version__ = '0.1'
 
@@ -103,8 +101,10 @@ def stty_cols():
 
 def read_into_table(filenames, node_re, log_re, since, until):
     def check_file(filename):
-        orig = '\d+\s+\d+.\d+\s+\d+:\d+:\d+.\d+\s+\[\d+.\d+.\d+.\d+\]\s+\w+\s+\S+\s+<[-:.TZ\d]*>\s+'
+        from itertools import islice
+
         nodetime = '\S+\s+<[-:.TZ\d]*>\s+'
+        orig = '\d+\s+\d+.\d+\s+\d+:\d+:\d+.\d+\s+\[\d+.\d+.\d+.\d+\]\s+\w+\s+' + nodetime
 
         for line in islice(open(filename), 100):
             if re.match(orig, line):
