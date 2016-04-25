@@ -136,7 +136,9 @@ def make_stat_nodes(lines):
 
 def make_stat_rows(nodes, sort_col):
     def make_rows(*colgens):
-        cols = [[gen(node, times) for node, times in nodes] for _, _, gen in colgens]
+        def gen_column(gen):
+            return [gen(i, node, times) for i, (node, times) in enumerate(nodes)]
+        cols = [gen_column(gen) for _, _, gen in colgens]
         def maxlen(col):
             return max([len(str(x)) for x in col])
         def colfmt(col, colgen):
@@ -147,18 +149,52 @@ def make_stat_rows(nodes, sort_col):
             rows.sort(key=lambda x: colgens[sort_col][0](x[sort_col]))
         return rows, fmt
 
-    def dpar(tst):
-        return dateutil.parser.parse(tst)
-    def ddur(dttd):
-        return '{}.{:0>6}'.format(dttd.seconds, dttd.microseconds)
+    def duration(t1, t2):
+        from dateutil.parser import parse
+        delta = parse(t2) - parse(t1)
+        return '{}.{:0>6}'.format(delta.seconds, delta.microseconds)
+
+    def histogram(v1, v2, data, bins):
+        def to_fl(x):
+            from dateutil.parser import parse
+            from dateutil.tz import tzlocal
+            y = parse(x).replace(tzinfo=tzlocal())
+            return float(y.strftime('%s.%f'))
+        def from_fl(x):
+            from datetime import datetime
+            return datetime.fromtimestamp(x).isoformat()
+        def calc_points(x1, x2, bins):
+            span = x2 - x1
+            interval = span / bins
+            points = [x1 + (interval * i) for i in range(1, bins)]
+            return points
+        from bisect import bisect_right
+        points = [from_fl(x) for x in calc_points(to_fl(v1), to_fl(v2), bins)]
+        indexes = [bisect_right(data, point) for point in points] + [len(data)]
+        hist = indexes[:1] + [y - x for x, y in zip(indexes[:-1], indexes[1:])]
+        return hist
+
+    t1 = min([times[0] for _, times in nodes])
+    t2 = max([times[-1] for _, times in nodes])
+    bins = 20
+
+    hists = [histogram(t1, t2, times, bins) for _, times in nodes]
+    maxbinval = max([x for hist in hists for x in hist])
+    import math
+    bigpoint = math.log(maxbinval)
+
+    def render_hist(hist, bigpoint):
+        def glyph(val):
+            return val and (val < bigpoint and 'x' or 'X') or '.'
+        return ''.join(glyph(val) for val in hist)
 
     return make_rows(
-        (str,   '-', lambda node, _: node),
-        (int,   '',  lambda _, times: len(times)),
-        (float, '',  lambda _, times: ddur(dpar(times[-1]) - dpar(times[0]))),
-        (str,   '',  lambda _, times: 'abc'),
-        (str,   '',  lambda _, times: times[0]),
-        (str,   '',  lambda _, times: times[-1])
+        (str,   '-', lambda _, node, __: node),
+        (int,   '',  lambda _, __, times: len(times)),
+        (float, '',  lambda _, __, times: duration(times[0], times[-1])),
+        (str,   '',  lambda i, __, ___: render_hist(hists[i], bigpoint)),
+        (str,   '',  lambda _, __, times: times[0]),
+        (str,   '',  lambda _, __, times: times[-1])
     )
 
 def sort_by_timestamp(lines):
