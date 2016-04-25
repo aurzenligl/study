@@ -174,19 +174,22 @@ def make_stat_rows(nodes, sort_col):
         hist = indexes[:1] + [y - x for x, y in zip(indexes[:-1], indexes[1:])]
         return hist
 
-    t1 = min([times[0] for _, times in nodes])
-    t2 = max([times[-1] for _, times in nodes])
-    bins = 20
-
-    hists = [histogram(t1, t2, times, bins) for _, times in nodes]
-    maxbinval = max([x for hist in hists for x in hist])
-    import math
-    bigpoint = math.log(maxbinval)
+    def make_histograms(nodes, bins):
+        t1 = min([times[0] for _, times in nodes])
+        t2 = max([times[-1] for _, times in nodes])
+        hists = [histogram(t1, t2, times, bins) for _, times in nodes]
+        def bigpoint(hists):
+            import math
+            maxbinval = max([x for hist in hists for x in hist])
+            return math.log(maxbinval)
+        return hists, bigpoint(hists)
 
     def render_hist(hist, bigpoint):
         def glyph(val):
             return val and (val < bigpoint and 'x' or 'X') or '.'
         return ''.join(glyph(val) for val in hist)
+
+    hists, bigpoint = make_histograms(nodes, 20)
 
     return make_rows(
         (str,   '-', lambda _, node, __: node),
@@ -266,13 +269,7 @@ else:
 """
 TODO:
 
-1. stat histogram
-
-node     logs seconds histogram        start timestamp             stop timestamp
-ABC-1235 2342  988224 xx....x..x....xx 2016-04-19T11:46:36.124528Z 2016-04-19T11:46:36.124528Z
-ABC-1235 2342  988224 ..........xxxXXX 2016-04-19T11:46:36.124528Z 2016-04-19T11:46:36.124528Z
-
-2. filtering:
+1. filtering:
 
 log
 since
