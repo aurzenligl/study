@@ -8,31 +8,32 @@ eclipse.ini
 -XX:+UseParallelGC
 -XX:+UseParallelOldGC
 -XX:+AggressiveOpts
--Xmn512m
--Xms3000m
--Xmx3000m
+-Xmn750m
+-Xms2000m
+-Xmx2000m
 -Xss2m
 
-Preferences
-------------------------------------------------
-Preferences > General > Startup and Shutdown : remove all plugins activated on startup
-Preferences > General > Editors > Text Editors > Spelling : Disable spell checking
-Preferences > Install/Update > Automatic Updates > Uncheck “Automatically find new updates”
-Preferences > General > Appearance > [Uncheck] Enable Animations
-
-Preferences > General > Show Heap Status
-Window > Customize Perspective > Remove stuff you don’t use
-Preferences > General > Workspace > [Uncheck] Build Automatically
-Preferences > General > Keys > Build Project [Ctrl+B]
-
-Features
+features
 ------------------------------------------------
 cd eclipse/features
 mkdir removed
 mv *git* removed
 mv *mylyn* removed
 
+Help > Eclipse Marketplace > PyDev
+
+preferences
+------------------------------------------------
+Preferences > General > Startup and Shutdown : remove all plugins activated on startup
+Preferences > General > Editors > Text Editors > Spelling : Disable spell checking
+Preferences > General > Appearance > [Uncheck] Enable Animations
+Preferences > C/C++ > Indexer > [Uncheck] Allow Heuristic Resolution of Includes
+
+Preferences > General > Show Heap Status
+Window > Customize Perspective > Remove stuff you don’t use
+Preferences > General > Workspace > [Uncheck] Build Automatically
+Preferences > General > Keys > Build Project [Ctrl+B]
+
 TODO
-....
-indexer options
-filter resources
+......
+indexer options: remove from indexing
