@@ -36,3 +36,41 @@ Preferences > General > Keys > Build Project [Ctrl+B]
 Preferences > General > Keys > Run [Ctrl+R]
 Preferences > C/C++ > Editor > Folding > [Uncheck] Enable folding when opening new editor
 Preferences > C/C++ > Code Style > Formatter > BSD/Allman [tabs to spaces]
+
+keyboard shortcuts
+=========================================
+
+window
+-----------------------------------------
+Ctrl+Shift+S                  save all files
+Ctrl+W                        close current file
+Ctrl+Shift+W                  close all files
+Ctrl+Page Down/Ctrl+Page Up   switch to next editor / switch to previous editor
+Ctrl+E                        show list of open Editors. Use arrow keys and enter to switch
+Ctrl+M                        maximize or un-maximize current Editor Window (also works for other Windows)
+
+navigate
+-----------------------------------------
+Ctrl+Home/End                    jump to beginning / jump to end of source
+Ctrl+Shift+Arrow Down/Arrow Up   jump to previous / jump to next method
+Ctrl+Q                           jump to last location edited
+Ctrl+./Ctrl+,                    jump to next / jump to previous compiler syntax warning or error
+Ctrl+Shift+P                     with a bracket selected: jump to the matching closing or opening bracket
+
+edit
+-----------------------------------------
+Alt+Arrow Up/Arrow Down   move current line or selection up or down
+Ctrl+1                    open Quick Fix and Quick Assist
+
+search and replace
+-----------------------------------------
+Ctrl+K/Ctrl+Shift+K   find previous / find next occurrence of search term (close find window first)
+Ctrl+J/Ctrl+Shift+J   incremental search forward / backwards. Type search term after pressing ctrl+j, there is now search window
+Ctrl+Shift+T          open a resource search dialog to find any class
+
+indentions and comments
+-----------------------------------------
+Ctrl+I         correct indention of selected text or of current line
+Ctrl+Shift+F   autoformat all code in Editor using code formatter
+Ctrl+Shift+/   add Block Comment around selection ( adds '/... */' )
+Ctrl+Shift+\   remove Block Comment
