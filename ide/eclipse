@@ -8,7 +8,7 @@ eclipse.ini
 -XX:+UseParallelGC
 -XX:+UseParallelOldGC
 -XX:+AggressiveOpts
--Xmn250m
+-Xmn200m
 -Xms2000m
 -Xmx2000m
 -Xss2m
@@ -21,15 +21,18 @@ mv *git* removed
 mv *mylyn* removed
 
 Help > Eclipse Marketplace > PyDev
+Help > Install New Software > http://sourceforge.net/projects/shelled/files/shelled/update/
 
 preferences
 ------------------------------------------------
 Preferences > General > Startup and Shutdown : remove all plugins activated on startup
 Preferences > General > Editors > Text Editors > Spelling : Disable spell checking
 Preferences > General > Appearance > [Uncheck] Enable Animations
-Preferences > C/C++ > Indexer > [Uncheck] Allow Heuristic Resolution of Includes
 
 Preferences > General > Show Heap Status
 Window > Customize Perspective > Remove stuff you don’t use
 Preferences > General > Workspace > [Uncheck] Build Automatically
 Preferences > General > Keys > Build Project [Ctrl+B]
+Preferences > General > Keys > Run [Ctrl+R]
+Preferences > C/C++ > Editor > Folding > [Uncheck] Enable folding when opening new editor
+Preferences > C/C++ > Code Style > Formatter > BSD/Allman [tabs to spaces]
