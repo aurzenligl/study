@@ -1,0 +1,38 @@
+eclipse.ini
+------------------------------------------------
+-vm
+/home/aurzenligl/opt/jdk1.8.0_92/jre/lib/amd64/server/libjvm.so
+
+-server
+-XX:+DisableExplicitGC
+-XX:+UseParallelGC
+-XX:+UseParallelOldGC
+-XX:+AggressiveOpts
+-Xmn512m
+-Xms3000m
+-Xmx3000m
+-Xss2m
+
+Preferences
+------------------------------------------------
+Preferences > General > Startup and Shutdown : remove all plugins activated on startup
+Preferences > General > Editors > Text Editors > Spelling : Disable spell checking
+Preferences > Install/Update > Automatic Updates > Uncheck “Automatically find new updates”
+Preferences > General > Appearance > [Uncheck] Enable Animations
+
+Preferences > General > Show Heap Status
+Window > Customize Perspective > Remove stuff you don’t use
+Preferences > General > Workspace > [Uncheck] Build Automatically
+Preferences > General > Keys > Build Project [Ctrl+B]
+
+Features
+------------------------------------------------
+cd eclipse/features
+mkdir removed
+mv *git* removed
+mv *mylyn* removed
+
+TODO
+....
+indexer options
+filter resources
