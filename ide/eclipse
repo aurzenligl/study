@@ -8,7 +8,7 @@ eclipse.ini
 -XX:+UseParallelGC
 -XX:+UseParallelOldGC
 -XX:+AggressiveOpts
--Xmn750m
+-Xmn250m
 -Xms2000m
 -Xmx2000m
 -Xss2m
@@ -33,7 +33,3 @@ Preferences > General > Show Heap Status
 Window > Customize Perspective > Remove stuff you don’t use
 Preferences > General > Workspace > [Uncheck] Build Automatically
 Preferences > General > Keys > Build Project [Ctrl+B]
-
-TODO
-......
-indexer options: remove from indexing
