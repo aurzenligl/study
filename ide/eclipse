@@ -4,7 +4,6 @@ eclipse.ini
 /home/aurzenligl/opt/jdk1.8.0_92/jre/lib/amd64/server/libjvm.so
 
 -server
--XX:+DisableExplicitGC
 -XX:+UseParallelGC
 -XX:+UseParallelOldGC
 -XX:+AggressiveOpts
@@ -48,9 +47,17 @@ Ctrl+Shift+W                  close all files
 Ctrl+Page Down/Ctrl+Page Up   switch to next editor / switch to previous editor
 Ctrl+E                        show list of open Editors. Use arrow keys and enter to switch
 Ctrl+M                        maximize or un-maximize current Editor Window (also works for other Windows)
+F12                           focus on editor window
 
 navigate
 -----------------------------------------
+F4                               open Type Hierarchy window for selected item
+Ctrl+T                           show / open Quick Type Hierarchy for selected item
+Ctrl+Shift+T                     open a resource search dialog to find any class
+Ctrl+Alt+H                       open call hierarchy
+Ctrl+Shift+G                     search for references
+Ctrl+Shift+R                     jump to resource
+Alt+Arrow Left/Arrow Right       go backwards / forward
 Ctrl+Home/End                    jump to beginning / jump to end of source
 Ctrl+Shift+Arrow Down/Arrow Up   jump to previous / jump to next method
 Ctrl+Q                           jump to last location edited
@@ -59,6 +66,11 @@ Ctrl+Shift+P                     with a bracket selected: jump to the matching c
 
 edit
 -----------------------------------------
+Alt+Shift+R               rename selected element and all references
+Ctrl+Shift+/              add Block Comment around selection ( adds '/... */' )
+Ctrl+Shift+\              remove Block Comment
+Ctrl+Shift+F              autoformat all code in Editor using code formatter
+Ctrl+I                    correct indention of selected text or of current line
 Alt+Arrow Up/Arrow Down   move current line or selection up or down
 Ctrl+1                    open Quick Fix and Quick Assist
 
@@ -66,11 +78,3 @@ search and replace
 -----------------------------------------
 Ctrl+K/Ctrl+Shift+K   find previous / find next occurrence of search term (close find window first)
 Ctrl+J/Ctrl+Shift+J   incremental search forward / backwards. Type search term after pressing ctrl+j, there is now search window
-Ctrl+Shift+T          open a resource search dialog to find any class
-
-indentions and comments
------------------------------------------
-Ctrl+I         correct indention of selected text or of current line
-Ctrl+Shift+F   autoformat all code in Editor using code formatter
-Ctrl+Shift+/   add Block Comment around selection ( adds '/... */' )
-Ctrl+Shift+\   remove Block Comment
