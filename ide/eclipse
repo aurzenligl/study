@@ -18,6 +18,10 @@ cd eclipse/features
 mkdir removed
 mv *git* removed
 mv *mylyn* removed
+cd eclipse/plugins
+mkdir removed
+mv *git* removed
+mv *mylyn* removed
 
 Help > Eclipse Marketplace > PyDev
 Help > Install New Software > http://sourceforge.net/projects/shelled/files/shelled/update/
