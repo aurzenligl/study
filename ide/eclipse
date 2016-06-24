@@ -2,7 +2,6 @@ eclipse.ini
 ------------------------------------------------
 -vm
 /home/aurzenligl/opt/jdk1.8.0_92/jre/lib/amd64/server/libjvm.so
-
 -server
 -XX:+UseParallelGC
 -XX:+UseParallelOldGC
