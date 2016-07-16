@@ -4,11 +4,18 @@ https://en.wikipedia.org/wiki/Advanced_Configuration_and_Power_Interface
 http://uefi.org/sites/default/files/resources/ACPI_5.pdf
 http://free-electrons.com/~thomas/pub/Power_ePAPR_APPROVED_v1.0.pdf
 https://events.linuxfoundation.org/sites/events/files/slides/petazzoni-device-tree-dummies.pdf
+https://www.raspberrypi.org/documentation/configuration/device-tree.md
+
++ http://elinux.org/images/4/48/Experiences_With_Device_Tree_Support_Development_For_ARM-Based_SOC's.pdf
++ http://events.linuxfoundation.org/sites/events/files/slides/dynamic-dt-elce14.pdf
++ http://events.linuxfoundation.org/sites/events/files/slides/dt_debugging.pdf
++ http://elinux.org/images/8/83/Plumbers_2016_dt_device_tree_tools.pdf
+
 + http://www.devicetree.org/Main_Page
 + https://lwn.net/Articles/448499/
 + https://lwn.net/Articles/448502/
 + http://xillybus.com/tutorials/device-tree-zynq-1
-+ http://devicetree.org/Device_Tree_Usage
++ http://elinux.org/Device_Tree_Usage
 + debian for odroid C1+
 + yocto for odroid C1+
 
