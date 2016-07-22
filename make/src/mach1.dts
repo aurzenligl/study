@@ -7,11 +7,18 @@
         prop3 = [01 02 03];
         prop4 = <0x01 0x02 0x03 0x04>;
         prop5 = <0xbeef 13>, "foobar", [ab cd], <0xaa>;
+
+        child1 {
+            childprop1;
+            childprop2 = "def";
+        };
     };
-    node2 {
+    node: node2 {
         member1 = "abc";
         member2 = <1>;
     };
 };
 
-
+&node {
+    member1 = "changed";
+};
