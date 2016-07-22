@@ -4,3 +4,5 @@
 build
 perf.data*
 .cproject
+.project
+.settings
