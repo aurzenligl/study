@@ -1,5 +1,7 @@
 /dts-v1/;
 
+#include "common.dtsi"
+
 / {
     node1 {
         prop1 = "string";
@@ -13,11 +15,15 @@
             childprop2 = "def";
         };
     };
-    node: node2 {
-        member1 = "abc";
-        member2 = <1>;
+};
+
+#ifdef MAIN
+/ {
+    main_node {
+        foo = "foo";
     };
 };
+#endif
 
 &node {
     member1 = "changed";

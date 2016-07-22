@@ -1,0 +1,19 @@
+/dts-v1/;
+
+#include "common.dtsi"
+
+/ {
+    different_node {
+        prop1 = "string";
+    };
+};
+
+#ifdef MAIN
+&node {
+    main_master_node = <1 2 3 4 5 6>;
+};
+#endif
+
+&node {
+    member1 = "changed again";
+};

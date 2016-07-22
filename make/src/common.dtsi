@@ -1,0 +1,6 @@
+/ {
+    node: node0 {
+        member1 = "abc";
+        member2 = <1>;
+    };
+};
