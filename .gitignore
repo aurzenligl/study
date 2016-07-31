@@ -6,3 +6,7 @@ perf.data*
 .cproject
 .project
 .settings
+.pydevproject
+.cache
+__pycache__
+*.pyc

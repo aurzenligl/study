@@ -1,0 +1,5 @@
+reproduce socket-already-used error with
+$ py.test -n20 --count 100
+
+pytest will print to stdout
+log is also accessible in user_log
