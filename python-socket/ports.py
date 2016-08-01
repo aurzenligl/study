@@ -1,19 +1,11 @@
-import py
 import os
 import atexit
 import socket
 import fasteners
+import subprocess
+import time
 
 # make PortAllocator or IdAllocator out of it 
-# change directory plus files into single file database
-
-def tst():
-    import os
-    import time
-    import datetime
-    pid = os.getpid()
-    ts = datetime.datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S.%f')
-    return "[%s] %s:" % (ts, pid)
 
 def get_free_port():
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -33,106 +25,76 @@ def is_port_free(port):
     except socket.error as e:
         return False
 
-def reserve_port():
+def reserve_port(lockfile, first):
     while True:
-        portfile = make_numbered_file('/tmp/pytest-sockets', 20000)
-        port = int(portfile.basename)
-        if not all(is_port_free(port) for port in (port, port, port)):
-            print('[%s] reserve: NOK %s' % (tst(), port))
+        port = reserve_id(lockfile, first)
+        if not is_port_free(port):
             continue
-        print('[%s] reserve: OK %s' % (tst(), port))
         return port
 
-def free_port(port):
-    ufile = py.path.local('/tmp/pytest-sockets').join(str(port))
-    try:
-        print('[%s] ports: -%s' % (tst(), ufile))
-        ufile.remove()
-    except py.error.Error:
-        pass
+def free_port(lockfile, port):
+    free_id(lockfile, port)
 
-def make_numbered_file(rootdir, first=0,
-                       lock_timeout = 172800):   # two days
-    lockfile = py.path.local(rootdir).join('lock')
-    with fasteners.InterProcessLock(str(lockfile)) as f:
-        return _make_numbered_file(rootdir, first, lock_timeout)
+def reserve_id(lockfile, first, lock_timeout=172800):  # two days
+    with fasteners.InterProcessLock(lockfile) as f:
+        db = read_db(f.lockfile.name)
+        db = prune_db(db, lock_timeout)
+        port = reserve_db(db, first)
+        save_db(db, f.lockfile)
 
-def _make_numbered_file(rootdir, first=0,
-                        lock_timeout = 172800):   # two days
-    """ return unique file with a first free number greater or equal to given one as name
-    """
-    rootdir = py.path.local(rootdir).ensure(dir=1)
-
-    def parse_num(path):
-        """ parse the number out of a path (if it matches the prefix) """
-        bn = path.basename
-        try:
-            return int(bn)
-        except ValueError:
-            pass
-
-    # compute the first free file number
-    while True:
-        nums = []
-        for path in rootdir.listdir():
-            num = parse_num(path)
-            if num is not None:
-                nums.append(num)
-
-        next_num = first
-        while True:
-            if next_num in nums:
-                next_num += 1
-                continue
-            break
-
-        # make the new file
-        try:
-            ufile = rootdir.join(str(next_num))
-            ufile.write('')
-        except py.error.EEXIST:
-            # race condition: another thread/process created the file
-            # in the meantime.  Try counting again
-            print('[%s] ports: =%s' % (tst(), ufile))
-            continue
-        # a bug! something is wrong with this portalocker:
-        # [[2016-08-01 04:59:57.126145] 30508:] ports: +/tmp/pytest-sockets/20012
-        # [[2016-08-01 04:59:57.126164] 30511:] ports: +/tmp/pytest-sockets/20012
-        print('[%s] ports: +%s' % (tst(), ufile))
-        break
-
-    # file will be removed at process exit
+    # port will be removed at process exit
     mypid = os.getpid()
-    def try_remove_file():
+    def try_remove_port():
         # in a fork() situation, only the last process should
-        # remove the file, otherwise the other processes run the
+        # remove the port, otherwise the other processes run the
         # risk of seeing their temporary file disappear.  For now
-        # we remove the file in the parent only (i.e. we assume
+        # we remove the port in the parent only (i.e. we assume
         # that the children finish before the parent).
         if os.getpid() != mypid:
             return
         try:
-            ufile.remove()
-        except py.error.Error:
+            free_port(lockfile, port)
+        except:
             pass
-    atexit.register(try_remove_file)
+    atexit.register(try_remove_port)
 
-    # prune old files
-    for path in rootdir.listdir():
-        num = parse_num(path)
-        if num is not None:
-            try:
-                t1 = path.lstat().mtime
-                t2 = ufile.lstat().mtime
-                if abs(t2-t1) < lock_timeout:
-                    continue   # skip files not timed out
-            except py.error.Error:
-                pass
-            try:
-                path.remove()
-            except KeyboardInterrupt:
-                raise
-            except: # this might be py.error.Error, WindowsError ...
-                pass
+    return port
 
-    return ufile
+def free_id(lockfile, port):
+    with fasteners.InterProcessLock(lockfile) as f:
+        db = read_db(f.lockfile.name)
+        db = remove_db(db, port)
+        save_db(db, f.lockfile)
+
+def read_db(name):
+    x = subprocess.check_output(['cat', name])
+    db = [y.split() for y in x.splitlines()]
+    return db
+
+def prune_db(db, timeout):
+    def is_not_timed_out(record):
+        t1 = float(record[1])
+        t2 = time.time()
+        return abs(t2 - t1) < timeout
+    return filter(is_not_timed_out, db)
+
+def reserve_db(db, first):
+    used = set(int(p[0]) for p in db)
+    port = first
+    while port in used:
+        port += 1
+    db.append([port, time.time()])
+    return port
+
+def save_db(db, f):
+    def to_line(record):
+        return ' '.join((str(x) for x in record))
+    def to_content(db):
+        return ''.join(to_line(rec) + '\n' for rec in db)
+    f.truncate(0)
+    f.write(to_content(db))
+
+def remove_db(db, port):
+    def is_not_port(record):
+        return int(record[0]) != port
+    return filter(is_not_port, db)

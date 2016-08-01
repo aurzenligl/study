@@ -11,10 +11,10 @@ def test_port(capsys, user_log_path, socket_count):
         return ' '.join((str(num) for num in nums))
 
     user = os.path.join(os.path.dirname(__file__), 'user.py')
-    ports = [reserve_port() for _ in range(socket_count)]
+    ports = [reserve_port('/tmp/pytest-sockets', 20000) for _ in range(socket_count)]
     out = subprocess.check_output('%s %s' % (user, to_str(ports)), shell=True)
     print out.rstrip()
-    [free_port(port) for port in ports]
+    [free_port('/tmp/pytest-sockets', port) for port in ports]
     with io.open(user_log_path, 'ab') as f:
         f.write(capsys.readouterr()[0])
     if 'error:' in out:
