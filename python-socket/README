@@ -1,5 +1,5 @@
-install portalocker library
-$ sudo pip install portalocker
+install fasteners library
+$ sudo pip install fasteners
 
 reproduce socket-already-used error with
 $ py.test -n20 --count=100 --sockets=10
