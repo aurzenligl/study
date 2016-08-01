@@ -53,7 +53,7 @@ def free_port(port):
 def make_numbered_file(rootdir, first=0,
                        lock_timeout = 172800):   # two days
     lockfile = py.path.local(rootdir).join('lock')
-    with portalocker.Lock(str(lockfile), fail_when_locked=False):
+    with portalocker.Lock(str(lockfile), timeout=30, fail_when_locked=False):
         return _make_numbered_file(rootdir, first, lock_timeout)
 
 def _make_numbered_file(rootdir, first=0,
