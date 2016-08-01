@@ -2,9 +2,10 @@ import py
 import os
 import atexit
 import socket
-import portalocker
+import fasteners
 
 # make PortAllocator or IdAllocator out of it 
+# change directory plus files into single file database
 
 def tst():
     import os
@@ -53,7 +54,7 @@ def free_port(port):
 def make_numbered_file(rootdir, first=0,
                        lock_timeout = 172800):   # two days
     lockfile = py.path.local(rootdir).join('lock')
-    with portalocker.Lock(str(lockfile), timeout=30, fail_when_locked=False):
+    with fasteners.InterProcessLock(str(lockfile)) as f:
         return _make_numbered_file(rootdir, first, lock_timeout)
 
 def _make_numbered_file(rootdir, first=0,
@@ -88,9 +89,8 @@ def _make_numbered_file(rootdir, first=0,
         # make the new file
         try:
             ufile = rootdir.join(str(next_num))
-            with portalocker.Lock(str(ufile)):
-                pass
-        except portalocker.AlreadyLocked:
+            ufile.write('')
+        except py.error.EEXIST:
             # race condition: another thread/process created the file
             # in the meantime.  Try counting again
             print('[%s] ports: =%s' % (tst(), ufile))
