@@ -3,6 +3,7 @@
 import os
 import io
 import subprocess
+import pytest
 from ports import reserve_port, free_port
 
 def test_port(capsys, user_log_path, socket_count):
@@ -11,10 +12,13 @@ def test_port(capsys, user_log_path, socket_count):
 
     user = os.path.join(os.path.dirname(__file__), 'user.py')
     ports = [reserve_port() for _ in range(socket_count)]
-    print subprocess.check_output('%s %s' % (user, to_str(ports)), shell=True)
+    out = subprocess.check_output('%s %s' % (user, to_str(ports)), shell=True)
+    print out.rstrip()
     [free_port(port) for port in ports]
     with io.open(user_log_path, 'ab') as f:
         f.write(capsys.readouterr()[0])
+    if 'error:' in out:
+        pytest.fail('Already in use')
 
 if __name__ == '__main__':
     print reserve_port()

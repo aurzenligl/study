@@ -1,3 +1,6 @@
+install portalocker library
+$ sudo pip install portalocker
+
 reproduce socket-already-used error with
 $ py.test -n20 --count=100 --sockets=10
 $ py.test -n40 --count=1000 --sockets=4
