@@ -1,5 +1,5 @@
 reproduce socket-already-used error with
-$ py.test -n20 --count 100
+$ py.test -n20 --count=100 --sockets=10
+$ py.test -n40 --count=1000 --sockets=4
 
-pytest will print to stdout
-log is also accessible in user_log
+log is accessible in user_log

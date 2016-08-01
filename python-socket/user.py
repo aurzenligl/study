@@ -13,6 +13,7 @@ def do(port):
         return s
     except socket.error as e:
         print('error: on port %s, %s' % (port, e))
+        raise e
 
 ports = [int(x) for x in sys.argv[1:]]
 sockets = [do(port) for port in ports]

@@ -1,20 +1,20 @@
+#!/usr/bin/env python
+
 import os
-import socket
 import io
 import subprocess
+from ports import reserve_port, free_port
 
-def get_free_port():
-    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    s.bind(("",0))
-    s.listen(1)
-    port = s.getsockname()[1]
-    s.close()
-    return port
+def test_port(capsys, user_log_path, socket_count):
+    def to_str(nums):
+        return ' '.join((str(num) for num in nums))
 
-def test_port(capsys, user_log_path):
     user = os.path.join(os.path.dirname(__file__), 'user.py')
-    port = get_free_port()
-    portstring = ' '.join([str(get_free_port()) for _ in range(100)])
-    x = subprocess.check_output('%s %s' % (user, portstring), shell=True)
+    ports = [reserve_port() for _ in range(socket_count)]
+    print subprocess.check_output('%s %s' % (user, to_str(ports)), shell=True)
+    [free_port(port) for port in ports]
     with io.open(user_log_path, 'ab') as f:
-        f.write(x)
+        f.write(capsys.readouterr()[0])
+
+if __name__ == '__main__':
+    print reserve_port()
