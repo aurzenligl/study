@@ -39,30 +39,31 @@ def reserve_id(lockfile, first, lock_timeout=172800):  # two days
     with fasteners.InterProcessLock(lockfile) as f:
         db = read_db(f.lockfile.name)
         db = prune_db(db, lock_timeout)
-        port = reserve_db(db, first)
+        id = reserve_db(db, first)
         save_db(db, f.lockfile)
 
-    # port will be removed at process exit
+    # id will be removed at process exit
     mypid = os.getpid()
-    def try_remove_port():
+    def try_remove_id():
         # in a fork() situation, only the last process should
-        # remove the port, otherwise the other processes run the
+        # remove the id, otherwise the other processes run the
         # risk of seeing their temporary file disappear.  For now
-        # we remove the port in the parent only (i.e. we assume
+        # we remove the id in the parent only (i.e. we assume
         # that the children finish before the parent).
         if os.getpid() != mypid:
             return
         try:
-            free_port(lockfile, port)
+            if str(id) in open(lockfile).read():
+                free_id(lockfile, id)
         except:
             pass
-    atexit.register(try_remove_port)
+    atexit.register(try_remove_id)
 
-    return port
+    return id
 
 def free_id(lockfile, port):
     with fasteners.InterProcessLock(lockfile) as f:
-        db = read_db(f.lockfile.name)
+        db = read_db(lockfile)
         db = remove_db(db, port)
         save_db(db, f.lockfile)
 
