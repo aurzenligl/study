@@ -1,6 +1,7 @@
 import os
 import sys
 import pytest
+import persistent
 
 def pytest_addoption(parser):
     parser.addoption ('--count', default=1, type='int', metavar='count',
@@ -21,6 +22,10 @@ def user_log_path():
 @pytest.fixture
 def socket_count(pytestconfig):
     return pytestconfig.option.sockets
+
+@pytest.fixture(scope='session')
+def portalloc():
+    return persistent.PortAllocator('/tmp/pytest-sockets', 20000)
 
 def pytest_configure(config):
     os.system('rm -f user_log')
