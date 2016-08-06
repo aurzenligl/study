@@ -1,0 +1,39 @@
+start -> starts program and stops at beginning of main
+
+tui
+--------------------
+
+Ctrl+x+a -> real curses tui: current view of source code
+Ctrl+l -> refresh tui
+Ctrl+x+2 -> multiple windows
+:tui reg float -> show float registers
+Ctrl+p/Ctrl+n -> show previous and next command
+
+python
+--------------------
+python print('hello'.center(12))
+
+(gdb) python
+>import os
+>print('my pid is %s' % os.getpid())
+>end
+my pid is 3921
+
+(gdb) python
+>import sys
+>print(sys.version)
+>end
+3.4.3 (default, Oct 14 2015, 20:31:36) 
+[GCC 4.8.4]
+
+(gdb) b main
+Breakpoint 2 at 0x40058e: file hello.c, line 5.
+(gdb) b 9
+Breakpoint 3 at 0x4005b7: file hello.c, line 9.
+(gdb) python print (gdb.breakpoints())
+(<gdb.Breakpoint object at 0x7f56d0f61350>, <gdb.Breakpoint object at 0x7f56d0f61468>)
+(gdb) python print (gdb.breakpoints()[0].location)
+main
+
+(gdb) python gdb.Breakpoint('7')
+Breakpoint 4 at 0x40059f: file hello.c, line 7.
