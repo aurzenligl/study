@@ -37,3 +37,40 @@ main
 
 (gdb) python gdb.Breakpoint('7')
 Breakpoint 4 at 0x40059f: file hello.c, line 7.
+
+post mortem
+---------------------
+
+gcc -g bubble_sort.c
+ulimit -c unlimited
+while ./a.out ; do echo OK; done
+
+gdb -c core
+# doesn't provide any good information
+
+gdb a.out
+b main
+b _exit.c:32
+command 3
+> run
+> end
+command 2
+> record
+> continue
+> end
+set pagination off
+run
+
+# this is where the magic happens and we have program recorded
+
+p $pc
+reverse-stepi
+bt
+disas
+print $sp
+print *(long**) 0x7fffffffdf78
+watch *(long**) 0x7fffffffdf78
+reverse-continue
+p i
+
+# it seems program corrupted stack by writing to 36-th array element
