@@ -8,18 +8,18 @@ def fill_by_dict(obj, data):
         et = obj.DESCRIPTOR.fields_by_name[key].enum_type
         return et and et.values_by_name[val].number or val
 
-    def append(obj, key, val):
-        if isinstance(val, collections.Mapping):
-            fill_by_dict(obj.d.add(), val)
-        else:
-            getattr(obj, key).append(deenumize(obj, key, val))
+    def fill_by_list(obj, key, val_list):
+        for val in val_list:
+            if isinstance(val, collections.Mapping):
+                fill_by_dict(obj.d.add(), val)
+            else:
+                getattr(obj, key).append(deenumize(obj, key, val))
 
     for key, val in data.items():
         if isinstance(val, collections.Mapping):
             fill_by_dict(getattr(obj, key), val)
         elif isinstance(val, collections.Iterable) and not isinstance(val, basestring):
-            for v in val:
-                append(obj, key, v)
+            fill_by_list(obj, key, val)
         else:
             setattr(obj, key, deenumize(obj, key, val))
     return obj
