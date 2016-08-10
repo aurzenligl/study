@@ -11,7 +11,7 @@ def fill_by_dict(obj, data):
     def fill_by_list(obj, key, val_list):
         for val in val_list:
             if isinstance(val, collections.Mapping):
-                fill_by_dict(obj.d.add(), val)
+                fill_by_dict(getattr(obj, key).add(), val)
             else:
                 getattr(obj, key).append(deenumize(obj, key, val))
 
