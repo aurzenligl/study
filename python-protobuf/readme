@@ -1,0 +1,4 @@
+compile python proto codec:
+    $ protoc --python_out . alu.proto
+run test
+    $ ./test.py

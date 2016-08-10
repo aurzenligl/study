@@ -1,0 +1,29 @@
+enum Oenum
+{
+    Oenum1 = 10;
+    Oenum2 = 20;
+};
+
+message ALU
+{
+    message X
+    {
+        repeated int32 x = 1;
+        repeated string y = 2;
+    };
+    message V
+    {
+        optional int32 v = 1;
+    };
+    enum Fenum
+    {
+        Fenum1 = 1;
+        Fenum2 = 2;
+    };
+    required int32 a = 1;
+    required string b = 2;
+    required X c = 3;
+    repeated V d = 4;
+    required Fenum e = 5;
+    repeated Oenum f = 6;
+};
