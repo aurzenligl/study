@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+import json
 import collections
 from alu_pb2 import ALU
 
@@ -32,10 +33,14 @@ class Mo(object):
     def from_dict(data):
         return fill_by_dict(ALU(), data)
 
+    @staticmethod
+    def from_json(data):
+        return Mo.from_dict(json.loads(data))
+
     def __str__(self):
         return str(self.obj)
 
-mo = Mo.from_dict({
+modict = {
     'a': 1,
     'b': 'the_value',
     'c': {
@@ -48,7 +53,26 @@ mo = Mo.from_dict({
     ],
     'e': 'Fenum2',
     'f': ['Oenum1', 'Oenum2']
-})
+}
 
-print(mo)
+mojson = '''{
+    "a": 1,
+    "b": "the_value",
+    "c": {
+        "x": [1, 2, 3],
+        "y": ["1", "22", "333"]
+    },
+    "d": [
+        { },
+        {"v": 2}
+    ],
+    "e": "Fenum2",
+    "f": ["Oenum1", "Oenum2"]
+}'''
+
+mo1 = Mo.from_dict(modict)
+print(mo1)
+
+mo2 = Mo.from_json(mojson)
+print(mo2)
 
