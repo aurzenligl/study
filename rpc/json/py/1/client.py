@@ -6,8 +6,10 @@ import jsonrpclib
 def main():
     server = jsonrpclib.Server('http://localhost:8080')
 
-    for _ in range(3):
+    for _ in range(1):
         print server.add(123, 456)
+
+    print server.div(100, 9)
 
     print jsonrpclib.history.request
     print jsonrpclib.history.response
