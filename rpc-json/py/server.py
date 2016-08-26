@@ -5,9 +5,6 @@ from bunch import Bunch
 from mock import Mock
 from pprint import pformat
 
-def resolve_attribute(obj, attr):
-    return getattr(obj, i)
-
 class Mocker(object):
     def __init__(self):
         self.mocks = Bunch()
