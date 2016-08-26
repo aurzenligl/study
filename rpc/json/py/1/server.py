@@ -11,15 +11,20 @@ def resolve_attribute(obj, attr):
 class Mocker(object):
     def __init__(self):
         self.mocks = Bunch()
+        self._funcs = {}
         self._instances = []
 
     def register_function(self, function):
-        mock_ = self._get_mock(function.__name__)
-        mock_.configure_mock(_mock_wraps=function)
+        self._funcs[function.__name__] = function
+        mock_ = self.mocks.get(function.__name__, None)
+        if mock_ is not None:
+            mock_.configure_mock(_mock_wraps=function)
 
     def unregister_function(self, function):
-        mock_ = self._get_mock(function.__name__)
-        mock_.configure_mock(_mock_wraps=self._noop_func)
+        del self._funcs[function.__name__]
+        mock_ = self.mocks.get(function.__name__, None)
+        if mock_ is not None:
+            mock_.configure_mock(_mock_wraps=self._noop_func)
 
     def register_instance(self, instance):
         self._instances.append(instance)
@@ -48,8 +53,9 @@ class Mocker(object):
         try:
             return self.mocks[name]
         except KeyError:
+            func = self._funcs.get(name, None)
             obj = self._resolve_instance_attribute(name)
-            self.mocks[name] = val = Mock(wraps=(obj or self._noop_func))
+            self.mocks[name] = val = Mock(wraps=(func or obj or self._noop_func))
             return val
 
     def _dispatch(self, method, params):
