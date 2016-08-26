@@ -6,10 +6,12 @@ import jsonrpclib
 def main():
     server = jsonrpclib.Server('http://localhost:8080')
 
-    for _ in range(1):
-        print server.add(123, 456)
+#     server.givememoney()
 
-    print server.div(100, 9)
+    print server.add(a=30, b=6)
+    print server.sub(30, 6)
+    print server.mul(a=30, b=6)
+    print server.div(30, 6)
 
     print jsonrpclib.history.request
     print jsonrpclib.history.response
@@ -19,6 +21,9 @@ def main():
     batch.ping({'key':'value'})
     results = batch()
     print([x for x in results])
+
+    print server.printme()
+    print server.printme(verbose=True)
 
 if __name__ == '__main__':
     main()

@@ -1,66 +1,95 @@
 #!/usr/bin/env python
 
 from jsonrpclib.SimpleJSONRPCServer import SimpleJSONRPCServer
+from bunch import Bunch
+from mock import Mock
+from pprint import pformat
 
-server = SimpleJSONRPCServer(('localhost', 8080), logRequests=False)
-server.register_function(pow)
-server.register_function(lambda x,y: x+y, 'add')
-server.register_function(lambda x: x, 'ping')
-
-# use mocks
-# use bunch
-
-# mocker.register_function(func)
-# mocker.unregister_function(func)
-# mocker.register_instance(inst)
-# mocker.unregister_instance(inst)
-# with mocker.with_function(func): pass
-# with mocker.with_instance(inst): pass
-
-# mocker.mocks is a bunch of mocks, lazily added during calls
-# register func/instance add/remove wrapper functions for calls
-
-# mocker.mocks.vtc__do_it
-# mocker.mocks
-# mocker.with_func(vtc__foobar)
-
-# mocker.mocks.vtc
-# '_mock_wraps': <function add at 0x7ffb5f326668>,
+def resolve_attribute(obj, attr):
+    return getattr(obj, i)
 
 class Mocker(object):
-    def register_function(self, function, name = None):
-        pass
-    def unregister_function(self, function, name = None):
-        pass
-    def _precall(self, method, params):
-        # call mock here
-        print('pre method: %s was called with params: %s' % (method, params))
-    def _unknowncall(self, method, params):
-        # return None here
-        print('unknown method: %s was called with params: %s' % (method, params))
-    def _dispatch(self, method, params):
+    def __init__(self):
+        self.mocks = Bunch()
+        self._instances = []
 
-        func = None
+    def register_function(self, function):
+        mock_ = self._get_mock(function.__name__)
+        mock_.configure_mock(_mock_wraps=function)
+
+    def unregister_function(self, function):
+        mock_ = self._get_mock(function.__name__)
+        mock_.configure_mock(_mock_wraps=self._noop_func)
+
+    def register_instance(self, instance):
+        self._instances.append(instance)
+        for name, mock_ in self.mocks.items():
+            obj = getattr(instance, name, None)
+            if obj is not None:
+                mock_.configure_mock(_mock_wraps=obj)
+
+    def unregister_instance(self, instance):
+        self._instances.remove(instance)
+        for name, mock_ in self.mocks.items():
+            obj = getattr(instance, name, None)
+            if obj is not None:
+                mock_.configure_mock(_mock_wraps=self._noop_func)
+
+    def _noop_func(self, *args, **kwargs):
+        pass
+
+    def _resolve_instance_attribute(self, attr):
+        for inst in reversed(self._instances):
+            obj = getattr(inst, attr, None)
+            if obj is not None:
+                return obj
+
+    def _get_mock(self, name):
         try:
-            func = self.funcs[method]
+            return self.mocks[name]
         except KeyError:
-            for instance in self.instances:
-                try:
-                    func = resolve_dotted_attribute(
-                        self.instance,
-                        method,
-                        self.allow_dotted_names
-                        )
-                    break
-                except AttributeError:
-                    pass
+            obj = self._resolve_instance_attribute(name)
+            self.mocks[name] = val = Mock(wraps=(obj or self._noop_func))
+            return val
 
-        if func is not None:
-            return func(*params)
+    def _dispatch(self, method, params):
+        mock_ = self._get_mock(method)
+        if isinstance(params, dict):
+            return mock_(**params)
         else:
-            raise Exception('method "%s" is not supported' % method)
+            return mock_(*params)
 
-server.register_instance(Mocker())
+mocker = Mocker()
 
+class ArithA(object):
+    def add(self, a, b):
+        return a + b
+    def div(self, x, y):
+        return x / y
+
+class ArithB(object):
+    def mul(self, a, b):
+        return a * b
+    def sub(self, x, y):
+        return x - y
+
+def printme(verbose = False):
+    if verbose:
+        out = ['\n'.join((name, pformat(mock_.call_args_list))) for name, mock_ in mocker.mocks.items()]
+        return '\n'.join(out)
+    else:
+        out = [name + ' ' + str(mock_.call_count) for name, mock_ in mocker.mocks.items()]
+        return '\n'.join(out)
+
+def givememoney():
+    import pdb;pdb.set_trace()
+
+mocker.register_instance(ArithA())
+mocker.register_instance(ArithB())
+mocker.register_function(printme)
+mocker.register_function(givememoney)
+
+server = SimpleJSONRPCServer(('localhost', 8080), logRequests=False)
+server.register_instance(mocker)
 print('Server listening on %s:%s' % server.socket.getsockname())
 server.serve_forever()
