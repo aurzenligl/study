@@ -4,55 +4,51 @@ from jsonrpclib.SimpleJSONRPCServer import SimpleJSONRPCServer
 from bunch import Bunch
 from mock import Mock
 from pprint import pformat
+import types
+
+def _get_public_methods(instance):
+    ret = []
+    for name in type(instance).__dict__.keys():
+        if not name.startswith("_"):
+            obj = getattr(instance, name)
+            if isinstance(obj, types.MethodType):
+                ret.append(obj)
+    return ret
 
 class Mocker(object):
     def __init__(self):
         self.mocks = Bunch()
-        self._funcs = {}
-        self._instances = []
 
     def register_function(self, function):
-        self._funcs[function.__name__] = function
         mock_ = self.mocks.get(function.__name__, None)
-        if mock_ is not None:
-            mock_.configure_mock(_mock_wraps=function)
+        assert mock_ is None or mock_.size_effect == self._noop_func
+        self.mocks[function.__name__] = Mock(side_effect=function)
 
     def unregister_function(self, function):
-        del self._funcs[function.__name__]
         mock_ = self.mocks.get(function.__name__, None)
-        if mock_ is not None:
-            mock_.configure_mock(_mock_wraps=self._noop_func)
+        assert mock_ is not None
+        mock_.configure_mock(_mock_wraps=self._noop_func)
 
     def register_instance(self, instance):
-        self._instances.append(instance)
-        for name, mock_ in self.mocks.items():
-            obj = getattr(instance, name, None)
-            if obj is not None:
-                mock_.configure_mock(_mock_wraps=obj)
+        for method in _get_public_methods(instance):
+            name = method.im_func.func_name
+            assert (name not in self.mocks) or (self.mocks[name].side_effect == self._noop_func)
+            self.mocks[name] = Mock(side_effect=method)
 
     def unregister_instance(self, instance):
-        self._instances.remove(instance)
-        for name, mock_ in self.mocks.items():
-            obj = getattr(instance, name, None)
-            if obj is not None:
-                mock_.configure_mock(_mock_wraps=self._noop_func)
+        for method in _get_public_methods(instance):
+            name = method.im_func.func_name
+            assert method == self.mocks[name].side_effect
+            self.mocks[name].configure_mock(side_effect=self._noop_func)
 
     def _noop_func(self, *args, **kwargs):
         pass
-
-    def _resolve_instance_attribute(self, attr):
-        for inst in reversed(self._instances):
-            obj = getattr(inst, attr, None)
-            if obj is not None:
-                return obj
 
     def _get_mock(self, name):
         try:
             return self.mocks[name]
         except KeyError:
-            func = self._funcs.get(name, None)
-            obj = self._resolve_instance_attribute(name)
-            self.mocks[name] = val = Mock(wraps=(func or obj or self._noop_func))
+            self.mocks[name] = val = Mock(wraps=self._noop_func)
             return val
 
     def _dispatch(self, method, params):
@@ -65,6 +61,15 @@ class Mocker(object):
 mocker = Mocker()
 
 class ArithA(object):
+    def add(self, a, b):
+        return a + b
+    def div(self, x, y):
+        return x / y
+    def _private_method(self):
+        pass
+    _anyprivate = "dummy"
+
+class ArithA2(object):
     def add(self, a, b):
         return a + b
     def div(self, x, y):
@@ -87,8 +92,11 @@ def printme(verbose = False):
 def givememoney():
     import pdb;pdb.set_trace()
 
-mocker.register_instance(ArithA())
+inst = ArithA()
+mocker.register_instance(inst)
 mocker.register_instance(ArithB())
+mocker.unregister_instance(inst)
+mocker.register_instance(ArithA2())
 mocker.register_function(printme)
 mocker.register_function(givememoney)
 

@@ -16,6 +16,9 @@ def main():
         print jsonrpclib.history.request
         print jsonrpclib.history.response
 
+    if 1:
+        server.trythisone()
+
     if 0:
         batch = jsonrpclib.MultiCall(server)
         batch.add(5, 6)
