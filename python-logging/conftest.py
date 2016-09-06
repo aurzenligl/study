@@ -11,6 +11,7 @@ from reportlab.rl_settings import odbc_driver
 2. add cmdline choice of stdout handlers (default: setup and xystat)
 3. catch output from subprocess and put via logging to stdout or file
 4. fix ~800ms offset of timestamps in test session shorter than 0.1 seconds
+5. refactor into a pytest plugin, configured from conftest.py
 '''
 
 def pytest_addoption(parser):
