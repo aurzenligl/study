@@ -18,15 +18,15 @@ def pytest_addoption(parser):
     parser.addoption ('--error', action='store_true',
                       help='Cause failure during test run')
 
-def pytest_generate_tests (metafunc):
+def pytest_generate_tests(metafunc):
     count = metafunc.config.option.count
     if count is not None:
         for i in range(count):
             metafunc.addcall()
 
-class MyHandler(logging.StreamHandler):
+class MyStdoutHandler(logging.StreamHandler):
     def __init__(self, *args, **kwargs):
-        super(MyHandler, self).__init__(*args, **kwargs)
+        logging.StreamHandler.__init__(self, *args, **kwargs)
         self._guard = False
     def write_initial_newline(self):
         self._guard = True
@@ -35,8 +35,11 @@ class MyHandler(logging.StreamHandler):
             self._guard = False
             if self.stream.name == '<stdout>':
                 self.stream.write('\n')
-        super(MyHandler, self).emit(record)
+        logging.StreamHandler.emit(self, record)
 
+class MyFileHandler(logging.FileHandler):
+    def __init__(self, filename, **kwargs):
+        logging.FileHandler.__init__(self, filename, **kwargs)
 class MyFormatter(logging.Formatter):
     def __init__(self, *args, **kwargs):
         super(MyFormatter, self).__init__(*args, **kwargs)
@@ -48,30 +51,55 @@ class MyFormatter(logging.Formatter):
         t = "%s.%03d" % (st, record.msecs)
         return t
 
-loggers = ['data', 'setup', 'im']
+def ensure_dir(path):
+    try:
+        os.makedirs(path)
+    except OSError as e:
+        import errno
+        if e.errno != errno.EEXIST:
+            raise
 
-def setup_loggers():
+loggers = [logging.getLogger(name) for name in ('data', 'setup', 'im')]
+
+def sanitize(filename):
+    import string
+    tbl = string.maketrans('[]:', '___')
+    return filename.translate(tbl)
+
+def make_file_handler(logfile, fmt):
+    ensure_dir(os.path.dirname(logfile))
+    hfile = MyFileHandler(filename=logfile, mode='w', delay=True)
+    hfile.setFormatter(fmt)
+    return hfile
+
+def setup_loggers(item):
     FORMAT = '%(asctime)s %(name)s: %(message)s'
     fmt = MyFormatter(fmt=FORMAT)
-    hdlr = MyHandler(stream=sys.stdout)
-    hdlr.setFormatter(fmt)
 
-    for name in loggers:
-        lgr = logging.getLogger(name)
+    hstdout = MyStdoutHandler(stream=sys.stdout)
+    hstdout.setFormatter(fmt)
+
+    handlers = []
+    for lgr in loggers:
+        hfilename = os.path.join('logs', sanitize(item.nodeid), lgr.name)
+        hfile = make_file_handler(hfilename, fmt)
+        handlers.append((lgr, hfile))
+        handlers.append((lgr, hstdout))
+
+    for lgr, hdlr in handlers:
         lgr.addHandler(hdlr)
 
     def finalize():
-        for name in loggers:
-            lgr = logging.getLogger(name)
+        for lgr, hdlr in handlers:
             lgr.removeHandler(hdlr)
 
-    return hdlr, finalize
+    return hstdout, finalize
 
 setuplgr = logging.getLogger('setup')
 setuplgr.addHandler(logging.NullHandler())
 
 def pytest_runtest_setup(item):
-    item.logguard, item.logfinalizer = setup_loggers()
+    item.logguard, item.logfinalizer = setup_loggers(item)
     item.logguard.write_initial_newline()
 
 def pytest_runtest_makereport(item, call):
