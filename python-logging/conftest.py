@@ -3,8 +3,6 @@ import sys
 import pytest
 import logging
 import time
-from distutils.log import INFO
-from reportlab.rl_settings import odbc_driver
 
 '''
 1. add file handlers, which log to logs directory, one file per logger
