@@ -1,6 +1,7 @@
-import os
+#!/usr/bin/env python
+
 import sys
-import pytest
+import os
 import pkg_resources
 
 def require_one(one):
@@ -8,7 +9,7 @@ def require_one(one):
         pkg_resources.require(one)
     except pkg_resources.DistributionNotFound as e:
         return 'package not found: %s' % e
-    except (pkg_resources.DistributionNotFound, pkg_resources.VersionConflict) as e:
+    except pkg_resources.VersionConflict as e:
         return 'package version conflict: found: %s, expected: %s' % (str(e[0]), str(e[1]))
 
 def format_message(errors):
