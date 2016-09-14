@@ -5,11 +5,14 @@ import logging
 import time
 
 '''
+cleanup todo list (email todo, written todo, file todo)
+
 1. add file handlers, which log to logs directory, one file per logger
 2. add cmdline choice of stdout handlers (default: setup and xystat)
 3. catch output from subprocess and put via logging to stdout or file
 4. fix ~800ms offset of timestamps in test session shorter than 0.1 seconds
 5. refactor into a pytest plugin, configured from conftest.py
+6. solve "logs" access race condition (simultaneous tests)
 '''
 
 def pytest_addoption(parser):
