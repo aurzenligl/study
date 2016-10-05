@@ -7,25 +7,18 @@ import time
 '''
 cleanup todo list (email todo, written todo, file todo)
 
-1. add file handlers, which log to logs directory, one file per logger
+1. extract generic logging code to plugin
+    - how to configure pytest plugin from conftest?
+    - plugin should be enabled automatically
+    - adds cmdline options
+    - adds fixtures
+    - does exactly nothing by default
 2. add cmdline choice of stdout handlers (default: setup and xystat)
 3. catch output from subprocess and put via logging to stdout or file
 4. fix ~800ms offset of timestamps in test session shorter than 0.1 seconds
 5. refactor into a pytest plugin, configured from conftest.py
 6. solve "logs" access race condition (simultaneous tests)
 '''
-
-def pytest_addoption(parser):
-    parser.addoption ('--count', default=1, type='int', metavar='count',
-                      help='Run each test the specified number of times')
-    parser.addoption ('--error', action='store_true',
-                      help='Cause failure during test run')
-
-def pytest_generate_tests(metafunc):
-    count = metafunc.config.option.count
-    if count is not None:
-        for i in range(count):
-            metafunc.addcall()
 
 class MyStdoutHandler(logging.StreamHandler):
     def __init__(self, *args, **kwargs):
@@ -56,7 +49,15 @@ class MyFormatter(logging.Formatter):
         t = "%s.%03d" % (st, record.msecs)
         return t
 
-loggers = [logging.getLogger(name) for name in ('data', 'setup', 'im')]
+def refresh_link(source, link_name):
+    try:
+        os.unlink(link_name)
+    except OSError:
+        pass
+    try:
+        os.symlink(source, link_name)
+    except (OSError, AttributeError, NotImplementedError):
+        pass
 
 def setup_loggers(item, logdir):
     def make_stdout_handler(fmt):
@@ -94,8 +95,17 @@ def pytest_runtest_makereport(item, call):
     if call.when == 'call':
         item.logguard.write_initial_newline()
 
+@pytest.fixture(scope='session')
+def _logsdir(tmpdir_factory):
+    logsdir = tmpdir_factory.getbasetemp()
+    if logsdir.basename.startswith('popen-gw'):
+        logsdir = logsdir.join('..')
+    logsdir = logsdir.join('logs').ensure(dir=1)
+    refresh_link(str(logsdir), os.path.join(linkdir, 'logs'))
+    return logsdir
+
 @pytest.fixture
-def logdir(tmpdir_factory, request):
+def logdir(_logsdir, request):
     '''
     Ridiculous popen-gw to work seamlessly in xdist can/should depend on something other than directory name.
     '''
@@ -105,10 +115,7 @@ def logdir(tmpdir_factory, request):
         tbl = string.maketrans('[]:', '___')
         return filename.translate(tbl)
 
-    nodeid = 'logs' + '/' + sanitize(request.node.nodeid)
-    if tmpdir_factory.getbasetemp().basename.startswith('popen-gw'):
-        nodeid = '../' + nodeid
-    return tmpdir_factory.getbasetemp().join(nodeid).ensure(dir=1)
+    return _logsdir.join(sanitize(request.node.nodeid)).ensure(dir=1)
 
 @pytest.yield_fixture(autouse=True)
 def _loggers(logdir, request):
@@ -118,6 +125,21 @@ def _loggers(logdir, request):
     item.logguard.write_initial_newline()
     yield
     logfinalizer()
+
+def pytest_addoption(parser):
+    parser.addoption ('--count', default=1, type='int', metavar='count',
+                      help='Run each test the specified number of times')
+    parser.addoption ('--error', action='store_true',
+                      help='Cause failure during test run')
+
+def pytest_generate_tests(metafunc):
+    count = metafunc.config.option.count
+    if count is not None:
+        for i in range(count):
+            metafunc.addcall()
+
+linkdir = os.path.dirname(__file__)
+loggers = [logging.getLogger(name) for name in ('data', 'setup', 'im')]
 
 setuplgr = logging.getLogger('setup')
 setuplgr.addHandler(logging.NullHandler())
