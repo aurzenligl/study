@@ -43,49 +43,41 @@ class MyStdoutHandler(logging.StreamHandler):
 class MyFileHandler(logging.FileHandler):
     def __init__(self, filename, **kwargs):
         logging.FileHandler.__init__(self, filename, **kwargs)
+
 class MyFormatter(logging.Formatter):
     def __init__(self, *args, **kwargs):
         super(MyFormatter, self).__init__(*args, **kwargs)
         self._start = time.time()
     def formatTime(self, record, datefmt=None):
+        # TODO: correct subtracting milliseconds
         ct = record.created - self._start
         gt = time.gmtime(ct)
         st = time.strftime("%M:%S", gt)
         t = "%s.%03d" % (st, record.msecs)
         return t
 
-def ensure_dir(path):
-    try:
-        os.makedirs(path)
-    except OSError as e:
-        import errno
-        if e.errno != errno.EEXIST:
-            raise
-
 loggers = [logging.getLogger(name) for name in ('data', 'setup', 'im')]
 
-def sanitize(filename):
-    import string
-    tbl = string.maketrans('[]:', '___')
-    return filename.translate(tbl)
+def setup_loggers(item, logdir):
+    def make_stdout_handler(fmt):
+        hndl = MyStdoutHandler(stream=sys.stdout)
+        hndl.setFormatter(fmt)
+        return hndl
 
-def make_file_handler(logfile, fmt):
-    ensure_dir(os.path.dirname(logfile))
-    hfile = MyFileHandler(filename=logfile, mode='w', delay=True)
-    hfile.setFormatter(fmt)
-    return hfile
+    def make_file_handler(logfile, fmt):
+        hndl = MyFileHandler(filename=logfile, mode='w', delay=True)
+        hndl.setFormatter(fmt)
+        return hndl
 
-def setup_loggers(item):
     FORMAT = '%(asctime)s %(name)s: %(message)s'
     fmt = MyFormatter(fmt=FORMAT)
 
-    hstdout = MyStdoutHandler(stream=sys.stdout)
-    hstdout.setFormatter(fmt)
+    hstdout = make_stdout_handler(fmt)
 
     handlers = []
     for lgr in loggers:
-        hfilename = os.path.join('logs', sanitize(item.nodeid), lgr.name)
-        hfile = make_file_handler(hfilename, fmt)
+        hfilename = logdir.join(lgr.name)
+        hfile = make_file_handler(str(hfilename), fmt)
         handlers.append((lgr, hfile))
         handlers.append((lgr, hstdout))
 
@@ -98,18 +90,37 @@ def setup_loggers(item):
 
     return hstdout, finalize
 
-setuplgr = logging.getLogger('setup')
-setuplgr.addHandler(logging.NullHandler())
-
-def pytest_runtest_setup(item):
-    item.logguard, item.logfinalizer = setup_loggers(item)
-    item.logguard.write_initial_newline()
-
 def pytest_runtest_makereport(item, call):
     if call.when == 'call':
         item.logguard.write_initial_newline()
-    elif call.when == 'teardown':
-        item.logfinalizer()
+
+@pytest.fixture
+def logdir(tmpdir_factory, request):
+    '''
+    Ridiculous popen-gw to work seamlessly in xdist can/should depend on something other than directory name.
+    '''
+
+    def sanitize(filename):
+        import string
+        tbl = string.maketrans('[]:', '___')
+        return filename.translate(tbl)
+
+    nodeid = 'logs' + '/' + sanitize(request.node.nodeid)
+    if tmpdir_factory.getbasetemp().basename.startswith('popen-gw'):
+        nodeid = '../' + nodeid
+    return tmpdir_factory.getbasetemp().join(nodeid).ensure(dir=1)
+
+@pytest.yield_fixture(autouse=True)
+def _loggers(logdir, request):
+    # TODO: prepare Loggers class
+    item = request.node
+    item.logguard, logfinalizer = setup_loggers(item, logdir)
+    item.logguard.write_initial_newline()
+    yield
+    logfinalizer()
+
+setuplgr = logging.getLogger('setup')
+setuplgr.addHandler(logging.NullHandler())
 
 @pytest.yield_fixture
 def the_error_fixture(request):
