@@ -13,7 +13,15 @@ cleanup todo list (email todo, written todo, file todo)
     - adds cmdline options
     - adds fixtures
     - does exactly nothing by default
+    - logdir fixture - if used - enables logger plugin operation
+    - custom pytest-logger hooks - if used - enable logger plugin operation
+        option: --logdirflat [default false]
+        option: --logdirlink [provide default in conftest.py]
+        hook: pytest_logger_fileloggers [default none, appends]
+        hook: pytest_logger_stdoutloggers [default none, appends]
+        fixture: logdir
 2. add cmdline choice of stdout handlers (default: setup and xystat)
+        option: --log [default sut, setup and stat]
 3. catch output from subprocess and put via logging to stdout or file
 4. fix ~800ms offset of timestamps in test session shorter than 0.1 seconds
 5. refactor into a pytest plugin, configured from conftest.py
@@ -91,9 +99,18 @@ def setup_loggers(item, logdir):
 
     return hstdout, finalize
 
+def pytest_runtest_setup(item):
+    # TODO: hooks calls to determine if loggers should be used in this test
+    # TODO: hooks should store return values in item._xyz object, which fixture can access
+    # TODO: separate file and stdout loggers fixtures
+    item.fixturenames.insert(0, '_loggers')
+
 def pytest_runtest_makereport(item, call):
     if call.when == 'call':
-        item.logguard.write_initial_newline()
+        try:
+            item.logguard.write_initial_newline()
+        except:
+            pass
 
 @pytest.fixture(scope='session')
 def _logsdir(tmpdir_factory):
@@ -105,7 +122,7 @@ def _logsdir(tmpdir_factory):
     return logsdir
 
 @pytest.fixture
-def logdir(_logsdir, request):
+def _logdir(_logsdir, request):
     '''
     Ridiculous popen-gw to work seamlessly in xdist can/should depend on something other than directory name.
     '''
@@ -117,14 +134,19 @@ def logdir(_logsdir, request):
 
     return _logsdir.join(sanitize(request.node.nodeid)).ensure(dir=1)
 
-@pytest.yield_fixture(autouse=True)
-def _loggers(logdir, request):
+@pytest.yield_fixture
+def _loggers(_logdir, request):
     # TODO: prepare Loggers class
-    item = request.node
-    item.logguard, logfinalizer = setup_loggers(item, logdir)
+    # TODO: split to file and stdout loggers fixtures
+    item = request._pyfuncitem
+    item.logguard, logfinalizer = setup_loggers(item, _logdir)
     item.logguard.write_initial_newline()
     yield
     logfinalizer()
+
+@pytest.fixture
+def logdir(_logdir):
+    return _logdir
 
 def pytest_addoption(parser):
     parser.addoption ('--count', default=1, type='int', metavar='count',
