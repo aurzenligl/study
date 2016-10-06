@@ -3,6 +3,7 @@ import sys
 import pytest
 import logging
 import time
+from contextlib import contextmanager
 
 '''
 cleanup todo list (email todo, written todo, file todo)
@@ -32,7 +33,7 @@ class MyStdoutHandler(logging.StreamHandler):
     def __init__(self, *args, **kwargs):
         logging.StreamHandler.__init__(self, *args, **kwargs)
         self._guard = False
-    def write_initial_newline(self):
+    def newline_before_next_log(self):
         self._guard = True
     def emit(self, record):
         if self._guard:
@@ -57,6 +58,16 @@ class MyFormatter(logging.Formatter):
         t = "%s.%03d" % (st, record.msecs)
         return t
 
+@contextmanager
+def handlers_added(loggers_and_handlers):
+    for lgr, hdlr in loggers_and_handlers:
+        lgr.addHandler(hdlr)
+    try:
+        yield
+    finally:
+        for lgr, hdlr in loggers_and_handlers:
+            lgr.removeHandler(hdlr)
+
 def refresh_link(source, link_name):
     try:
         os.unlink(link_name)
@@ -67,50 +78,30 @@ def refresh_link(source, link_name):
     except (OSError, AttributeError, NotImplementedError):
         pass
 
-def setup_loggers(item, logdir):
-    def make_stdout_handler(fmt):
-        hndl = MyStdoutHandler(stream=sys.stdout)
-        hndl.setFormatter(fmt)
-        return hndl
-
-    def make_file_handler(logfile, fmt):
-        hndl = MyFileHandler(filename=logfile, mode='w', delay=True)
-        hndl.setFormatter(fmt)
-        return hndl
-
+class LoggerCfg:
     FORMAT = '%(asctime)s %(name)s: %(message)s'
-    fmt = MyFormatter(fmt=FORMAT)
-
-    hstdout = make_stdout_handler(fmt)
-
-    handlers = []
-    for lgr in loggers:
-        hfilename = logdir.join(lgr.name)
-        hfile = make_file_handler(str(hfilename), fmt)
-        handlers.append((lgr, hfile))
-        handlers.append((lgr, hstdout))
-
-    for lgr, hdlr in handlers:
-        lgr.addHandler(hdlr)
-
-    def finalize():
-        for lgr, hdlr in handlers:
-            lgr.removeHandler(hdlr)
-
-    return hstdout, finalize
+    def __init__(self, stdoutloggers, fileloggers):
+        self.formatter = MyFormatter(fmt=self.FORMAT)
+        self.stdouthandler = None
+        self.stdoutloggers = stdoutloggers
+        self.fileloggers = fileloggers
 
 def pytest_runtest_setup(item):
     # TODO: hooks calls to determine if loggers should be used in this test
     # TODO: hooks should store return values in item._xyz object, which fixture can access
     # TODO: separate file and stdout loggers fixtures
-    item.fixturenames.insert(0, '_loggers')
+
+    loggers = [logging.getLogger(name) for name in loggernames]
+
+    item._loggercfg = LoggerCfg(loggers, loggers)
+    item.fixturenames.insert(0, '_logger_stdouthandlers')
+    item.fixturenames.insert(0, '_logger_filehandlers')
 
 def pytest_runtest_makereport(item, call):
     if call.when == 'call':
-        try:
-            item.logguard.write_initial_newline()
-        except:
-            pass
+        handler = item._loggercfg.stdouthandler
+        if handler:
+            handler.newline_before_next_log()
 
 @pytest.fixture(scope='session')
 def _logsdir(tmpdir_factory):
@@ -123,10 +114,6 @@ def _logsdir(tmpdir_factory):
 
 @pytest.fixture
 def _logdir(_logsdir, request):
-    '''
-    Ridiculous popen-gw to work seamlessly in xdist can/should depend on something other than directory name.
-    '''
-
     def sanitize(filename):
         import string
         tbl = string.maketrans('[]:', '___')
@@ -135,14 +122,36 @@ def _logdir(_logsdir, request):
     return _logsdir.join(sanitize(request.node.nodeid)).ensure(dir=1)
 
 @pytest.yield_fixture
-def _loggers(_logdir, request):
-    # TODO: prepare Loggers class
-    # TODO: split to file and stdout loggers fixtures
-    item = request._pyfuncitem
-    item.logguard, logfinalizer = setup_loggers(item, _logdir)
-    item.logguard.write_initial_newline()
-    yield
-    logfinalizer()
+def _logger_stdouthandlers(request):
+    def make_handler(fmt):
+        handler = MyStdoutHandler(stream=sys.stdout)
+        handler.setFormatter(fmt)
+        handler.newline_before_next_log()
+        return handler
+
+    cfg = request._pyfuncitem._loggercfg
+    cfg.stdouthandler = handler = make_handler(cfg.formatter)
+    loggers_and_handlers = [(lgr, handler) for lgr in cfg.stdoutloggers]
+
+    with handlers_added(loggers_and_handlers):
+        yield
+
+@pytest.yield_fixture
+def _logger_filehandlers(_logdir, request):
+    def make_handler(logdir, fmt, logger):
+        logfile = str(logdir.join(logger.name))
+        handler = MyFileHandler(filename=logfile, mode='w', delay=True)
+        handler.setFormatter(fmt)
+        return handler
+
+    cfg = request._pyfuncitem._loggercfg
+    loggers_and_handlers = [
+        (lgr, make_handler(_logdir, cfg.formatter, lgr))
+        for lgr in cfg.fileloggers
+    ]
+
+    with handlers_added(loggers_and_handlers):
+        yield
 
 @pytest.fixture
 def logdir(_logdir):
@@ -162,6 +171,7 @@ def pytest_generate_tests(metafunc):
 
 linkdir = os.path.dirname(__file__)
 loggers = [logging.getLogger(name) for name in ('data', 'setup', 'im')]
+loggernames = ['data', 'setup', 'im']
 
 setuplgr = logging.getLogger('setup')
 setuplgr.addHandler(logging.NullHandler())
