@@ -4,7 +4,6 @@ import logging
 
 '''
 3. catch output from subprocess and put via logging to stdout or file
-6. even if finalization doesn't log, put a newline
 
 cleanup todo list (email todo, written todo, file todo)
 

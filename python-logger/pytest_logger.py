@@ -37,11 +37,10 @@ class LoggerPlugin(object):
         if stdoutloggers:
             item.fixturenames.insert(0, '_stdouthandlers')
 
-    def pytest_runtest_makereport(self, item, call):
-        if call.when == 'call':
-            handler = item._logger.stdouthandler
-            if handler:
-                handler.newline_before_next_log()
+    def pytest_runtest_teardown(self, item, nextitem):
+        handler = item._logger.stdouthandler
+        if handler:
+            handler.newline_before_next_log()
 
 class LoggerState(object):
     FORMAT = '%(asctime)s %(name)s: %(message)s'
@@ -132,17 +131,9 @@ class Formatter(logging.Formatter):
         return dt.strftime("%M:%S.%f")[:-3]  # omit useconds, leave mseconds
 
 class StdoutHandler(logging.StreamHandler):
-    def __init__(self, *args, **kwargs):
-        logging.StreamHandler.__init__(self, *args, **kwargs)
-        self._guard = False
     def newline_before_next_log(self):
-        self._guard = True
-    def emit(self, record):
-        if self._guard:
-            self._guard = False
-            if self.stream.name == '<stdout>':
-                self.stream.write('\n')
-        logging.StreamHandler.emit(self, record)
+        if self.stream.name == '<stdout>':
+            self.stream.write('\n')
 
 class MyFileHandler(logging.FileHandler):
     def __init__(self, filename, **kwargs):
