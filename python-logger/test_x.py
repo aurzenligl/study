@@ -19,7 +19,7 @@ def test_foo(the_error_fixture):
 
     datalgr.warning('data 1')
 
-def test_bar(the_error_fixture):
+def test_bar(the_error_fixture, tmpdir, logdir):
     datalgr.warning('data -1')
     datalgr.warning('connection available')
     datalgr.warning('data 0')
