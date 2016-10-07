@@ -1,32 +1,38 @@
 import os
-import sys
 import pytest
 import logging
-import time
-from contextlib import contextmanager
 
 '''
-cleanup todo list (email todo, written todo, file todo)
-
 1. extract generic logging code to plugin
-    - how to configure pytest plugin from conftest?
-    - plugin should be enabled automatically
     - adds cmdline options
-    - adds fixtures
-    - does exactly nothing by default
-    - logdir fixture - if used - enables logger plugin operation
-    - custom pytest-logger hooks - if used - enable logger plugin operation
         option: --logdirflat [default false]
-        option: --logdirlink [provide default in conftest.py]
-        hook: pytest_logger_fileloggers [default none, appends]
-        hook: pytest_logger_stdoutloggers [default none, appends]
-        fixture: logdir
-2. add cmdline choice of stdout handlers (default: setup and xystat)
+2. conftest.py: adds cmdline choice of stdout handlers (default: setup and xystat)
         option: --log [default sut, setup and stat]
 3. catch output from subprocess and put via logging to stdout or file
 4. fix ~800ms offset of timestamps in test session shorter than 0.1 seconds
-5. refactor into a pytest plugin, configured from conftest.py
-6. solve "logs" access race condition (simultaneous tests)
+5. sanitize in a saner way
+
+cleanup todo list (email todo, written todo, file todo)
+
+multiple hooks
+nested conftests
+logging fixtures
+logging libraries
+log levels
+incorrect logger names
+parametrized tests
+tests as class methods
+log from subprocess
+log format override
+
+1. see other plugins
+2. see cookie cutter
+3. see plugin tests
+4. plugin repo + layout
+5. test plugin
+6. readme to explain API
+7. docstrings for functions, classes
+8. release on pypi
 '''
 
 def pytest_addoption(parser):
@@ -41,8 +47,14 @@ def pytest_generate_tests(metafunc):
         for i in range(count):
             metafunc.addcall()
 
-linkdir = os.path.dirname(__file__)
-loggernames = ['data', 'setup', 'im']
+def pytest_logger_stdoutloggers(item):
+    return ['data', 'setup', 'im']
+
+def pytest_logger_fileloggers(item):
+    return ['data', 'setup', 'im']
+
+def pytest_logger_logdirlink(config):
+    return os.path.join(os.path.dirname(__file__), 'logs')
 
 pytest_plugins = 'pytest_logger'
 

@@ -1,12 +1,9 @@
 import os
 import sys
+import time
 import pytest
 import logging
-import time
 from contextlib import contextmanager
-
-linkdir = os.path.dirname(__file__)  # remove this
-loggernames = ['data', 'setup', 'im']  # remove this
 
 def pytest_configure(config):
     config.pluginmanager.register(LoggerPlugin(config), '_logger')
@@ -16,18 +13,21 @@ def pytest_addhooks(pluginmanager):
 
 class LoggerPlugin(object):
     def __init__(self, config):
-        pass
+        self.logdirlinks = config.hook.pytest_logger_logdirlink(config=config)
 
     def pytest_runtest_setup(self, item):
-        # TODO: hooks calls to determine if loggers should be used in this test
-        # TODO: hooks should store return values in item._xyz object, which fixture can access
-        # TODO: separate file and stdout loggers fixtures
+        def to_loggers(names_list):
+            return [logging.getLogger(name) for names in names_list for name in names]
 
-        loggers = [logging.getLogger(name) for name in loggernames]
+        stdoutloggers = to_loggers(item.config.hook.pytest_logger_stdoutloggers(item=item))
+        fileloggers = to_loggers(item.config.hook.pytest_logger_fileloggers(item=item))
 
-        item._logger = LoggerState(loggers, loggers)
-        item.fixturenames.insert(0, '_filehandlers')
-        item.fixturenames.insert(0, '_stdouthandlers')
+        item._logger = LoggerState(plugin=self, stdoutloggers=stdoutloggers, fileloggers=fileloggers)
+
+        if fileloggers:
+            item.fixturenames.insert(0, '_filehandlers')
+        if stdoutloggers:
+            item.fixturenames.insert(0, '_stdouthandlers')
 
     def pytest_runtest_makereport(self, item, call):
         if call.when == 'call':
@@ -37,11 +37,12 @@ class LoggerPlugin(object):
 
 class LoggerState(object):
     FORMAT = '%(asctime)s %(name)s: %(message)s'
-    def __init__(self, stdoutloggers, fileloggers):
-        self.formatter = Formatter(fmt=self.FORMAT)
-        self.stdouthandler = None
+    def __init__(self, plugin, stdoutloggers, fileloggers):
+        self.plugin = plugin
         self.stdoutloggers = stdoutloggers
         self.fileloggers = fileloggers
+        self.formatter = Formatter(fmt=self.FORMAT)
+        self.stdouthandler = None
 
 class LoggerHookspec(object):
     def pytest_logger_stdoutloggers(self, item):
@@ -54,12 +55,16 @@ class LoggerHookspec(object):
         """ called after cmdline options parsing, returns location of link to logs dir """
 
 @pytest.fixture(scope='session')
-def _logsdir(tmpdir_factory):
+def _logsdir(tmpdir_factory, request):
     logsdir = tmpdir_factory.getbasetemp()
     if logsdir.basename.startswith('popen-gw'):
         logsdir = logsdir.join('..')
     logsdir = logsdir.join('logs').ensure(dir=1)
-    _refresh_link(str(logsdir), os.path.join(linkdir, 'logs'))
+
+    state = request._pyfuncitem._logger
+    for link in state.plugin.logdirlinks:
+        _refresh_link(str(logsdir), link)
+
     return logsdir
 
 @pytest.fixture
