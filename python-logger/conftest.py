@@ -3,9 +3,6 @@ import pytest
 import logging
 
 '''
-1. extract generic logging code to plugin
-    - adds cmdline options
-        option: --logdirflat [default false]
 2. conftest.py: adds cmdline choice of stdout handlers (default: setup and xystat)
         option: --log [default sut, setup and stat]
 3. catch output from subprocess and put via logging to stdout or file

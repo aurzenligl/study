@@ -5,6 +5,11 @@ import pytest
 import logging
 from contextlib import contextmanager
 
+def pytest_addoption(parser):
+    group = parser.getgroup("logger", "logging")
+    group.addoption('--logdirflat', default=False, action='store_true',
+                     help='puts all logs in single file.')
+
 def pytest_configure(config):
     config.pluginmanager.register(LoggerPlugin(config), '_logger')
 
@@ -14,6 +19,7 @@ def pytest_addhooks(pluginmanager):
 class LoggerPlugin(object):
     def __init__(self, config):
         self.logdirlinks = config.hook.pytest_logger_logdirlink(config=config)
+        self.logdirflat = config.getoption('logdirflat')
 
     def pytest_runtest_setup(self, item):
         def to_loggers(names_list):
@@ -93,17 +99,21 @@ def _stdouthandlers(request):
 
 @pytest.yield_fixture
 def _filehandlers(_logdir, request):
-    def make_handler(logdir, fmt, logger):
-        logfile = str(logdir.join(logger.name))
+    def make_handler(logdir, name, fmt):
+        logfile = str(logdir.join(name))
         handler = MyFileHandler(filename=logfile, mode='w', delay=True)
         handler.setFormatter(fmt)
         return handler
 
     state = request._pyfuncitem._logger
-    loggers_and_handlers = [
-        (lgr, make_handler(_logdir, state.formatter, lgr))
-        for lgr in state.fileloggers
-    ]
+    if not state.plugin.logdirflat:
+        loggers_and_handlers = [
+            (lgr, make_handler(_logdir, lgr.name, state.formatter))
+            for lgr in state.fileloggers
+        ]
+    else:
+        handler = make_handler(_logdir, 'logs', state.formatter)
+        loggers_and_handlers = [(lgr, handler) for lgr in state.fileloggers]
 
     with _handlers_added(loggers_and_handlers):
         yield
