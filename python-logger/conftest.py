@@ -1,10 +1,9 @@
 import os
 import pytest
 import logging
+from process import process
 
 '''
-3. catch output from subprocess and put via logging to stdout or file
-
 cleanup todo list (email todo, written todo, file todo)
 
 multiple hooks
@@ -29,7 +28,7 @@ log format override
 '''
 
 must_loggers = ['problem']
-configurable_loggers = ['setup', 'im', 'data']
+configurable_loggers = ['setup', 'im', 'data', 'proc', 'daemon']
 default_loggers = ['setup']
 
 def pytest_addoption(parser):
@@ -50,9 +49,12 @@ def pytest_addoption(parser):
                      type=comma_delimited_loggers,
                      help='Pick configurable loggers for stdout from: %s'
                         % ', '.join(configurable_loggers))
+    parser.addoption('--logall', action='store_true',
+                     help='Pick all loggers for stdout')
 
 def pytest_logger_stdoutloggers(item):
-    return must_loggers + item.config.option.log
+    option = item.config.option
+    return must_loggers + (option.logall and configurable_loggers or option.log)
 
 def pytest_logger_fileloggers(item):
     return must_loggers + configurable_loggers
@@ -71,8 +73,16 @@ pytest_plugins = 'pytest_logger'
 setuplgr = logging.getLogger('setup')
 setuplgr.addHandler(logging.NullHandler())
 
+daemonlgr = logging.getLogger('daemon')
+daemonlgr.addHandler(logging.NullHandler())
+
 @pytest.yield_fixture
 def the_error_fixture(request):
     setuplgr.warning('before...')
     yield request.config.getoption('error')
     setuplgr.warning('...after')
+
+@pytest.yield_fixture(scope='session')
+def daemon(request):
+    with process('./printdaemon', stdoutlgr=daemonlgr):
+        yield
