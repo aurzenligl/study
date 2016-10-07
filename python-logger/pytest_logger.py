@@ -1,5 +1,6 @@
 import os
 import sys
+import re
 import pytest
 import logging
 import time
@@ -77,9 +78,9 @@ def _logsdir(tmpdir_factory, request):
 @pytest.fixture
 def _logdir(_logsdir, request):
     def sanitize(filename):
-        import string
-        tbl = string.maketrans('[]:', '___')
-        return filename.translate(tbl)
+        filename = filename.replace('::', '-')
+        filename = re.sub(r'\[(\d+)\]', r'-\1', filename)
+        return filename
 
     return _logsdir.join(sanitize(request.node.nodeid)).ensure(dir=1)
 
