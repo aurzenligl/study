@@ -4,7 +4,6 @@ import logging
 
 '''
 3. catch output from subprocess and put via logging to stdout or file
-4. fix ~800ms offset of timestamps in test session shorter than 0.1 seconds
 5. sanitize in a saner way
 6. even if finalization doesn't log, put a newline
 

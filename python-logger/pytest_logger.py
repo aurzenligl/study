@@ -1,8 +1,9 @@
 import os
 import sys
-import time
 import pytest
 import logging
+import time
+import datetime
 from contextlib import contextmanager
 
 def pytest_addoption(parser):
@@ -125,12 +126,9 @@ class Formatter(logging.Formatter):
         super(Formatter, self).__init__(*args, **kwargs)
         self._start = time.time()
     def formatTime(self, record, datefmt=None):
-        # TODO: correct subtracting milliseconds
         ct = record.created - self._start
-        gt = time.gmtime(ct)
-        st = time.strftime("%M:%S", gt)
-        t = "%s.%03d" % (st, record.msecs)
-        return t
+        dt = datetime.datetime.utcfromtimestamp(ct)
+        return dt.strftime("%M:%S.%f")[:-3]  # omit useconds, leave mseconds
 
 class StdoutHandler(logging.StreamHandler):
     def __init__(self, *args, **kwargs):
