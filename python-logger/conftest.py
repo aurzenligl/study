@@ -3,8 +3,6 @@ import pytest
 import logging
 
 '''
-2. conftest.py: adds cmdline choice of stdout handlers (default: setup and xystat)
-        option: --log [default sut, setup and stat]
 3. catch output from subprocess and put via logging to stdout or file
 4. fix ~800ms offset of timestamps in test session shorter than 0.1 seconds
 5. sanitize in a saner way
@@ -33,26 +31,43 @@ log format override
 8. release on pypi
 '''
 
+must_loggers = ['problem']
+configurable_loggers = ['setup', 'im', 'data']
+default_loggers = ['setup']
+
 def pytest_addoption(parser):
-    parser.addoption ('--count', default=1, type='int', metavar='count',
-                      help='Run each test the specified number of times')
-    parser.addoption ('--error', action='store_true',
-                      help='Cause failure during test run')
+    def comma_delimited_loggers(delimited_strings):
+        loggernames = delimited_strings.split(',')
+        for name in loggernames:
+            if name not in configurable_loggers:
+                import argparse
+                raise argparse.ArgumentTypeError('logger "%s" not found, choose from: %s'
+                                                 % (name, ', '.join(configurable_loggers)))
+        return loggernames
+
+    parser.addoption('--count', type='int', metavar='COUNT',
+                     help='Run each test the specified number of times')
+    parser.addoption('--error', action='store_true',
+                     help='Cause failure during test run')
+    parser.addoption('--log', default=default_loggers, metavar='LOGGER,...',
+                     type=comma_delimited_loggers,
+                     help='Pick configurable loggers for stdout from: %s'
+                        % ', '.join(configurable_loggers))
+
+def pytest_logger_stdoutloggers(item):
+    return must_loggers + item.config.option.log
+
+def pytest_logger_fileloggers(item):
+    return must_loggers + configurable_loggers
+
+def pytest_logger_logdirlink(config):
+    return os.path.join(os.path.dirname(__file__), 'logs')
 
 def pytest_generate_tests(metafunc):
     count = metafunc.config.option.count
     if count is not None:
         for i in range(count):
             metafunc.addcall()
-
-def pytest_logger_stdoutloggers(item):
-    return ['data', 'setup', 'im']
-
-def pytest_logger_fileloggers(item):
-    return ['data', 'setup', 'im']
-
-def pytest_logger_logdirlink(config):
-    return os.path.join(os.path.dirname(__file__), 'logs')
 
 pytest_plugins = 'pytest_logger'
 
