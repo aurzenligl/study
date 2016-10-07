@@ -77,8 +77,9 @@ def _logsdir(tmpdir_factory, request):
 @pytest.fixture
 def _logdir(_logsdir, request):
     def sanitize(filename):
+        filename = filename.replace('::()::', '-')
         filename = filename.replace('::', '-')
-        filename = re.sub(r'\[(\d+)\]', r'-\1', filename)
+        filename = re.sub(r'\[(.+)\]', r'-\1', filename)
         return filename
 
     return _logsdir.join(sanitize(request.node.nodeid)).ensure(dir=1)
