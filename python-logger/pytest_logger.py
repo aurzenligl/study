@@ -29,27 +29,43 @@ class LoggerPlugin(object):
 
         stdoutloggers = to_loggers(item.config.hook.pytest_logger_stdoutloggers(item=item))
         fileloggers = to_loggers(item.config.hook.pytest_logger_fileloggers(item=item))
-
-        item._logger = LoggerState(plugin=self, stdoutloggers=stdoutloggers, fileloggers=fileloggers)
-
-        if fileloggers:
-            item.fixturenames.insert(0, '_filehandlers')
-        if stdoutloggers:
-            item.fixturenames.insert(0, '_stdouthandlers')
+        item._logger = state = LoggerState(plugin=self, item=item,
+                                           stdoutloggers=stdoutloggers,
+                                           fileloggers=fileloggers)
+        state.enable()
 
     def pytest_runtest_teardown(self, item, nextitem):
         handler = item._logger.stdouthandler
         if handler:
             handler.newline_before_next_log()
 
+    def pytest_runtest_makereport(self, item, call):
+        if call.when == 'teardown':
+            item._logger.disable()
+
 class LoggerState(object):
     FORMAT = '%(asctime)s %(name)s: %(message)s'
-    def __init__(self, plugin, stdoutloggers, fileloggers):
+    def __init__(self, plugin, item, stdoutloggers, fileloggers):
+        self._logsdir = None
         self.plugin = plugin
+        self.item = item
         self.stdoutloggers = stdoutloggers
         self.fileloggers = fileloggers
         self.formatter = Formatter(fmt=self.FORMAT)
-        self.stdouthandler = None
+        self.stdoutloggersandhandlers = stdoutloggers and _make_stdoutloggersandhandlers(self)
+        self.fileloggersandhandlers = fileloggers and _make_fileloggersandhandlers(self)
+        self.stdouthandler = self.stdoutloggersandhandlers and self.stdoutloggersandhandlers[0][1]
+    def logsdir(self):
+        self._logsdir = self._logsdir or _make_logsdir(self)
+        return self._logsdir
+    def logdir(self):
+        return self.logsdir().join(_sanitize(self.item.nodeid)).ensure(dir=1)
+    def enable(self):
+        _add_handlers(self.stdoutloggersandhandlers)
+        _add_handlers(self.fileloggersandhandlers)
+    def disable(self):
+        _remove_handlers(self.fileloggersandhandlers)
+        _remove_handlers(self.stdoutloggersandhandlers)
 
 class LoggerHookspec(object):
     def pytest_logger_stdoutloggers(self, item):
@@ -61,66 +77,10 @@ class LoggerHookspec(object):
     def pytest_logger_logdirlink(self, config):
         """ called after cmdline options parsing, returns location of link to logs dir """
 
-@pytest.fixture(scope='session')
-def _logsdir(tmpdir_factory, request):
-    logsdir = tmpdir_factory.getbasetemp()
-    if logsdir.basename.startswith('popen-gw'):
-        logsdir = logsdir.join('..')
-    logsdir = logsdir.join('logs').ensure(dir=1)
-
-    state = request._pyfuncitem._logger
-    for link in state.plugin.logdirlinks:
-        _refresh_link(str(logsdir), link)
-
-    return logsdir
-
 @pytest.fixture
-def _logdir(_logsdir, request):
-    def sanitize(filename):
-        filename = filename.replace('::()::', '-')
-        filename = filename.replace('::', '-')
-        filename = re.sub(r'\[(.+)\]', r'-\1', filename)
-        return filename
-
-    return _logsdir.join(sanitize(request.node.nodeid)).ensure(dir=1)
-
-@pytest.yield_fixture
-def _stdouthandlers(request):
-    def make_handler(fmt):
-        handler = StdoutHandler(stream=sys.stdout)
-        handler.setFormatter(fmt)
-        handler.newline_before_next_log()
-        return handler
-
+def logdir(request):
     state = request._pyfuncitem._logger
-    state.stdouthandler = handler = make_handler(state.formatter)
-    loggers_and_handlers = [(lgr, handler) for lgr in state.stdoutloggers]
-
-    with _handlers_added(loggers_and_handlers):
-        yield
-
-@pytest.yield_fixture
-def _filehandlers(_logdir, request):
-    def make_handler(logdir, name, fmt):
-        logfile = str(logdir.join(name))
-        handler = MyFileHandler(filename=logfile, mode='w', delay=True)
-        handler.setFormatter(fmt)
-        return handler
-
-    state = request._pyfuncitem._logger
-    if not state.plugin.logdirflat:
-        loggers_and_handlers = [
-            (lgr, make_handler(_logdir, lgr.name, state.formatter))
-            for lgr in state.fileloggers
-        ]
-    else:
-        handler = make_handler(_logdir, 'logs', state.formatter)
-        loggers_and_handlers = [(lgr, handler) for lgr in state.fileloggers]
-
-    with _handlers_added(loggers_and_handlers):
-        yield
-
-logdir = _logdir
+    return state.logdir()
 
 class Formatter(logging.Formatter):
     def __init__(self, *args, **kwargs):
@@ -140,15 +100,11 @@ class MyFileHandler(logging.FileHandler):
     def __init__(self, filename, **kwargs):
         logging.FileHandler.__init__(self, filename, **kwargs)
 
-@contextmanager
-def _handlers_added(loggers_and_handlers):
-    for lgr, hdlr in loggers_and_handlers:
-        lgr.addHandler(hdlr)
-    try:
-        yield
-    finally:
-        for lgr, hdlr in loggers_and_handlers:
-            lgr.removeHandler(hdlr)
+def _sanitize(filename):
+    filename = filename.replace('::()::', '-')
+    filename = filename.replace('::', '-')
+    filename = re.sub(r'\[(.+)\]', r'-\1', filename)
+    return filename
 
 def _refresh_link(source, link_name):
     try:
@@ -159,3 +115,50 @@ def _refresh_link(source, link_name):
         os.symlink(source, link_name)
     except (OSError, AttributeError, NotImplementedError):
         pass
+
+def _make_logsdir(state):
+    logsdir = state.item.config._tmpdirhandler.getbasetemp()
+    if logsdir.basename.startswith('popen-gw'):
+        logsdir = logsdir.join('..')
+    logsdir = logsdir.join('logs').ensure(dir=1)
+
+    for link in state.plugin.logdirlinks:
+        _refresh_link(str(logsdir), link)
+
+    return logsdir
+
+def _make_stdout_handler(fmt):
+    handler = StdoutHandler(stream=sys.stdout)
+    handler.setFormatter(fmt)
+    handler.newline_before_next_log()
+    return handler
+
+def _make_stdoutloggersandhandlers(state):
+    state.stdouthandler = handler = _make_stdout_handler(state.formatter)
+    return [(lgr, handler) for lgr in state.stdoutloggers]
+
+def _make_file_handler(logdir, name, fmt):
+    logfile = str(logdir.join(name))
+    handler = MyFileHandler(filename=logfile, mode='w', delay=True)
+    handler.setFormatter(fmt)
+    return handler
+
+def _make_fileloggersandhandlers(state):
+    logdir = state.logdir()
+    if not state.plugin.logdirflat:
+        loggers_and_handlers = [
+            (lgr, _make_file_handler(logdir, lgr.name, state.formatter))
+            for lgr in state.fileloggers
+        ]
+    else:
+        handler = make_handler(logdir, 'logs', state.formatter)
+        loggers_and_handlers = [(lgr, handler) for lgr in state.fileloggers]
+    return loggers_and_handlers
+
+def _add_handlers(loggers_and_handlers):
+    for lgr, hdlr in loggers_and_handlers:
+        lgr.addHandler(hdlr)
+
+def _remove_handlers(loggers_and_handlers):
+    for lgr, hdlr in loggers_and_handlers:
+        lgr.removeHandler(hdlr)

@@ -76,6 +76,12 @@ setuplgr.addHandler(logging.NullHandler())
 daemonlgr = logging.getLogger('daemon')
 daemonlgr.addHandler(logging.NullHandler())
 
+@pytest.yield_fixture(scope='session', autouse=True)
+def sessionfixture():
+    setuplgr.warning('session begins')
+    yield
+    setuplgr.warning('session ends')
+
 @pytest.yield_fixture
 def the_error_fixture(request):
     setuplgr.warning('before...')
