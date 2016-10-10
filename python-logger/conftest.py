@@ -68,25 +68,25 @@ def pytest_generate_tests(metafunc):
         for i in range(count):
             metafunc.addcall()
 
-pytest_plugins = 'pytest_logger'
-
 setuplgr = logging.getLogger('setup')
 setuplgr.addHandler(logging.NullHandler())
 
 daemonlgr = logging.getLogger('daemon')
 daemonlgr.addHandler(logging.NullHandler())
 
+logging.root.setLevel(logging.NOTSET)
+
 @pytest.yield_fixture(scope='session', autouse=True)
 def sessionfixture():
-    setuplgr.warning('session begins')
+    setuplgr.info('session begins')
     yield
-    setuplgr.warning('session ends')
+    setuplgr.info('session ends')
 
 @pytest.yield_fixture
 def the_error_fixture(request):
-    setuplgr.warning('before...')
+    setuplgr.info('before...')
     yield request.config.getoption('error')
-    setuplgr.warning('...after')
+    setuplgr.info('...after')
 
 @pytest.yield_fixture(scope='session')
 def daemon(request):

@@ -16,8 +16,8 @@ def test_cat():
         import time; time.sleep(0.1)
 
 def test_qez(daemon):
-    imlgr.warning('object A')
+    imlgr.info('object A')
     import time;time.sleep(0.1)
-    imlgr.warning('object B')
+    imlgr.info('object B')
     import time;time.sleep(0.1)
-    imlgr.warning('object C')
+    imlgr.info('object C')

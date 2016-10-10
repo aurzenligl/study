@@ -11,26 +11,26 @@ problemlgr = logging.getLogger('problem')
 problemlgr.addHandler(logging.NullHandler())
 
 def test_foo(the_error_fixture):
-    datalgr.warning('data -1')
-    datalgr.warning('connection available')
-    datalgr.warning('data 0')
+    datalgr.info('data -1')
+    datalgr.info('connection available')
+    datalgr.info('data 0')
 
-    imlgr.warning('object ABC')
-    imlgr.warning('object DEF')
+    imlgr.info('object ABC')
+    imlgr.info('object DEF')
 
-    datalgr.warning('data 1')
+    datalgr.info('data 1')
 
 def test_bar(the_error_fixture, tmpdir, logdir):
-    datalgr.warning('data -1')
-    datalgr.warning('connection available')
-    datalgr.warning('data 0')
+    datalgr.info('data -1')
+    datalgr.info('connection available')
+    datalgr.info('data 0')
 
-    imlgr.warning('object ABC')
+    imlgr.info('object ABC')
 
     if the_error_fixture:
-        problemlgr.warning("we're about to crash")
+        problemlgr.info("we're about to crash")
         assert 1 != 1
 
-    imlgr.warning('object DEF')
+    imlgr.info('object DEF')
 
-    datalgr.warning('data 1')
+    datalgr.info('data 1')
