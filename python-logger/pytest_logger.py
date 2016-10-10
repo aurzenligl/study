@@ -13,7 +13,7 @@ def pytest_addoption(parser):
                      help='puts all logs in single file.')
 
 def pytest_configure(config):
-    config.pluginmanager.register(LoggerPlugin(config), '_logger')
+    config.pluginmanager.register(LoggerPlugin(config), 'logger')
 
 def pytest_addhooks(pluginmanager):
     pluginmanager.add_hookspecs(LoggerHookspec)
