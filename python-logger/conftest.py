@@ -51,13 +51,16 @@ def pytest_addoption(parser):
                         % ', '.join(configurable_loggers))
     parser.addoption('--logall', action='store_true',
                      help='Pick all loggers for stdout')
+    parser.addoption('--logflat', action='store_true',
+                     help='Log all to single logs file.')
 
 def pytest_logger_stdoutloggers(item):
     option = item.config.option
     return must_loggers + (option.logall and configurable_loggers or option.log)
 
 def pytest_logger_fileloggers(item):
-    return must_loggers + configurable_loggers
+    logflat = item.config.option.logflat
+    return logflat and [''] or (must_loggers + configurable_loggers)
 
 def pytest_logger_logdirlink(config):
     return os.path.join(os.path.dirname(__file__), 'logs')
