@@ -13,12 +13,4 @@ int system(const char* cmd);
 
 }  // namespace libcwrap
 
-extern "C"
-{
-
-// to override, compile with USE_LIBCWRAP and ship these in dynamic lib
-int libcwrap_system(const char* cmd);
-
-}
-
 #endif  // LIBCWRAP_HPP_

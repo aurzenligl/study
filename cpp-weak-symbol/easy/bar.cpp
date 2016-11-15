@@ -1,9 +1,9 @@
 #include <stdio.h>
 
-extern "C"
+namespace libcwrap
 {
 
-int libcwrap_system(const char* cmd)
+int system(const char* cmd)
 {
     printf("library implementation of system, called system with command: %s\n", cmd);
     return 0;
