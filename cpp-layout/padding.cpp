@@ -4,12 +4,16 @@
     #include <type_traits>
 #endif
 
-class Padding16
+// this shall define alignment and packed attributes
+#define PROPHY_STRUCT struct
+
+PROPHY_STRUCT Padding16
 {
+private:
     uint16_t x;
 };
 
-struct X
+PROPHY_STRUCT X
 {
     uint16_t x;
     Padding16 _padding0;
