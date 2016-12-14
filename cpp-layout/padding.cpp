@@ -23,7 +23,7 @@ PROPHY_STRUCT X
 template <typename T>
 void print(const char* msg, const T& t)
 {
-    printf("%s: ", msg);
+    printf(msg);
     for (size_t i = 0; i < sizeof(T); i++)
     {
         printf("%02X", ((unsigned char*)&t)[i]);
