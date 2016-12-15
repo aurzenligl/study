@@ -4,16 +4,18 @@
     #include <type_traits>
 #endif
 
-// this shall define alignment and packed attributes
-#define PROPHY_STRUCT struct
+#define PROPHY_STRUCT(N) struct __attribute__((__aligned__(N), __packed__))
 
-PROPHY_STRUCT Padding16
+PROPHY_STRUCT(2) Padding16_RetainsPodInCpp11
 {
-private:
     uint16_t x;
 };
 
-PROPHY_STRUCT X
+PROPHY_STRUCT(2) Padding16 : public Padding16_RetainsPodInCpp11
+{
+};
+
+PROPHY_STRUCT(4) X
 {
     uint16_t x;
     Padding16 _padding0;
@@ -23,7 +25,7 @@ PROPHY_STRUCT X
 template <typename T>
 void print(const char* msg, const T& t)
 {
-    printf(msg);
+    printf("%s", msg);
     for (size_t i = 0; i < sizeof(T); i++)
     {
         printf("%02X", ((unsigned char*)&t)[i]);
@@ -45,7 +47,11 @@ int main()
 
 #ifdef ERRORS
     X error1 = {1, 2};
+    (void) error1;
+#if __cplusplus >= 201103L
     X error2{1, 2};
+    (void) error2;
+#endif
 #endif
 }
 
