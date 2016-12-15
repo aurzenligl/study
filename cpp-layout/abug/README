@@ -1,0 +1,13 @@
+Gcc seems to break c++98 and c++03 standards by allowing to jump over non-POD automatic local variable declaration.
+
+If I get the standard right, non-aggregates (types with bases or private/protected non-static data members) are non-PODs, jumping over which is illegal:
+
+(C++03 6.7 §3) [stmt.dcl]:
+It is possible to transfer into a block, but not in a way that bypasses declarations with initialization. A program that jumps from a point where a local variable with automatic storage duration is not in scope to a point where it is in scope is ill-formed unless the variable has POD type (3.9) and is declared without an initializer (8.5).
+
+(C++03 8.5.1 §1) [dcl.init.aggr]:
+An aggregate is an array or a class (clause 9) with no user-declared constructors (12.1), no private or protected non-static data members (clause 11), no base classes (clause 10), and no virtual functions (10.3).
+
+(C++03 9 §4) [class]:
+A structure is a class defined with the class-key struct; its members and base classes (clause 10) are public by default (clause 11). A union is a class defined with the class-key union; its members are public by default and it holds only one data member at a time (9.5). [Note: aggregates of class type are described in 8.5.1. ] A POD-struct is an aggregate class that has no non-static data members of type non-POD-struct, non-POD-union (or array of such types) or reference, and has no user-defined copy assignment operator and no user-defined destructor. Similarly, a POD-union is an aggregate union that has no non-static data members of type non-POD-struct, non-POD-union (or array of such types) or reference, and has no user-defined copy assignment operator and no user-defined destructor. A POD class is a class that is either a POD-struct or a POD-union.
+
