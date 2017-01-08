@@ -3,14 +3,25 @@
 
 #include "prophy.hpp"
 
+struct Ra : prophy::message<Ra>
+{
+    uint16_t ra = 5;
+
+    typedef prophy::desc<
+        prophy::field<Ra, uint16_t, &Ra::ra, prophy::chars<'r', 'a'>, 0>
+    > _desc;
+};
+
 struct Foo : prophy::message<Foo>
 {
     uint16_t foo;
     uint32_t pod = 12;
+    Ra ra;
 
     typedef prophy::desc<
         prophy::field<Foo, uint16_t, &Foo::foo, prophy::chars<'f', 'o', 'o'>, 0>,
-        prophy::field<Foo, uint32_t, &Foo::pod, prophy::chars<'p', 'o', 'd'>, 0>
+        prophy::field<Foo, uint32_t, &Foo::pod, prophy::chars<'p', 'o', 'd'>, 0>,
+    prophy::field<Foo, Ra, &Foo::ra, prophy::chars<'r', 'a'>, 0>
     > _desc;
 };
 

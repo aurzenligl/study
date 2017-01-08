@@ -26,6 +26,12 @@ struct is_composite
 };
 
 template <>
+struct is_composite<uint8_t>
+{
+    enum { value = false };
+};
+
+template <>
 struct is_composite<uint16_t>
 {
     enum { value = false };
@@ -118,82 +124,6 @@ inline std::ostream& put_spaces(std::ostream& out, int count)
         --count;
     }
     return out;
-}
-
-template <typename T>
-void print_scalar(const char* name, const T& value, std::ostream& out, int indent)
-{
-    put_spaces(out, indent) << name << ": " << value << '\n';
-}
-
-template <typename T>
-void print_composite(const char* name, const T& value, std::ostream& out, int indent)
-{
-    put_spaces(out, indent) << name << " {\n";
-    value._print(out, indent + 1);
-    put_spaces(out, indent) << "}\n";
-}
-
-template <typename Field, typename T>
-typename std::enable_if<
-    not std::is_same<typename Field::tag, field_tag>::value,
-void>::type print(std::ostream& out, int indent, const T& t)
-{
-}
-
-template <typename Field, typename T>
-typename std::enable_if<
-    std::is_same<typename Field::tag, field_tag>::value and Field::range and not Field::composite,
-void>::type print(std::ostream& out, int indent, const T& t)
-{
-    for (const typename Field::type::value_type& x : Field::get(t))
-    {
-        print_scalar(Field::name(), x, out, indent);
-    }
-}
-
-template <typename Field, typename T>
-typename std::enable_if<
-    std::is_same<typename Field::tag, field_tag>::value and Field::range and Field::composite,
-void>::type print(std::ostream& out, int indent, const T& t)
-{
-    for (const typename Field::type::value_type& x : Field::get(t))
-    {
-        print_composite(Field::name(), x, out, indent);
-    }
-}
-
-template <typename Field, typename T>
-typename std::enable_if<
-    std::is_same<typename Field::tag, field_tag>::value and not Field::range and Field::composite,
-void>::type print(std::ostream& out, int indent, const T& t)
-{
-    print_composite(Field::name(), Field::get(t), out, indent);
-}
-
-template <typename Field, typename T>
-typename std::enable_if<
-std::is_same<typename Field::tag, field_tag>::value and not Field::range and not Field::composite,
-void>::type print(std::ostream& out, int indent, const T& t)
-{
-    print_scalar(Field::name(), Field::get(t), out, indent);
-}
-
-template <typename T>
-void print_iter(std::ostream& out, int indent, const T& t)
-{}
-
-template <typename T, typename Field, typename ...Ts>
-void print_iter(std::ostream& out, int indent, const T& t)
-{
-    print<Field>(out, indent, t);
-    print_iter<T, Ts...>(out, indent, t);
-}
-
-template <typename T, typename ...Fields>
-void print_exec(std::ostream& out, int indent, const T& t, desc<Fields...>)
-{
-    print_iter<T, Fields...>(out, indent, t);
 }
 
 template <int Padding>
@@ -294,6 +224,146 @@ uint8_t* encode_exec(uint8_t* pos, const T& t, desc<Fields...>)
     return encode_iter<T, Fields...>(pos, t);
 }
 
+/////////////////////
+
+template <typename T, typename Ctx>
+void print_scalar(const char* name, const T& value, Ctx& ctx);
+
+template <typename T, typename Ctx>
+void print_composite(const char* name, const T& value, Ctx& ctx);
+
+struct Printer
+{
+    struct Ctx
+    {
+        std::ostream& out;
+        int indent;
+    };
+
+    template <typename Field>
+    static void scalar(Ctx& ctx, const typename Field::type& value)
+    {
+        print_scalar(Field::name(), value, ctx);
+    }
+
+    template <typename Field>
+    static void scalar_range(Ctx& ctx, const typename Field::type& value)
+    {
+        for (const typename Field::value_type& x: value)
+        {
+            print_scalar(Field::name(), x, ctx);
+        }
+    }
+
+    template <typename Field>
+    static void scalar_optional(Ctx& ctx, const typename Field::type& value)
+    {
+    }
+
+    template <typename Field>
+    static void composite(Ctx& ctx, const typename Field::type& value)
+    {
+        print_composite(Field::name(), value, ctx);
+    }
+
+    template <typename Field>
+    static void composite_range(Ctx& ctx, const typename Field::type& value)
+    {
+        for (const typename Field::value_type& x: value)
+        {
+            print_composite(Field::name(), x, ctx);
+        }
+    }
+
+    template <typename Field>
+    static void composite_optional(Ctx& ctx, const typename Field::type& value)
+    {
+    }
+
+    template <typename Field>
+    static void len(Ctx& ctx, const typename Field::type& value)
+    {
+    }
+};
+
+template <typename T, typename Ctx>
+void print_scalar(const char* name, const T& value, Ctx& ctx)
+{
+    put_spaces(ctx.out, ctx.indent) << name << ": " << value << '\n';
+}
+
+template <typename T, typename Ctx>
+void print_composite(const char* name, const T& value, Ctx& ctx)
+{
+    put_spaces(ctx.out, ctx.indent) << name << " {\n";
+    ctx.indent++;
+    value._print(ctx);
+    ctx.indent--;
+    put_spaces(ctx.out, ctx.indent) << "}\n";
+}
+
+template <typename Algorithm, typename Field, typename T>
+typename std::enable_if<
+    std::is_same<typename Field::tag, len_field_tag>::value,
+void>::type dispatch_field(typename Algorithm::Ctx& ctx, const T& t)
+{
+}
+
+template <typename Algorithm, typename Field, typename T>
+typename std::enable_if<
+    std::is_same<typename Field::tag, field_tag>::value and not Field::composite and not Field::range,
+void>::type dispatch_field(typename Algorithm::Ctx& ctx, const T& t)
+{
+    Algorithm::template scalar<Field>(ctx, Field::get(t));
+}
+
+template <typename Algorithm, typename Field, typename T>
+typename std::enable_if<
+    std::is_same<typename Field::tag, field_tag>::value and not Field::composite and Field::range,
+void>::type dispatch_field(typename Algorithm::Ctx& ctx, const T& t)
+{
+    Algorithm::template scalar_range<Field>(ctx, Field::get(t));
+}
+
+template <typename Algorithm, typename Field, typename T>
+typename std::enable_if<
+    std::is_same<typename Field::tag, field_tag>::value and Field::composite and not Field::range,
+void>::type dispatch_field(typename Algorithm::Ctx& ctx, const T& t)
+{
+    Algorithm::template composite<Field>(ctx, Field::get(t));
+}
+
+template <typename Algorithm, typename Field, typename T>
+typename std::enable_if<
+    std::is_same<typename Field::tag, field_tag>::value and Field::composite and Field::range,
+void>::type dispatch_field(typename Algorithm::Ctx& ctx, const T& t)
+{
+    Algorithm::template composite_range<Field>(ctx, Field::get(t));
+}
+
+template <typename Algorithm, typename T>
+void dispatch_iter(typename Algorithm::Ctx& ctx, const T& t)
+{}
+
+template <typename Algorithm, typename T, typename Field, typename ...Fields>
+void dispatch_iter(typename Algorithm::Ctx& ctx, const T& t)
+{
+    dispatch_field<Algorithm, Field>(ctx, t);
+    dispatch_iter<Algorithm, T, Fields...>(ctx, t);
+}
+
+template <typename Algorithm, typename T, typename ...Fields>
+void dispatch_exec(typename Algorithm::Ctx& ctx, const T& t, desc<Fields...>)
+{
+    dispatch_iter<Algorithm, T, Fields...>(ctx, t);
+}
+
+template <typename Algorithm, typename T>
+void dispatch(typename Algorithm::Ctx& ctx, const T& t)
+{
+    dispatch_exec<Algorithm>(ctx, t, typename T::_desc());
+}
+
 template <typename T>
 struct message
 {
@@ -309,15 +379,16 @@ struct message
         return end - pos;
     }
 
-    void _print(std::ostream& out, int indent) const
+    void _print(Printer::Ctx& ctx) const
     {
-        print_exec(out, indent, *static_cast<const T*>(this), typename T::_desc());
+        dispatch<Printer>(ctx, *static_cast<const T*>(this));
     }
 
     std::string print() const
     {
         std::stringstream ss;
-        _print(ss, 0);
+        Printer::Ctx ctx{ss, 0};
+        _print(ctx);
         return ss.str();
     }
 };
