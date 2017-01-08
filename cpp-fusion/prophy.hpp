@@ -13,8 +13,7 @@ namespace prophy
 
 template <typename... Ts>
 struct desc
-{
-};
+{};
 
 struct field_tag{};
 struct len_field_tag{};
@@ -126,111 +125,21 @@ inline std::ostream& put_spaces(std::ostream& out, int count)
     return out;
 }
 
-template <int Padding>
-typename std::enable_if<
-    Padding < 0,
-uint8_t*>::type pad(uint8_t* out)
+template <typename T, typename Ctx>
+void print_scalar(const char* name, const T& value, Ctx& ctx)
 {
-    // TODO
-    return out;
+    put_spaces(ctx.out, ctx.indent) << name << ": " << value << '\n';
 }
-
-template <int Padding>
-typename std::enable_if<
-    Padding >= 0,
-uint8_t*>::type pad(uint8_t* out)
-{
-    return out + Padding;
-}
-
-template <typename T>
-inline uint8_t* encode_int(uint8_t* out, T in)
-{
-    *reinterpret_cast<T*>(out) = in;
-    return out + sizeof(T);
-}
-
-template <int Padding, typename T>
-inline uint8_t* encode_scalar(uint8_t* pos, const T& in)
-{
-    return pad<Padding>(encode_int(pos, in));
-}
-
-template <int Padding, typename T>
-inline uint8_t* encode_composite(uint8_t* pos, const T& in)
-{
-    return pad<Padding>(in._encode(pos));
-}
-
-template <typename Field, typename T>
-typename std::enable_if<
-    std::is_same<typename Field::tag, len_field_tag>::value,
-uint8_t*>::type encode(uint8_t* pos, const T& t)
-{
-    // TODO
-    return pos;
-}
-
-template <typename Field, typename T>
-typename std::enable_if<
-    std::is_same<typename Field::tag, field_tag>::value and not Field::range and not Field::composite,
-uint8_t*>::type encode(uint8_t* pos, const T& t)
-{
-    return encode_scalar<Field::padding>(pos, Field::get(t));
-}
-
-template <typename Field, typename T>
-typename std::enable_if<
-    std::is_same<typename Field::tag, field_tag>::value and Field::range and not Field::composite,
-uint8_t*>::type encode(uint8_t* pos, const T& t)
-{
-    // TODO
-    return pos;
-}
-
-template <typename Field, typename T>
-typename std::enable_if<
-    std::is_same<typename Field::tag, field_tag>::value and not Field::range and Field::composite,
-uint8_t*>::type encode(uint8_t* pos, const T& t)
-{
-    return encode_composite<Field::padding>(pos, Field::get(t));
-}
-
-template <typename Field, typename T>
-typename std::enable_if<
-    std::is_same<typename Field::tag, field_tag>::value and Field::range and Field::composite,
-uint8_t*>::type encode(uint8_t* pos, const T& t)
-{
-    // TODO
-    return pos;
-}
-
-template <typename T>
-uint8_t* encode_iter(uint8_t* pos, const T& t)
-{
-    return pos;
-}
-
-template <typename T, typename Field, typename ...Ts>
-uint8_t* encode_iter(uint8_t* pos, const T& t)
-{
-    uint8_t* mid = encode<Field>(pos, t);
-    return encode_iter<T, Ts...>(mid, t);
-}
-
-template <typename T, typename ...Fields>
-uint8_t* encode_exec(uint8_t* pos, const T& t, desc<Fields...>)
-{
-    return encode_iter<T, Fields...>(pos, t);
-}
-
-/////////////////////
 
 template <typename T, typename Ctx>
-void print_scalar(const char* name, const T& value, Ctx& ctx);
-
-template <typename T, typename Ctx>
-void print_composite(const char* name, const T& value, Ctx& ctx);
+void print_composite(const char* name, const T& value, Ctx& ctx)
+{
+    put_spaces(ctx.out, ctx.indent) << name << " {\n";
+    ctx.indent++;
+    value._print(ctx);
+    ctx.indent--;
+    put_spaces(ctx.out, ctx.indent) << "}\n";
+}
 
 struct Printer
 {
@@ -286,21 +195,83 @@ struct Printer
     }
 };
 
-template <typename T, typename Ctx>
-void print_scalar(const char* name, const T& value, Ctx& ctx)
+template <int Padding>
+typename std::enable_if<Padding < 0, uint8_t*>::type pad(uint8_t* out)
 {
-    put_spaces(ctx.out, ctx.indent) << name << ": " << value << '\n';
+    // TODO
+    return out;
 }
 
-template <typename T, typename Ctx>
-void print_composite(const char* name, const T& value, Ctx& ctx)
+template <int Padding>
+typename std::enable_if<Padding >= 0, uint8_t*>::type pad(uint8_t* out)
 {
-    put_spaces(ctx.out, ctx.indent) << name << " {\n";
-    ctx.indent++;
-    value._print(ctx);
-    ctx.indent--;
-    put_spaces(ctx.out, ctx.indent) << "}\n";
+    return out + Padding;
 }
+
+template <typename T>
+inline uint8_t* encode_int(uint8_t* out, T in)
+{
+    *reinterpret_cast<T*>(out) = in;
+    return out + sizeof(T);
+}
+
+template <int Padding, typename T, typename Ctx>
+inline void encode_scalar(Ctx& ctx, const T& in)
+{
+    ctx.pos = pad<Padding>(encode_int(ctx.pos, in));
+}
+
+template <int Padding, typename T, typename Ctx>
+inline void encode_composite(Ctx& ctx, const T& in)
+{
+    in._encode(ctx);
+    ctx.pos = pad<Padding>(ctx.pos);
+}
+
+struct Encoder
+{
+    struct Ctx
+    {
+        uint8_t* pos;
+    };
+
+    template <typename Field>
+    static void scalar(Ctx& ctx, const typename Field::type& value)
+    {
+        encode_scalar<Field::padding>(ctx, value);
+    }
+
+    template <typename Field>
+    static void scalar_range(Ctx& ctx, const typename Field::type& value)
+    {
+    }
+
+    template <typename Field>
+    static void scalar_optional(Ctx& ctx, const typename Field::type& value)
+    {
+    }
+
+    template <typename Field>
+    static void composite(Ctx& ctx, const typename Field::type& value)
+    {
+        encode_composite<Field::padding>(ctx, value);
+    }
+
+    template <typename Field>
+    static void composite_range(Ctx& ctx, const typename Field::type& value)
+    {
+    }
+
+    template <typename Field>
+    static void composite_optional(Ctx& ctx, const typename Field::type& value)
+    {
+    }
+
+    template <typename Field>
+    static void len(Ctx& ctx, const typename Field::type& value)
+    {
+    }
+};
 
 template <typename Algorithm, typename Field, typename T>
 typename std::enable_if<
@@ -367,16 +338,17 @@ void dispatch(typename Algorithm::Ctx& ctx, const T& t)
 template <typename T>
 struct message
 {
-    uint8_t* _encode(uint8_t* pos) const
+    void _encode(Encoder::Ctx& ctx) const
     {
-        return encode_exec(pos, *static_cast<const T*>(this), typename T::_desc());
+        dispatch<Encoder>(ctx, *static_cast<const T*>(this));
     }
 
     size_t encode(void* data)
     {
         uint8_t* pos = static_cast<uint8_t*>(data);
-        uint8_t* end = _encode(pos);
-        return end - pos;
+        Encoder::Ctx ctx{pos};
+        _encode(ctx);
+        return ctx.pos - pos;
     }
 
     void _print(Printer::Ctx& ctx) const
