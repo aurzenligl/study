@@ -64,15 +64,28 @@ struct chars
 template <char ...Chars>
 constexpr char chars<Chars...>::value[];
 
+template <typename T>
+struct get_value_type
+{
+    typedef T type;
+};
+
+template <typename T>
+struct get_value_type<std::vector<T>>
+{
+    typedef T type;
+};
+
 template <typename T, typename V, V T::*D, typename Chars, int P>
 struct field
 {
     typedef T parent_type;
     typedef V type;
+    typedef typename get_value_type<V>::type value_type;
 
     typedef field_tag tag;
     enum { range = is_range<type>::value };
-    enum { composite = is_composite<type>::value };
+    enum { composite = is_composite<value_type>::value };
     enum { padding = P };
 
     static type& get(parent_type& t)
@@ -130,12 +143,23 @@ void>::type print(std::ostream& out, int indent, const T& t)
 
 template <typename Field, typename T>
 typename std::enable_if<
-    std::is_same<typename Field::tag, field_tag>::value and Field::range,
+    std::is_same<typename Field::tag, field_tag>::value and Field::range and not Field::composite,
 void>::type print(std::ostream& out, int indent, const T& t)
 {
     for (const typename Field::type::value_type& x : Field::get(t))
     {
         print_scalar(Field::name(), x, out, indent);
+    }
+}
+
+template <typename Field, typename T>
+typename std::enable_if<
+    std::is_same<typename Field::tag, field_tag>::value and Field::range and Field::composite,
+void>::type print(std::ostream& out, int indent, const T& t)
+{
+    for (const typename Field::type::value_type& x : Field::get(t))
+    {
+        print_composite(Field::name(), x, out, indent);
     }
 }
 

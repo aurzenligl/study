@@ -6,9 +6,11 @@
 struct Foo : prophy::message<Foo>
 {
     uint16_t foo;
+    uint32_t pod = 12;
 
     typedef prophy::desc<
-        prophy::field<Foo, uint16_t, &Foo::foo, prophy::chars<'f', 'o', 'o'>, 0>
+        prophy::field<Foo, uint16_t, &Foo::foo, prophy::chars<'f', 'o', 'o'>, 0>,
+        prophy::field<Foo, uint32_t, &Foo::pod, prophy::chars<'p', 'o', 'd'>, 0>
     > _desc;
 };
 
@@ -23,6 +25,15 @@ struct Bar : prophy::message<Bar>
         prophy::field<Bar, Foo, &Bar::y, prophy::chars<'y'>, 2>,
         prophy::len_field<Bar, std::vector<uint32_t>, &Bar::z, uint32_t, 0>,
         prophy::field<Bar, std::vector<uint32_t>, &Bar::z, prophy::chars<'z'>, -8>
+    > _desc;
+};
+
+struct Baz : prophy::message<Baz>
+{
+    std::vector<Foo> baz;
+
+    typedef prophy::desc<
+        prophy::field<Baz, std::vector<Foo>, &Baz::baz, prophy::chars<'b', 'a', 'z'>, 0>
     > _desc;
 };
 
