@@ -55,33 +55,43 @@ struct is_range<std::vector<V>>
     enum { value = true };
 };
 
-template <typename T, typename V, V T::* D, const char* N, int P>
+template <char ...Chars>
+struct chars
+{
+    static constexpr const char value[] = { Chars..., 0 };
+};
+
+template <char ...Chars>
+constexpr char chars<Chars...>::value[];
+
+template <typename T, typename V, V T::*D, typename Chars, int P>
 struct field
 {
-    typedef field_tag tag;
-    enum { range = is_range<V>::value };
-    enum { composite = is_composite<V>::value };
-    enum { padding = P };
-
+    typedef T parent_type;
     typedef V type;
 
-    static V& get(T& t)
+    typedef field_tag tag;
+    enum { range = is_range<type>::value };
+    enum { composite = is_composite<type>::value };
+    enum { padding = P };
+
+    static type& get(parent_type& t)
     {
         return t.*D;
     }
 
-    static const V& get(const T& t)
+    static const type& get(const parent_type& t)
     {
         return t.*D;
     }
 
     static const char* name()
     {
-        return N;
+        return Chars::value;
     }
 };
 
-template <typename T, typename V, V T::* D, typename L, int P>
+template <typename T, typename V, V T::*D, typename L, int P>
 struct len_field
 {
     typedef len_field_tag tag;

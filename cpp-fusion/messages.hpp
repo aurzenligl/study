@@ -7,13 +7,8 @@ struct Foo : prophy::message<Foo>
 {
     uint16_t foo;
 
-    struct _names
-    {
-        static const char foo[];
-    };
-
     typedef prophy::desc<
-        prophy::field<Foo, uint16_t, &Foo::foo, _names::foo, 0>
+        prophy::field<Foo, uint16_t, &Foo::foo, prophy::chars<'f', 'o', 'o'>, 0>
     > _desc;
 };
 
@@ -23,18 +18,11 @@ struct Bar : prophy::message<Bar>
     Foo y;
     std::vector<uint32_t> z;
 
-    struct _names
-    {
-        static const char x[];
-        static const char y[];
-        static const char z[];
-    };
-
     typedef prophy::desc<
-        prophy::field<Bar, uint64_t, &Bar::x, _names::x, 0>,
-        prophy::field<Bar, Foo, &Bar::y, _names::y, 2>,
+        prophy::field<Bar, uint64_t, &Bar::x, prophy::chars<'x'>, 0>,
+        prophy::field<Bar, Foo, &Bar::y, prophy::chars<'y'>, 2>,
         prophy::len_field<Bar, std::vector<uint32_t>, &Bar::z, uint32_t, 0>,
-        prophy::field<Bar, std::vector<uint32_t>, &Bar::z, _names::z, -8>
+        prophy::field<Bar, std::vector<uint32_t>, &Bar::z, prophy::chars<'z'>, -8>
     > _desc;
 };
 
