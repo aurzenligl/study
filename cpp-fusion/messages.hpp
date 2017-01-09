@@ -19,9 +19,9 @@ struct Foo : prophy::message<Foo>
     Ra ra;
 
     typedef prophy::desc<
-        prophy::field<Foo, uint16_t, &Foo::foo, prophy::chars<'f', 'o', 'o'>, 0>,
+        prophy::field<Foo, uint16_t, &Foo::foo, prophy::chars<'f', 'o', 'o'>, 2>,
         prophy::field<Foo, uint32_t, &Foo::pod, prophy::chars<'p', 'o', 'd'>, 0>,
-    prophy::field<Foo, Ra, &Foo::ra, prophy::chars<'r', 'a'>, 0>
+        prophy::field<Foo, Ra, &Foo::ra, prophy::chars<'r', 'a'>, 2>
     > _desc;
 };
 
