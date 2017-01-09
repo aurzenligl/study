@@ -195,37 +195,23 @@ struct Printer
     }
 };
 
-template <int Padding>
-typename std::enable_if<Padding < 0, uint8_t*>::type pad(uint8_t* out)
+template <int Padding, typename Ctx>
+typename std::enable_if<Padding < 0, void>::type pad(Ctx& ctx)
 {
     // TODO
-    return out;
 }
 
-template <int Padding>
-typename std::enable_if<Padding >= 0, uint8_t*>::type pad(uint8_t* out)
+template <int Padding, typename Ctx>
+typename std::enable_if<Padding >= 0, void>::type pad(Ctx& ctx)
 {
-    return out + Padding;
+    ctx.pos += Padding;
 }
 
-template <typename T>
-inline uint8_t* encode_int(uint8_t* out, T in)
+template <typename T, typename Ctx>
+inline void encode_int(Ctx& ctx, T in)
 {
-    *reinterpret_cast<T*>(out) = in;
-    return out + sizeof(T);
-}
-
-template <int Padding, typename T, typename Ctx>
-inline void encode_scalar(Ctx& ctx, const T& in)
-{
-    ctx.pos = pad<Padding>(encode_int(ctx.pos, in));
-}
-
-template <int Padding, typename T, typename Ctx>
-inline void encode_composite(Ctx& ctx, const T& in)
-{
-    in._encode(ctx);
-    ctx.pos = pad<Padding>(ctx.pos);
+    *reinterpret_cast<T*>(ctx.pos) = in;
+    ctx.pos += sizeof(T);
 }
 
 struct Encoder
@@ -238,7 +224,8 @@ struct Encoder
     template <typename Field>
     static void scalar(Ctx& ctx, const typename Field::type& value)
     {
-        encode_scalar<Field::padding>(ctx, value);
+        encode_int(ctx, value);
+        pad<Field::padding>(ctx);
     }
 
     template <typename Field>
@@ -254,7 +241,8 @@ struct Encoder
     template <typename Field>
     static void composite(Ctx& ctx, const typename Field::type& value)
     {
-        encode_composite<Field::padding>(ctx, value);
+        value._encode(ctx);
+        pad<Field::padding>(ctx);
     }
 
     template <typename Field>
