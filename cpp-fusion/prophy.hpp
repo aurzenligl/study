@@ -231,6 +231,11 @@ struct Encoder
     template <typename Field>
     static void scalar_range(Ctx& ctx, const typename Field::type& value)
     {
+        for (const typename Field::value_type& x: value)
+        {
+            encode_int(ctx, x);
+        }
+        pad<Field::padding>(ctx);
     }
 
     template <typename Field>
@@ -248,6 +253,11 @@ struct Encoder
     template <typename Field>
     static void composite_range(Ctx& ctx, const typename Field::type& value)
     {
+        for (const typename Field::value_type& x: value)
+        {
+            x._encode(ctx);
+        }
+        pad<Field::padding>(ctx);
     }
 
     template <typename Field>
