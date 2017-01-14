@@ -1,0 +1,46 @@
+mpi: https://computing.llnl.gov/tutorials/mpi/
+mpi: http://www.open-mpi.org/faq/?category=running#run-prereqs
+mpi: http://mpitutorial.com/mpi-hello-world/
+mpi: https://pypi.python.org/pypi/mpi4py
+
+http://www.freesoftwaremagazine.com/articles/drivers_linux
+https://www.youtube.com/watch?v=m_NyYEBxfn8
+https://www.youtube.com/watch?v=G4n9t96GAa4
+http://www.linuxdevcenter.com/pub/a/linux/2007/07/05/devhelloworld-a-simple-introduction-to-device-drivers-under-linux.html
+http://stackoverflow.com/questions/22632713/how-to-write-a-simple-linux-device-driver
+Daniel P. Bovet: Understanding the Linux Kernel
+Michael Kerrisk: Linux Programming Interface
+http://www.contextis.com/documents/120/Glibc_Adventures-The_Forgotten_Chunks.pdf
+http://www.tldp.org/LDP/Linux-Filesystem-Hierarchy/html/proc.html
+top and htop
+rpc (xdr, protobuf, capnproto, msgpack)
+database (e.g. sql)
+http://www.akkadia.org/drepper/futex.pdf
+https://www.kernel.org/pub/linux/kernel/people/paulmck/perfbook/perfbook.2011.01.02a.pdf
+
+nmap - active network scanning (e.g check which ports are open)
+netstat - passive network scanning on own machine (UDP/TCP/unix sockets)
+netcat/nc - simple udp/tcp client/server
+tcpdump - passive network sniffing
+iptraf - network traffic analysis
+wget/curl - downloaders/uploaders
+iptables - firewall configuration (and marking packages according to complex rules)
+route - simplest routing configuration
+ip (iproute2) - advanced routing configuration (can use marks from iptables)
+
+__OK__ BSD Interprocess Communication Tutorial
+__OK__ protobuf
+__OK__ nanopb
+__OK__ Abstract Syntax Notation One
+__OK__ Edsger Dijkstra's On the cruelty of really teaching computing science
+__OK__ Ulrich Drepper's How To Write Shared Libraries
+__OK__ http://tools.ietf.org/html/rfc1014 [XDR data interchange language]
+__OK__ http://nvie.com/posts/a-successful-git-branching-model/
+__OK__ mscgen
+__OK__ Tech Talk: Linus Torvalds on git
+__OK__ http://docs.freebsd.org/44doc/psd/18.gprof/paper.pdf
+__OK__ http://fabiensanglard.net/git_code_review/index.php
+__OK__ Cpu Memory: http://www.akkadia.org/drepper/cpumemory.pdf
+__OK__ https://www.youtube.com/watch?v=G4n9t96GAa4
+__OK__ http://ithare.com/64-network-dos-and-donts-for-game-engine-developers-part-i-client-side/
+

@@ -1,0 +1,156 @@
+Bjarne Stroustrup The C++ Programming Language (4th Edition)
+http://en.wikipedia.org/wiki/C%2B%2B14
+http://www.drdobbs.com/cpp/the-c14-standard-what-you-need-to-know/240169034
+https://github.com/isocpp/CppCoreGuidelines/blob/master/CppCoreGuidelines.md
+http://llvm.org/docs/CodingStandards.html
+2D graphics: cinder, openframeworks
+http://ericniebler.com/2015/01/28/to-be-or-not-to-be-an-iterator/
+http://ericniebler.com/2015/02/03/iterators-plus-plus-part-1/
+http://stackoverflow.com/questions/3601602/what-are-rvalues-lvalues-xvalues-glvalues-and-prvalues
+GCC Passes https://gcc.gnu.org/onlinedocs/gccint/Passes.html#Passes (-Q, -ftime-report)
+http://hubicka.blogspot.com/2014/01/devirtualization-in-c-part-1.html
+http://hubicka.blogspot.com/2014/01/devirtualization-in-c-part-2-low-level.html
+http://hubicka.blogspot.com/2014/02/devirtualization-in-c-part-3-building.html
+http://hubicka.blogspot.com/2014/02/devirtualization-in-c-part-4-analyzing.html
+http://www.agner.org/optimize/
+http://www.agner.org/optimize/optimizing_cpp.pdf
+http://www.agner.org/optimize/optimizing_assembly.pdf
+http://www.agner.org/optimize/microarchitecture.pdf
+http://www.agner.org/optimize/instruction_tables.pdf
+http://www.agner.org/optimize/calling_conventions.pdf
+http://blog.memsql.com/common-pitfalls-in-writing-lock-free-algorithms/
+Transactional Memory http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2014/n3919.pdf
+simplex: http://cs.pwr.edu.pl/zielinski/
+simplex: http://cs.pwr.edu.pl/zielinski/lectures/om/mow3.pdf
+simplex: całkowitoliczbowość: http://cs.pwr.edu.pl/zielinski/lectures/om/mow10.pdf
+simplex: http://cs.pwr.edu.pl/zielinski/lectures/om/zestaw1_15.pdf
+simplex: C.H. Papadimitriou, K. Steiglitz, Combinatorial Optimization. Algorithms and Complexity, Dover Publication, Inc,Mineola, 1998. (on-line).
+simplex: https://books.google.de/books?id=u1RmDoJqkF4C&pg=PP1&dq=Combinatorial+Optimization&sig=1byxp6PGK80sch_huaBEmlLJv_A&hl=en#v=onepage&q=Combinatorial%20Optimization&f=false
+Url: http://blog.lunatech.com/2009/02/03/what-every-web-developer-must-know-about-url-encoding
+Search Engine: http://katemats.com/what-every-programmer-should-know-about-seo/
+Undefined Behavior: http://blog.llvm.org/2011/05/what-every-c-programmer-should-know.html
+Networking: http://gafferongames.com/networking-for-game-programmers/what-every-programmer-needs-to-know-about-game-networking/
+http://www.crystalclearsoftware.com/soc/coroutine/coroutine/tutorial.html#coroutine.generators
+http://paoloseverini.wordpress.com/2014/06/09/generator-functions-in-c/
+http://bartoszmilewski.com/2014/06/09/the-functional-revolution-in-c/
+Alex Stepanov @ A9: Programming Conversations
+Bill Gosper's Hakmem
+
+__OK__ CppCon 2015: Edouard Alligand “C++: How I learned to stop worrying and love metaprogramming" https://www.youtube.com/watch?v=u_8MMuVFz_k
+CppCon 2015: Zach Laine "Writing Great Libraries: 89 Easy Steps" https://www.youtube.com/watch?v=hcHUZE6buzE
+CppCon 2015: Artur Laksberg “Concurrency TS Editor's Report” https://www.youtube.com/watch?v=mPxIegd9J3w
+CppCon 2015: Paul Fultz II “Reflection Techniques in C++” https://www.youtube.com/watch?v=9QGsEkB4Rfs
+CppCon 2015: Pramod Gupta “C++ Multi-dimensional Arrays...” https://www.youtube.com/watch?v=CPPX4kwqh80
+CppCon 2015: Vittorio Romeo “`for_each_argument` explained and expanded" https://www.youtube.com/watch?v=2l83JlqkzBk
+CppCon 2015: Richard Powell “The Importance of Being const" https://www.youtube.com/watch?v=Y1KOuFYtTF4
+CppCon 2015: Niall Douglas “Racing The File System" https://www.youtube.com/watch?v=uhRWMGBjlO8
+CppCon 2015: Jacob Potter “Compile-time contract checking with nn" https://www.youtube.com/watch?v=mVfL0mQU3Bg
+CppCon 2015: Ábel Sinkovics “Compile-time tools supporting generic programming in C++" https://www.youtube.com/watch?v=nUXjVVO4YlA
+CppCon 2015: John Farrier “Demystifying Floating Point" https://www.youtube.com/watch?v=k12BJGSc2Nc
+CppCon 2015: Sylvain Jubertie “Programming with less effort in C++..." https://www.youtube.com/watch?v=PUFpQZKH6Hw
+CppCon 2015: John Lakos “Value Semantics: It ain't about the syntax!, Part I" https://www.youtube.com/watch?v=W3xI1HJUy7Q
+CppCon 2015: John Lakos “Value Semantics: It ain't about the syntax!, Part II" https://www.youtube.com/watch?v=0EvSxHxFknM
+CppCon 2015: Gwendolyn Hunt “Secure C++ Programming” https://www.youtube.com/watch?v=Z_jhNuoczfw
+CppCon 2015: Lawrence Crowl “Comparison is not simple, but it can be simpler" https://www.youtube.com/watch?v=fi0CQ7laiXE
+CppCon 2015: Roland Bock “Pruning Error Messages From Your C++ Template Code" https://www.youtube.com/watch?v=2ISqFW9fRws
+CppCon 2015: Marshall Clow “string_view" https://www.youtube.com/watch?v=H9gAaNRoon4
+CppCon 2015: Ben Deane “Testing Battle.net (before deploying to millions of players)" https://www.youtube.com/watch?v=OPoZWnYIcP4
+CppCon 2015: Rachel Cheng & Michael VanLoon “Evolving Legacy Code" https://www.youtube.com/watch?v=i1Tis90DBEY
+CppCon 2015: Howard Hinnant “A C++14 approach to dates and times" https://www.youtube.com/watch?v=tzyGjOm8AKo
+CppCon 2015: Fedor Pikus “C++ Metaprogramming: Journey from simple to insanity and back" https://www.youtube.com/watch?v=CZi6QqZSbFg
+CppCon 2015: Kate Gregory “Stop Teaching C" https://www.youtube.com/watch?v=YnWhqhNdYyk
+CppCon 2015: Nicolas Guillemot & Sean Middleditch “Birth of Study Group 14..." https://www.youtube.com/watch?v=0tFxdreVx6s
+CppCon 2015: Barbara Geller & Ansel Sermersheim “CopperSpice: A Pure C++ GUI Library" https://www.youtube.com/watch?v=LIiwBNvTllk
+CppCon 2015: Moderator: Chandler Carruth "Technical Specifications & C++17" https://www.youtube.com/watch?v=p1fqdl6sLMY
+
+__OK__ Marshall Cline FAQ
+__OK__ Bjorn Karlsson: safe Bool idiom
+__OK__ boost::function
+__OK__ boost::mem_fn
+__OK__ boost::bind
+__OK__ Don Clugston: member function pointers
+__OK__ Sergey Ryazanov: fast C++ delegates
+__OK__ Di Jaewook Choi: fast C++ delegate boost::bind "drop-in"
+__OK__ http://davesquared.net/2009/01/introduction-to-solid-principles-of-oo.html
+__OK__ http://c2.com/cgi/wiki?PrinciplesOfObjectOrientedDesign
+__OK__ http://www.elpauer.org/stuff/a_deeper_look_at_signals_and_slots.pdf
+__OK__ boost::thread
+__OK__ boost::promise
+__OK__ B.Stroustrup.What.is.C++0x
+__OK__ boost::pool
+__OK__ Alexandrescu's Modern C++ Design
+__OK__ Bartosz Milewski C++11 thread
+__OK__ Principles and Patterns
+__OK__ Design Patterns
+__OK__ boost::shared_ptr
+__OK__ boost::program_options
+__OK__ Technical Report on C++ Performance
+__OK__ Does Test-Driven Development Really Improve Software Design Quali
+__OK__ http://herbsutter.com/welcome-to-the-jungle/
+__OK__ http://herbsutter.com/gotw/_102/
+__OK__ Sean Parent: Value Semantics and Concepts-based Polymorphism 
+__OK__ Alexandrescu's Three Optimization Tips for C++
+__OK__ Herb Sutter's C++ and Beyond 2012: C++ Concurrency
+__OK__ Effective C++ Third Edition
+__OK__ http://blog.odd-e.com/basvodde/2010/08/mocking-support-in-cpputest.html
+__OK__ http://martinfowler.com/articles/mocksArentStubs.html
+__OK__ Sutter's and Alexandrescu's 101 Rules Coding Standards
+__OK__ Schwaber and Sutherland's Scrum Guide
+__OK__ Schwaber and Sutherland's Software in 30 days
+__OK__ Martin Reddy API Design for C++
+__OK__ gtest/gmock
+__OK__ http://google-styleguide.googlecode.com/svn/trunk/cppguide.xml
+__OK__ http://bartoszmilewski.com/2014/02/26/c17-i-see-a-monad-in-your-future/
+__OK__ gtest
+__OK__ http://accu.org/var/uploads/journals/Overload122.pdf
+__OK__ https://github.com/facebook/fatal
+__OK__ https://github.com/facebook/folly/blob/master/folly/docs/FBVector.md
+__OK__ http://bannalia.blogspot.ca/2014/05/fast-polymorphic-collections-with.html
+__OK__ http://mortoray.com/2014/08/22/the-amortized-cost-of-vector-insert-is-3/
+__OK__ http://blog.sduto.it/2014/05/a-c-error-handling-style-that-plays.html
+__OK__ http://yapb-soc.blogspot.fr/2012/11/monadic-io-in-c.html
+__OK__ http://gamasutra.com/view/news/169296/Indepth_Functional_programming_in_C.php
+__OK__ Alex Stepanov @ A9: Efficient Programming with components
+__OK__ http://preshing.com/20140709/the-purpose-of-memory_order_consume-in-cpp11/
+__OK__ https://rawgit.com/google/cxx-std-draft/allocator-paper/allocator_user_guide.html
+__OK__ http://pymotw.com/2/select/
+__OK__ https://docs.python.org/2/howto/sockets.html
+__OK__ Hans Boehm Threads-and-Shared-Variables-in-C-11
+__OK__ Herb Sutter: Atomic<> Weapons
+__OK__ Efficiency-with-Algorithms http://channel9.msdn.com/Events/CPP/C-PP-Con-2014
+__OK__ http://accu.org/index.php/journals/227
+__OK__ http://thbecker.net/articles/rvalue_references/section_01.html
+__OK__ http://isocpp.org/blog/2012/11/universal-references-in-c11-scott-meyers
+__OK__ http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2014/n4028.pdf
+__OK__ http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2014/n3916.pdf
+__OK__ https://isocpp.org/files/papers/N4173.pdf
+__OK__ https://isocpp.org/files/papers/N4174.pdf
+__OK__ https://ericniebler.github.io/std/wg21/D4128.html
+__OK__ https://channel9.msdn.com/Events/GoingNative/GoingNative-2012
+__OK__ http://www.informit.com/articles/printerfriendly/1407357
+__OK__ https://channel9.msdn.com/Events/GoingNative/2013
+__OK__ Eric Niebler Ranges https://www.youtube.com/watch?v=8yV2ONeWXyI
+__OK__ https://www.youtube.com/watch?v=PVYdHDm0q6Y
+__OK__ https://akrzemi1.wordpress.com/2011/05/06/compile-time-computations/ 
+__OK__ https://github.com/boostcon/cppnow_presentations_2015
+__OK__ http://channel9.msdn.com/Events/CPP/C-PP-Con-2014
+__OK__ CPPCON2014 Scott Meyers: Type Deduction and Why You Care
+__OK__ CPPCON2014 Thomas Rodgers: Implementing Wire Protocols with Boost Fusion
+__OK__ CPPCON2014 Bjarne Stroustrup: Make Simple Tasks Simple!
+__OK__ CPPCON2014 Mike Acton: Data-Oriented Design and C++
+__OK__ CPPCON2014 Chandler Carruth: Efficiency with Algorithms, Performance with Data Structures
+__OK__ CPPCON2014 Andrei Alexandrescu: Optimization Tips: Mo' Hustle Mo' Problems
+__OK__ CPPCON2014 Tony van Eerd: lockfree
+__OK__ CPPCON2014 John Lakos: defensive
+__OK__ Floating Point: http://docs.oracle.com/cd/E19957-01/806-3568/ncg_goldberg.html
+__OK__ Unicode: http://www.joelonsoftware.com/articles/Unicode.html
+__OK__ Time: http://unix4lyfe.org/time/?v=1
+__OK__ https://github.com/boostcon/cppnow_presentations_2014
+__OK__ https://www.youtube.com/user/CppCon
+__OK__ CPPCON2015 Sean Parent Algorithms: https://www.youtube.com/watch?v=sWgDk-o-6ZE
+__OK__ CPPCON2015 Alexandrescu Allocation: https://www.youtube.com/watch?v=LIb3L4vKZ7U
+__OK__ CPPCON2015 Alexandrescu Declarative: https://www.youtube.com/watch?v=WjTrfoiB0MQ
+__OK__ CPPCON2015 Grill the Committee: https://www.youtube.com/watch?v=PqU_ot4BlNQ
+__OK__ CPPCON2015 Chandler Carruth Tuning C++: https://www.youtube.com/watch?v=nXaxk27zwlk
+__OK__ CPPCON2015 Bjarne Stroustrup: https://www.youtube.com/watch?v=1OEu9C51K2A
+

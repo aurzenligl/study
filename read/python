@@ -1,0 +1,47 @@
+http://www.tutorialspoint.com/python/python_further_extensions.htm
+https://docs.python.org/2/extending/
+http://cxx.sourceforge.net/PyCXX-Python3.html
+cython: http://cython.org/
+swig: http://www.swig.org/
+boost::python: http://www.boost.org/doc/libs/1_58_0/libs/python/doc/
+pyqt: http://www.riverbankcomputing.co.uk/software/pyqt/intro
+libclang: https://github.com/llvm-mirror/clang/tree/master/bindings/python
+lxml: http://lxml.de/
+mercurial: https://mercurial.selenic.com/
+Beazley GIL https://www.youtube.com/watch?v=Obt-vMVdM8s
+Beazley Generators https://www.youtube.com/watch?v=5-qadlG7tWo
+https://docs.python.org/3.5/library/asyncio.html#module-asyncio
+Tarek Ziade: Expert python programming
+Python Algorithms: Mastering Basic Algorithms in the Python Language
+Writing Idiomatic Python 2.7.3 by Jeff Knupp (Feb 6, 2013)
+
+__OK__ python asyncore
+__OK__ pytest
+__OK__ python metaclass, slots, property
+__OK__ sdedit
+__OK__ sphinx: latex
+__OK__ sphinx: breathe
+__OK__ http://norvig.com/sudoku.html
+__OK__ http://google-styleguide.googlecode.com/svn/trunk/pyguide.html
+__OK__ http://legacy.python.org/dev/peps/pep-0008/
+__OK__ http://docs.python-guide.org/en/latest/writing/style/
+__OK__ sphinx
+__OK__ http://www.dabeaz.com/ply/ply.html
+__OK__ http://dabeaz.blogspot.com/2010/01/few-useful-bytearray-tricks.html
+__OK__ https://docs.python.org/2/howto/logging.html
+__OK__ https://docs.python.org/2/howto/logging-cookbook.html
+__OK__ https://docs.python.org/2/howto/regex.html
+__OK__ https://docs.python.org/2/howto/unicode.html
+__OK__ PyCon'2014 http://pyvideo.org/video/2645/discovering-python
+__OK__ http://lucumr.pocoo.org/2013/5/21/porting-to-python-3-redux/
+__OK__ PYCON2015 Guido Keynote: https://www.youtube.com/watch?v=G-uKNd5TSBw
+__OK__ PYCON2015 David Beazley Concurrency: https://www.youtube.com/watch?v=MCs5OvhV9S4
+__OK__ PYCON2015 David Beazley Modules: https://www.youtube.com/watch?v=0oTh1CXRaQ0
+__OK__ PYCON2015 Raymond Hettinger PEP8: https://www.youtube.com/watch?v=wf-BqAjZb8M
+__OK__ ctypes: https://docs.python.org/2/library/ctypes.html#ctypes-reference
+__OK__ cffi: http://cffi.readthedocs.org/en/latest/
+__OK__ http://intermediate-and-advanced-software-carpentry.readthedocs.org/en/latest/day1.html
+__OK__ http://intermediate-and-advanced-software-carpentry.readthedocs.org/en/latest/day2.html
+__OK__ http://intermediate-and-advanced-software-carpentry.readthedocs.org/en/latest/day3.html
+__OK__ http://dan.iel.fm/posts/python-c-extensions/
+
