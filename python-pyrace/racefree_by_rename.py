@@ -1,6 +1,8 @@
 import os
 import atexit
 import py
+import tempfile
+import time
 
 def make_numbered_dir(cls, prefix='session-', rootdir=None, keep=3,
                       lock_timeout = 172800):   # two days
@@ -21,9 +23,21 @@ def make_numbered_dir(cls, prefix='session-', rootdir=None, keep=3,
             except ValueError:
                 pass
 
+    # create a new directory with a .lock file
+    x = cls(tempfile.mkdtemp(prefix=prefix, suffix='-tmp', dir=str(rootdir)))
+    x.chmod(rootdir.stat().mode)
+    if lock_timeout:
+        xl = x.join('.lock')
+        mypid = os.getpid()
+        if hasattr(xl, 'mksymlinkto'):
+            xl.mksymlinkto(str(mypid))
+        else:
+            xl.write(str(mypid))
+
     # compute the maximum number currently in use with the
     # prefix
     lastmax = None
+    lastmaxcount = 0
     while True:
         maxnum = -1
         for path in rootdir.listdir():
@@ -33,13 +47,20 @@ def make_numbered_dir(cls, prefix='session-', rootdir=None, keep=3,
 
         # make the new directory
         try:
-            udir = rootdir.mkdir(prefix + str(maxnum+1))
-        except py.error.EEXIST:
+            newname = x.dirname + '/' + prefix + str(maxnum+1)
+            x.rename(newname)
+            udir = cls(newname)
+            udir.setmtime()
+        except py.error.ENOTEMPTY:
             # race condition: another thread/process created the dir
             # in the meantime.  Try counting again
             if lastmax == maxnum:
-                raise
+                if lastmaxcount == 3:
+                    raise
+                lastmaxcount += 1
+                continue
             lastmax = maxnum
+            lastmaxcount = 0
             continue
         break
 
@@ -47,11 +68,6 @@ def make_numbered_dir(cls, prefix='session-', rootdir=None, keep=3,
     # process exit
     if lock_timeout:
         lockfile = udir.join('.lock')
-        mypid = os.getpid()
-        if hasattr(lockfile, 'mksymlinkto'):
-            lockfile.mksymlinkto(str(mypid))
-        else:
-            lockfile.write(str(mypid))
         def try_remove_lockfile():
             # in a fork() situation, only the last process should
             # remove the .lock, otherwise the other processes run the
@@ -81,8 +97,7 @@ def make_numbered_dir(cls, prefix='session-', rootdir=None, keep=3,
                 except py.error.Error:
                     pass   # assume that it means that there is no 'lf'
                 try:
-                    t3 = path.lstat().mtime
-                    if (t0-t3) < 2:
+                    if path.lstat().mtime >= t0:
                         continue
                     path.remove(rec=1)
                 except KeyboardInterrupt:

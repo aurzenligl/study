@@ -2,10 +2,11 @@ import os
 import py
 import pytest
 import racefree
+import racefree_by_rename
 
 @pytest.fixture(autouse=True)
 def patch_make_numbered_dir(monkeypatch):
-    monkeypatch.setattr(py.path.local, 'make_numbered_dir', classmethod(racefree.make_numbered_dir))
+    monkeypatch.setattr(py.path.local, 'make_numbered_dir', classmethod(racefree_by_rename.make_numbered_dir))
 
 @pytest.yield_fixture(scope='session')
 def rootdir():
@@ -17,7 +18,7 @@ def test_reproduce(rootdir, _):
         tmpdir = py.path.local.make_numbered_dir(prefix='repro-', rootdir=rootdir)
         tmpdir.join('foo').write('bar')
         assert tmpdir.join('foo').read() == 'bar'
-        tmpdir.remove()
+        tmpdir.remove(ignore_errors=True)
 
 # run this suite with xdist to reproduce:
 # $ pytest -n10
