@@ -1,6 +1,7 @@
 import os
 import py
 import pytest
+import race_version_1_4_32
 import racefree_by_timeout
 import racefree_by_rename
 import racefree_by_cookie
