@@ -3,10 +3,11 @@ import py
 import pytest
 import racefree_by_timeout
 import racefree_by_rename
+import racefree_by_cookie
 
 @pytest.fixture(autouse=True)
 def patch_make_numbered_dir(monkeypatch):
-    monkeypatch.setattr(py.path.local, 'make_numbered_dir', classmethod(racefree_by_timeout.make_numbered_dir))
+    monkeypatch.setattr(py.path.local, 'make_numbered_dir', classmethod(racefree_by_cookie.make_numbered_dir))
 
 @pytest.yield_fixture(scope='session')
 def rootdir():
