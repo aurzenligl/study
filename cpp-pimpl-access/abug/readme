@@ -1,0 +1,30 @@
+Clang accepts ill-formed code in -std=c++11/14 (and -std=c++98, but for different reason):
+
+struct Outer
+{
+    struct Inner
+    {
+        friend int get(Outer& o)
+        {
+            return o.x;
+        }
+    };
+private:
+    int x;
+};
+
+Legal basis (based on c++11 standard):
+    in-class friend function definition is a namespace member (7.3.1.2[3], 11.3[6])
+    in-class friend function definition has member function lexical scope (3.4.1[9], 11.3[7])
+    in-nested-class function definition can access private members of enclosing class (11.7[1])
+    in-nested-class friend function definition has no special access rights to members of an enclosing class (9.7[4])
+
+It seems that explicit exception in 9.7[4] is not respected: "(...) friend function (...) has no special access rights to members of an enclosing class".
+There's no warning with -Wall -Wextra -pedantic on clang-3.5, newer and trunk.
+
+I'd expect compilation to fail with error.
+Other compilers (gcc, msvc, icc) fail as expected, noting that in given context x is private.
+
+In c++98 access from nested to enclosing class privates is illegal (11.8[1] c++03).
+In c++11 above clause was relaxed (11.7[1] c++11), but this shouldn't change the meaning of -std=c++98/03 in clang.
+
