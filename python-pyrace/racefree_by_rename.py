@@ -84,7 +84,6 @@ def make_numbered_dir(cls, prefix='session-', rootdir=None, keep=3,
 
     # prune old directories
     if keep:
-        t0 = udir.lstat().mtime
         for path in rootdir.listdir():
             num = parse_num(path)
             if num is not None and num <= (maxnum - keep):
@@ -97,8 +96,6 @@ def make_numbered_dir(cls, prefix='session-', rootdir=None, keep=3,
                 except py.error.Error:
                     pass   # assume that it means that there is no 'lf'
                 try:
-                    if path.lstat().mtime >= t0:
-                        continue
                     path.remove(rec=1)
                 except KeyboardInterrupt:
                     raise
