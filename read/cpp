@@ -38,10 +38,10 @@ Bill Gosper's Hakmem
 
 __OK__ CppCon 2015: Edouard Alligand “C++: How I learned to stop worrying and love metaprogramming" https://www.youtube.com/watch?v=u_8MMuVFz_k
 __OK__ CppCon 2015: Zach Laine "Writing Great Libraries: 89 Easy Steps" https://www.youtube.com/watch?v=hcHUZE6buzE
-CppCon 2015: Artur Laksberg “Concurrency TS Editor's Report” https://www.youtube.com/watch?v=mPxIegd9J3w
-CppCon 2015: Paul Fultz II “Reflection Techniques in C++” https://www.youtube.com/watch?v=9QGsEkB4Rfs
-CppCon 2015: Pramod Gupta “C++ Multi-dimensional Arrays...” https://www.youtube.com/watch?v=CPPX4kwqh80
-CppCon 2015: Vittorio Romeo “`for_each_argument` explained and expanded" https://www.youtube.com/watch?v=2l83JlqkzBk
+__OK__ CppCon 2015: Artur Laksberg “Concurrency TS Editor's Report” https://www.youtube.com/watch?v=mPxIegd9J3w
+__OK__ CppCon 2015: Paul Fultz II “Reflection Techniques in C++” https://www.youtube.com/watch?v=9QGsEkB4Rfs
+__OK__ CppCon 2015: Pramod Gupta “C++ Multi-dimensional Arrays...” https://www.youtube.com/watch?v=CPPX4kwqh80
+__OK__ CppCon 2015: Vittorio Romeo “`for_each_argument` explained and expanded" https://www.youtube.com/watch?v=2l83JlqkzBk
 CppCon 2015: Richard Powell “The Importance of Being const" https://www.youtube.com/watch?v=Y1KOuFYtTF4
 CppCon 2015: Niall Douglas “Racing The File System" https://www.youtube.com/watch?v=uhRWMGBjlO8
 CppCon 2015: Jacob Potter “Compile-time contract checking with nn" https://www.youtube.com/watch?v=mVfL0mQU3Bg
