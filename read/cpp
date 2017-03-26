@@ -42,7 +42,7 @@ __OK__ CppCon 2015: Artur Laksberg “Concurrency TS Editor's Report” https://
 __OK__ CppCon 2015: Paul Fultz II “Reflection Techniques in C++” https://www.youtube.com/watch?v=9QGsEkB4Rfs
 __OK__ CppCon 2015: Pramod Gupta “C++ Multi-dimensional Arrays...” https://www.youtube.com/watch?v=CPPX4kwqh80
 __OK__ CppCon 2015: Vittorio Romeo “`for_each_argument` explained and expanded" https://www.youtube.com/watch?v=2l83JlqkzBk
-CppCon 2015: Richard Powell “The Importance of Being const" https://www.youtube.com/watch?v=Y1KOuFYtTF4
+__OK__ CppCon 2015: Richard Powell “The Importance of Being const" https://www.youtube.com/watch?v=Y1KOuFYtTF4
 CppCon 2015: Niall Douglas “Racing The File System" https://www.youtube.com/watch?v=uhRWMGBjlO8
 CppCon 2015: Jacob Potter “Compile-time contract checking with nn" https://www.youtube.com/watch?v=mVfL0mQU3Bg
 CppCon 2015: Ábel Sinkovics “Compile-time tools supporting generic programming in C++" https://www.youtube.com/watch?v=nUXjVVO4YlA
