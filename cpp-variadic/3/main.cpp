@@ -11,6 +11,9 @@ struct Printer
     }
 };
 
+void onlyInt(int x)
+{}
+
 int main()
 {
     std::cout
@@ -21,6 +24,8 @@ int main()
 
     for_args_if<std::is_arithmetic>(Printer(), 1, "foo", 2u, std::string("bar"), 3.f);
     for_args_if<std::is_literal_type>(Printer(), 1, "foo", 2u, std::string("bar"), 3.f);
+
+    for_args_if<std::is_arithmetic>(onlyInt, 1, "foo");
 
     std::cout
         << "std::vector<int>: "
