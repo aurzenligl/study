@@ -1,0 +1,3 @@
+void osc_open()
+{
+}
