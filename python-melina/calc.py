@@ -6,33 +6,6 @@ import argparse
 import io
 import enum
 
-'''
-program:
-    end
-    expr_list end
-
-expr_list:
-    expression print
-    expression print expr_list
-
-expression:
-    expression + term
-    expression - term
-    term
-
-term:
-    term / primary
-    term * primary
-    primary
-
-primary:
-    number
-    name
-    name = expression
-    - primary
-    ( expression )
-'''
-
 class TokenKind(enum.Enum):
     NAME = 1
     NUMBER = 2
@@ -57,14 +30,17 @@ class Token(object):
         else:
             return "<Token %s>" % (self.kind.name)
 
-class TokenStream(object):
+class Tokenizer(object):
     def __init__(self, input):
         self.input = input
-        self.token = self.get()
+        self.token = Token(TokenKind.END)
 
     def get(self):
         self.token = token = self._get()
         return token
+
+    def current(self):
+        return self.token
 
     _unitokens = {
         ord('+'): TokenKind.PLUS,
@@ -109,11 +85,98 @@ class TokenStream(object):
             return Token(self._unitokens[ord(ch)])
         elif self._is_numeric(ch):
             ent = self._get_remaining(ch, self._is_numeric)
-            return Token(TokenKind.NUMBER, int(ent))
+            return Token(TokenKind.NUMBER, float(ent))
         elif ch.isalpha():
             ent = self._get_remaining(ch, self._is_alpha)
             return Token(TokenKind.NAME, ent)
         raise Exception('Unknown character: %s, ord=%s' % (ch, ord(ch)))
+
+class Parser(object):
+    '''
+    program:
+        end
+        expr_list end
+
+    expr_list:
+        expression print
+        expression print expr_list
+
+    expression:
+        expression + term
+        expression - term
+        term
+
+    term:
+        term / primary
+        term * primary
+        primary
+
+    primary:
+        number
+        name
+        name = expression
+        - primary
+        ( expression )
+    '''
+
+    def __init__(self, tokenizer):
+        self.ts = tokenizer
+        self.table = {}
+
+    def parse(self):
+        while True:
+            self.ts.get()
+            if self.ts.current().kind == TokenKind.END:
+                break
+            if self.ts.current().kind == TokenKind.PRINT:
+                continue
+            print self.expr(False)
+
+    def expr(self, get):
+        left = self.term(get)
+
+        while True:
+            if self.ts.current().kind == TokenKind.PLUS:
+                left += self.term(True)
+            elif self.ts.current().kind == TokenKind.MINUS:
+                left -= self.term(True)
+            else:
+                return left
+
+    def term(self, get):
+        left = self.prim(get)
+
+        while True:
+            if self.ts.current().kind == TokenKind.MUL:
+                left *= self.prim(True)
+            elif self.ts.current().kind == TokenKind.DIV:
+                left /= self.prim(True)
+            else:
+                return left
+
+    def prim(self, get):
+        if get:
+            self.ts.get()
+
+        if self.ts.current().kind == TokenKind.NUMBER:
+            v = self.ts.current().value
+            self.ts.get()
+            return v
+        elif self.ts.current().kind == TokenKind.NAME:
+            n = self.ts.current().value
+            if self.ts.get().kind == TokenKind.ASSIGN:
+                self.table[n] = self.expr(True)
+            return self.table[n]
+        elif self.ts.current().kind == TokenKind.MINUS:
+            return -self.prim(True)
+        elif self.ts.current().kind == TokenKind.LP:
+            e = self.expr(True)
+            if self.ts.current().kind != TokenKind.RP:
+                raise Exception("')' expected")
+            self.ts.get()
+            return e
+        else:
+            raise Exception("Primary expected")
 
 def parse_options():
     def readable_file(name):
@@ -140,11 +203,11 @@ def parse_options():
 def main():
     opts = parse_options()
     input = io.FileIO(opts.input)
-    tokenizer = TokenStream(input)
-    while True:
-        print tokenizer.token
-        if tokenizer.get().kind == TokenKind.END:
-            return
+    ts = Tokenizer(input)
+    parser = Parser(ts)
+    parser.parse()
+
+    print parser.table
 
 if __name__ == '__main__':
     main()
