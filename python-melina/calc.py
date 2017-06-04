@@ -1,5 +1,9 @@
 #!/usr/bin/env python
 
+'''
+Desk calc example inspired by 10.2 chapter of Bjarne Stroustrup's book The C++ Programming Language.
+'''
+
 import os
 import sys
 import argparse
