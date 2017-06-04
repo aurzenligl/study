@@ -4,4 +4,4 @@
 #./compile.sh
 
 cd python-melina
-./calc.py calcsheet
+./melina.py example.meta
