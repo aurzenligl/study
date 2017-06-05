@@ -101,14 +101,11 @@ class Tokenizer(object):
     def __init__(self, input):
         self.input = TokenizerInput(input)
         self.token = Token(TokenKind.END)
-        '''TODO keep comments'''
+        self.comments = []
 
     def get(self):
-        while True:
-            token = self._get()
-            if token:
-                self.token = token
-                return token
+        self.token = token = self._get()
+        return token
 
     @property
     def cur(self):
@@ -153,65 +150,68 @@ class Tokenizer(object):
     def _get(self):
         '''TODO syntax sugar location passing'''
 
-        ch = self.input.read()
-        loc = self._loc
-
-        # END
-        if ch == '':
-            return Token(TokenKind.END)
-
-        # SPACE <ignored> ' \t\n'
-        if ch == ' ' or ch == '\t' or ch == '\n':
-            self._read_all(lambda ch: ch == ' ' or ch == '\t' or ch == '\n')
-            return
-
-        # COMMENT <ignored, stored> '//\n' '/**/'
-        if ch == '/':
+        while True:
             ch = self.input.read()
+            loc = self._loc
+
+            # END
+            if ch == '':
+                return Token(TokenKind.END)
+
+            # SPACE <ignored> ' \t\n'
+            if ch == ' ' or ch == '\t' or ch == '\n':
+                self._read_all(lambda ch: ch == ' ' or ch == '\t' or ch == '\n')
+                continue
+
+            # COMMENT <ignored, stored> '//\n' '/**/'
             if ch == '/':
-                string = '//' + self._read_all(lambda ch: ch != '\n')
-                return Token(TokenKind.COMMENT, string, locs=(loc, self._loc))
-            elif ch == '*':
-                string = '/*' + self._read_until('*/')
-                return Token(TokenKind.COMMENT, string, locs=(loc, self._loc))
-            else:
-                raise TokenizerError("character '/' can be used only as part of '//' or '/*' comment opening")
+                ch = self.input.read()
+                if ch == '/':
+                    string = '//' + self._read_all(lambda ch: ch != '\n')
+                    self.comments.append(Token(TokenKind.COMMENT, string, locs=(loc, self._loc)))
+                    continue
+                elif ch == '*':
+                    string = '/*' + self._read_until('*/')
+                    self.comments.append(Token(TokenKind.COMMENT, string, locs=(loc, self._loc)))
+                    continue
+                else:
+                    raise TokenizerError("character '/' can be used only as part of '//' or '/*' comment opening")
 
-        # KEYW [_a-zA-Z]
-        # NAME [_a-zA-Z]
-        if self._within(ch, 'A', 'Z') or self._within(ch, 'a', 'z') or ch == '_':
-            string = ch + self._read_all(lambda ch: (
-                self._within(ch, '0', '9') or
-                self._within(ch, 'A', 'Z') or self._within(ch, 'a', 'z') or ch == '_'
-            ))
-            if string in self._keywords:
-                return Token(TokenKind.KEYW, string, locs=(loc, self._loc))
-            else:
-                return Token(TokenKind.NAME, string, locs=(loc, self._loc))
+            # KEYW [_a-zA-Z]
+            # NAME [_a-zA-Z]
+            if self._within(ch, 'A', 'Z') or self._within(ch, 'a', 'z') or ch == '_':
+                string = ch + self._read_all(lambda ch: (
+                    self._within(ch, '0', '9') or
+                    self._within(ch, 'A', 'Z') or self._within(ch, 'a', 'z') or ch == '_'
+                ))
+                if string in self._keywords:
+                    return Token(TokenKind.KEYW, string, locs=(loc, self._loc))
+                else:
+                    return Token(TokenKind.NAME, string, locs=(loc, self._loc))
 
-        # NUMBER [0-9]*
-        if self._within(ch, '0', '9'):
-            string = ch + self._read_all(lambda ch: self._within(ch, '0', '9'))
-            return Token(TokenKind.NUMBER, int(string), locs=(loc, self._loc))
+            # NUMBER [0-9]*
+            if self._within(ch, '0', '9'):
+                string = ch + self._read_all(lambda ch: self._within(ch, '0', '9'))
+                return Token(TokenKind.NUMBER, int(string), locs=(loc, self._loc))
 
-        # ARROW ->
-        if ch == '-':
-            ch = self.input.read()
-            if ch == '>':
-                return Token(TokenKind.ARROW, locs=(loc, self._loc))
-            else:
-                raise TokenizerError("character '-' can be used only as part of arrow operator '->'")
+            # ARROW ->
+            if ch == '-':
+                ch = self.input.read()
+                if ch == '>':
+                    return Token(TokenKind.ARROW, locs=(loc, self._loc))
+                else:
+                    raise TokenizerError("character '-' can be used only as part of arrow operator '->'")
 
-        # LCB {
-        # RCB }
-        # SEMI ;
-        # COMMA ,
-        # ASSIGN =
-        kind = self._unitokens.get(ch)
-        if kind:
-            return Token(kind, locs=(loc, self._loc))
+            # LCB {
+            # RCB }
+            # SEMI ;
+            # COMMA ,
+            # ASSIGN =
+            kind = self._unitokens.get(ch)
+            if kind:
+                return Token(kind, locs=(loc, self._loc))
 
-        raise TokenizerError("unexpected character: '%s', ord=%s" % (ch, ord(ch)))
+            raise TokenizerError("unexpected character: '%s', ord=%s" % (ch, ord(ch)))
 
 class Parser(object):
     '''
@@ -311,6 +311,8 @@ def main():
 
     for tok in get_tokens(ts):
         print tok
+    for com in ts.comments:
+        print com
 
     print "ok"
 
