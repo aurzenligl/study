@@ -1,0 +1,55 @@
+mo CONFIGURE_MECHANISM_TASK -> RESULT
+{
+    struct alphaDelta
+    {
+        repeated struct modified
+        {
+            string dn;
+            int param;
+        };
+    };
+
+    struct betaDelta
+    {
+        repeated struct added
+        {
+            string devDn;  // e.g.: alpha, beta, gamma
+            int id;
+            int param;
+        };
+        repeated struct modified
+        {
+            string dn;
+            int param;
+        };
+        repeated struct removed
+        {
+            string dn;
+        };
+    };
+
+    /**
+     * Gamma can be explained here.
+     * There is no added/removed as Gamma Software deployment/hardware decide how many
+     * gammas exist in given execution.
+     */
+    struct gammaDelta
+    {
+        repeated struct modified
+        {
+            string dn;
+            optional struct config
+            {
+                optional int param;
+                optional struct gammaConfig
+                {
+                    int placeholderJustToCompileMeta;  // meta_compiler cannot produce empty structs
+                };
+                repeated struct gammaGimmickConfig
+                {
+                    string dn;
+                };
+            };
+        };
+    };
+};
