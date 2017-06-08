@@ -81,18 +81,33 @@ class TokenizerInput(object):
 
     def read(self):
         ch = self.input.read(1)
+        self._advance_loc(ch)
+        return ch
+
+    def read_all(self, pred):
+        string = ''
+        while True:
+            ch = self.input.read(1)
+            if pred(ch):
+                string += ch
+                self._advance_loc(ch)
+                continue
+            if ch:
+                self.input.seek(self.input.tell() - 1)
+            return string
+
+    def read_until(self, string):
+        read = ''
+        while True:
+            read += self.read()
+            if read.endswith(string):
+                return read
+
+    def _advance_loc(self, ch):
         if ch == '\n':
             self.loc.newline()
         else:
             self.loc.newchar()
-        return ch
-
-    def peek(self):
-        '''TODO remove in favor of predicate reads'''
-        ch = self.input.read(1)
-        if ch:
-            self.input.seek(self.input.tell() - 1)
-        return ch
 
 class TokenizerError(Exception):
     pass
@@ -123,24 +138,6 @@ class Tokenizer(object):
     def _within(ch, first, last):
         return ord(first) <= ord(ch) <= ord(last)
 
-    def _read_all(self, pred):
-        '''TODO move to TokenizerInput'''
-        string = ''
-        while True:
-            ch = self.input.peek()
-            if pred(ch):
-                string += self.input.read()
-                continue
-            return string
-
-    def _read_until(self, string):
-        '''TODO move to TokenizerInput'''
-        read = ''
-        while True:
-            read += self.input.read()
-            if read.endswith(string):
-                return read
-
     _keywords = ('mo', 'struct', 'enum', 'repeated', 'optional', 'int', 'float', 'string')
 
     _unitokens = {
@@ -164,18 +161,18 @@ class Tokenizer(object):
 
             # SPACE <ignored> ' \t\n'
             if ch == ' ' or ch == '\t' or ch == '\n':
-                self._read_all(lambda ch: ch == ' ' or ch == '\t' or ch == '\n')
+                self.input.read_all(lambda ch: ch == ' ' or ch == '\t' or ch == '\n')
                 continue
 
             # COMMENT <ignored, stored> '//\n' '/**/'
             if ch == '/':
                 ch = self.input.read()
                 if ch == '/':
-                    string = '//' + self._read_all(lambda ch: ch != '\n')
+                    string = '//' + self.input.read_all(lambda ch: ch != '\n')
                     self.comments.append(Token(TokenKind.COMMENT, string, locs=(loc, self._loc)))
                     continue
                 elif ch == '*':
-                    string = '/*' + self._read_until('*/')
+                    string = '/*' + self.input.read_until('*/')
                     self.comments.append(Token(TokenKind.COMMENT, string, locs=(loc, self._loc)))
                     continue
                 else:
@@ -184,7 +181,7 @@ class Tokenizer(object):
             # KEYW [_a-zA-Z]
             # NAME [_a-zA-Z]
             if self._within(ch, 'A', 'Z') or self._within(ch, 'a', 'z') or ch == '_':
-                string = ch + self._read_all(lambda ch: (
+                string = ch + self.input.read_all(lambda ch: (
                     self._within(ch, '0', '9') or
                     self._within(ch, 'A', 'Z') or self._within(ch, 'a', 'z') or ch == '_'
                 ))
@@ -195,7 +192,7 @@ class Tokenizer(object):
 
             # NUMBER [0-9]*
             if self._within(ch, '0', '9'):
-                string = ch + self._read_all(lambda ch: self._within(ch, '0', '9'))
+                string = ch + self.input.read_all(lambda ch: self._within(ch, '0', '9'))
                 return Token(TokenKind.NUMBER, int(string), locs=(loc, self._loc))
 
             # ARROW ->
