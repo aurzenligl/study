@@ -7,23 +7,23 @@ import enum
 
 class Location(object):
     def __init__(self):
-        self.char = 0
+        self.pos = 0
         self.line = 1
         self.col = 0
 
     def clone(self):
         loc = Location()
-        loc.char = self.char
+        loc.pos = self.pos
         loc.line = self.line
         loc.col = self.col
         return loc
 
     def newchar(self):
-        self.char += 1
+        self.pos += 1
         self.col += 1
 
     def newline(self):
-        self.char += 1
+        self.pos += 1
         self.line += 1
         self.col = 0
 
@@ -76,25 +76,25 @@ class Token(object):
 class TokenizerInput(object):
     def __init__(self, input):
         '''TODO preload entire file and use regex'''
-        self.input = input
+        self.input = input.read()
         self.loc = Location()
 
     def read(self):
-        ch = self.input.read(1)
-        self._advance_loc(ch)
-        return ch
+        if self.loc.pos < len(self.input):
+            ch = self.input[self.loc.pos]
+            self._advance_loc(ch)
+            return ch
+        else:
+            return ''
 
     def read_all(self, pred):
-        string = ''
-        while True:
-            ch = self.input.read(1)
-            if pred(ch):
-                string += ch
-                self._advance_loc(ch)
-                continue
-            if ch:
-                self.input.seek(self.input.tell() - 1)
-            return string
+        pos = origpos = self.loc.pos
+        while self.loc.pos < len(self.input):
+            if pred(self.input[self.loc.pos]):
+                self._advance_loc(self.input[self.loc.pos])
+            else:
+                break
+        return self.input[origpos:self.loc.pos]
 
     def read_until(self, string):
         read = ''
