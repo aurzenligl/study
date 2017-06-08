@@ -103,6 +103,10 @@ class Tokenizer(object):
         self.token = Token(TokenKind.END)
         self.comments = []
 
+    @classmethod
+    def from_file(cls, filename):
+        return Tokenizer(open(filename))
+
     def get(self):
         self.token = token = self._get()
         return token

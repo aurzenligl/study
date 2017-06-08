@@ -4,4 +4,5 @@
 #./compile.sh
 
 cd python-melina
-./melina.py example.meta
+#./melina.py example.meta
+pytest -s -v
