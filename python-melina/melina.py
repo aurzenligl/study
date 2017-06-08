@@ -4,6 +4,7 @@ import os
 import sys
 import argparse
 import enum
+import re
 
 class Location(object):
     def __init__(self):
@@ -18,9 +19,9 @@ class Location(object):
         loc.col = self.col
         return loc
 
-    def newchar(self):
-        self.pos += 1
-        self.col += 1
+    def newchar(self, n = 1):
+        self.pos += n
+        self.col += n
 
     def newline(self):
         self.pos += 1
@@ -73,6 +74,9 @@ class Token(object):
             return repr + " %s>" % reprval
         return repr + ">"
 
+_is_name = re.compile(r'[a-zA-Z_][a-zA-Z0-9_]*')
+_is_number = re.compile(r'[1-9][0-9]*')
+
 class TokenizerInput(object):
     def __init__(self, input):
         '''TODO preload entire file and use regex'''
@@ -86,6 +90,13 @@ class TokenizerInput(object):
             return ch
         else:
             return ''
+
+    def read_re(self, re):
+        match = re.match(self.input, self.loc.pos)
+        if match:
+            string = match.group()
+            self.loc.newchar(len(string))
+            return string
 
     def read_all(self, pred):
         pos = origpos = self.loc.pos
@@ -152,6 +163,23 @@ class Tokenizer(object):
         '''TODO syntax sugar location passing'''
 
         while True:
+            loc = self._loc
+            loc.newchar()
+
+            # KEYW [_a-zA-Z]
+            # NAME [_a-zA-Z]
+            string = self.input.read_re(_is_name)
+            if string:
+                if string in self._keywords:
+                    return Token(TokenKind.KEYW, string, locs=(loc, self._loc))
+                else:
+                    return Token(TokenKind.NAME, string, locs=(loc, self._loc))
+
+            # NUMBER [0-9]*
+            string = self.input.read_re(_is_number)
+            if string:
+                return Token(TokenKind.NUMBER, int(string), locs=(loc, self._loc))
+
             ch = self.input.read()
             loc = self._loc
 
@@ -177,23 +205,6 @@ class Tokenizer(object):
                     continue
                 else:
                     raise TokenizerError("character '/' can be used only as part of '//' or '/*' comment opening")
-
-            # KEYW [_a-zA-Z]
-            # NAME [_a-zA-Z]
-            if self._within(ch, 'A', 'Z') or self._within(ch, 'a', 'z') or ch == '_':
-                string = ch + self.input.read_all(lambda ch: (
-                    self._within(ch, '0', '9') or
-                    self._within(ch, 'A', 'Z') or self._within(ch, 'a', 'z') or ch == '_'
-                ))
-                if string in self._keywords:
-                    return Token(TokenKind.KEYW, string, locs=(loc, self._loc))
-                else:
-                    return Token(TokenKind.NAME, string, locs=(loc, self._loc))
-
-            # NUMBER [0-9]*
-            if self._within(ch, '0', '9'):
-                string = ch + self.input.read_all(lambda ch: self._within(ch, '0', '9'))
-                return Token(TokenKind.NUMBER, int(string), locs=(loc, self._loc))
 
             # ARROW ->
             if ch == '-':
