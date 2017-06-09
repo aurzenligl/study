@@ -7,6 +7,8 @@ import enum
 import re
 
 class Location(object):
+    __slots__ = ('pos', 'line', 'col')
+
     def __init__(self):
         self.pos = 0
         self.line = 1
@@ -27,6 +29,16 @@ class Location(object):
         self.pos += 1
         self.line += 1
         self.col = 0
+
+    def progress(self, string):
+        slen = len(string)
+        nlcount = string.count('\n')
+        self.pos += slen
+        self.line += nlcount
+        if nlcount:
+            self.col = slen - string.rfind('\n') - 1
+        else:
+            self.col += slen
 
     def __repr__(self):
         return '%s:%s' % (self.line, self.col)
@@ -76,6 +88,8 @@ class Token(object):
 
 _is_name = re.compile(r'[a-zA-Z_][a-zA-Z0-9_]*')
 _is_number = re.compile(r'[1-9][0-9]*')
+_is_space = re.compile(r'\s*')
+_is_comment = re.compile(r'(//.*\n|/\*(\*(?!/)|[^*])*\*/)')
 
 class TokenizerInput(object):
     def __init__(self, input):
@@ -95,7 +109,8 @@ class TokenizerInput(object):
         match = re.match(self.input, self.loc.pos)
         if match:
             string = match.group()
-            self.loc.newchar(len(string))
+            '''TODO use match.end() to move pos and handle newlines in some clever way'''
+            self.loc.progress(string)
             return string
 
     def read_all(self, pred):
@@ -180,31 +195,23 @@ class Tokenizer(object):
             if string:
                 return Token(TokenKind.NUMBER, int(string), locs=(loc, self._loc))
 
+            # SPACE <ignored> ' \t\n'
+            string = self.input.read_re(_is_space)
+            if string:
+                continue
+
+            # COMMENT <ignored, stored> '//\n' '/**/'
+            string = self.input.read_re(_is_comment)
+            if string:
+                self.comments.append(Token(TokenKind.COMMENT, string, locs=(loc, self._loc)))
+                continue
+
             ch = self.input.read()
             loc = self._loc
 
             # END
             if ch == '':
                 return Token(TokenKind.END)
-
-            # SPACE <ignored> ' \t\n'
-            if ch == ' ' or ch == '\t' or ch == '\n':
-                self.input.read_all(lambda ch: ch == ' ' or ch == '\t' or ch == '\n')
-                continue
-
-            # COMMENT <ignored, stored> '//\n' '/**/'
-            if ch == '/':
-                ch = self.input.read()
-                if ch == '/':
-                    string = '//' + self.input.read_all(lambda ch: ch != '\n')
-                    self.comments.append(Token(TokenKind.COMMENT, string, locs=(loc, self._loc)))
-                    continue
-                elif ch == '*':
-                    string = '/*' + self.input.read_until('*/')
-                    self.comments.append(Token(TokenKind.COMMENT, string, locs=(loc, self._loc)))
-                    continue
-                else:
-                    raise TokenizerError("character '/' can be used only as part of '//' or '/*' comment opening")
 
             # ARROW ->
             if ch == '-':
