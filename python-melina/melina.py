@@ -25,6 +25,11 @@ class Location(object):
         self.pos += n
         self.col += n
 
+    def newline(self):
+        self.pos += 1
+        self.line += 1
+        self.col = 0
+
     def progress(self, string):
         slen = len(string)
         nlcount = string.count('\n')
@@ -113,6 +118,12 @@ class TokenizerInput(object):
             '''TODO use match.end() to move pos and handle newlines in some clever way'''
             self.loc.progress(string)
             return string
+
+    def _advance_loc(self, ch):
+        if ch == '\n':
+            self.loc.newline()
+        else:
+            self.loc.newchar()
 
 class TokenizerError(Exception):
     pass
