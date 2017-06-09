@@ -25,11 +25,6 @@ class Location(object):
         self.pos += n
         self.col += n
 
-    def newline(self):
-        self.pos += 1
-        self.line += 1
-        self.col = 0
-
     def progress(self, string):
         slen = len(string)
         nlcount = string.count('\n')
@@ -119,28 +114,6 @@ class TokenizerInput(object):
             self.loc.progress(string)
             return string
 
-    def read_all(self, pred):
-        pos = origpos = self.loc.pos
-        while self.loc.pos < len(self.input):
-            if pred(self.input[self.loc.pos]):
-                self._advance_loc(self.input[self.loc.pos])
-            else:
-                break
-        return self.input[origpos:self.loc.pos]
-
-    def read_until(self, string):
-        read = ''
-        while True:
-            read += self.read()
-            if read.endswith(string):
-                return read
-
-    def _advance_loc(self, ch):
-        if ch == '\n':
-            self.loc.newline()
-        else:
-            self.loc.newchar()
-
 class TokenizerError(Exception):
     pass
 
@@ -165,10 +138,6 @@ class Tokenizer(object):
     @property
     def _loc(self):
         return self.input.loc.clone()
-
-    @staticmethod
-    def _within(ch, first, last):
-        return ord(first) <= ord(ch) <= ord(last)
 
     _keywords = ('mo', 'struct', 'enum', 'repeated', 'optional', 'int', 'float', 'string')
 
