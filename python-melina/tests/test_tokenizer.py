@@ -228,3 +228,6 @@ class TestExample():
 
     def test_performance(self):
         print timeit.timeit("tokens('longexample.meta')", "from %s import tokens" % __name__, number=1)
+
+if __name__ == '__main__':
+    tokens('longexample.meta')
