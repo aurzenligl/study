@@ -88,11 +88,13 @@ class Token(object):
             return repr + " %s>" % reprval
         return repr + ">"
 
-_is_name = re.compile(r'[a-zA-Z_][a-zA-Z0-9_]*')
-_is_number = re.compile(r'[1-9][0-9]*')
-_is_space = re.compile(r'\s*')
-_is_comment = re.compile(r'(//.*\n|/\*(\*(?!/)|[^*])*\*/)')
-_is_operator = re.compile(r'(->)|[{};,=]')
+_mega_is = re.compile('|'.join((
+    r'(?P<name>[a-zA-Z_][a-zA-Z0-9_]*)',
+    r'(?P<number>[1-9][0-9]*)',
+    r'(?P<space>\s+)',
+    r'(?P<comment>(//.*\n|/\*(\*(?!/)|[^*])*\*/))',
+    r'(?P<operator>(->)|[{};,=])',
+)))
 
 class TokenizerInput(object):
     def __init__(self, input):
@@ -117,7 +119,7 @@ class TokenizerInput(object):
             string = match.group()
             '''TODO use match.end() to move pos and handle newlines in some clever way'''
             self.loc.progress(string)
-            return string
+            return string, match.lastgroup
 
     def _advance_loc(self, ch):
         if ch == '\n':
@@ -168,42 +170,25 @@ class Tokenizer(object):
             loc = self._loc
             loc.newchar()
 
-            # KEYW [_a-zA-Z]
-            # NAME [_a-zA-Z]
-            string = self.input.read_re(_is_name)
-            if string:
-                if string in self._keywords:
-                    return Token(TokenKind.KEYW, string, locs=(loc, self._loc))
-                else:
-                    return Token(TokenKind.NAME, string, locs=(loc, self._loc))
+            pack = self.input.read_re(_mega_is)
+            if pack:
+                string, group = pack
+                if group == 'name':
+                    if string in self._keywords:
+                        return Token(TokenKind.KEYW, string, locs=(loc, self._loc))
+                    else:
+                        return Token(TokenKind.NAME, string, locs=(loc, self._loc))
+                elif group == 'number':
+                    return Token(TokenKind.NUMBER, int(string), locs=(loc, self._loc))
+                elif group == 'space':
+                    continue
+                elif group == 'comment':
+                    self.comments.append(Token(TokenKind.COMMENT, string, locs=(loc, self._loc)))
+                    continue
+                elif group == 'operator':
+                    return Token(self._operators[string], locs=(loc, self._loc))
+                assert False, "o-oh, we shouldn't end up here"
 
-            # NUMBER [0-9]*
-            string = self.input.read_re(_is_number)
-            if string:
-                return Token(TokenKind.NUMBER, int(string), locs=(loc, self._loc))
-
-            # SPACE <ignored> ' \t\n'
-            string = self.input.read_re(_is_space)
-            if string:
-                continue
-
-            # COMMENT <ignored, stored> '//\n' '/**/'
-            string = self.input.read_re(_is_comment)
-            if string:
-                self.comments.append(Token(TokenKind.COMMENT, string, locs=(loc, self._loc)))
-                continue
-
-            # ARROW ->
-            # LCB {
-            # RCB }
-            # SEMI ;
-            # COMMA ,
-            # ASSIGN =
-            string = self.input.read_re(_is_operator)
-            if string:
-                return Token(self._operators[string], locs=(loc, self._loc))
-
-            # END
             if self.input.is_end():
                 return Token(TokenKind.END)
 
