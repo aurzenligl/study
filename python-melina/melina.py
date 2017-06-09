@@ -90,12 +90,23 @@ _is_name = re.compile(r'[a-zA-Z_][a-zA-Z0-9_]*')
 _is_number = re.compile(r'[1-9][0-9]*')
 _is_space = re.compile(r'\s*')
 _is_comment = re.compile(r'(//.*\n|/\*(\*(?!/)|[^*])*\*/)')
+_is_operator = re.compile('|'.join((
+    r'(?P<arrow>->)',
+    r'(?P<lcb>{)',
+    r'(?P<rcb>})',
+    r'(?P<semi>;)',
+    r'(?P<comma>,)',
+    r'(?P<assign>=)'
+)))
 
 class TokenizerInput(object):
     def __init__(self, input):
         '''TODO preload entire file and use regex'''
         self.input = input.read()
         self.loc = Location()
+
+    def is_end(self):
+        return self.loc.pos == len(self.input)
 
     def read(self):
         if self.loc.pos < len(self.input):
@@ -112,6 +123,14 @@ class TokenizerInput(object):
             '''TODO use match.end() to move pos and handle newlines in some clever way'''
             self.loc.progress(string)
             return string
+
+    def read_re_group(self, re):
+        match = re.match(self.input, self.loc.pos)
+        if match:
+            string = match.group()
+            '''TODO use match.end() to move pos and handle newlines in some clever way'''
+            self.loc.progress(string)
+            return string, match.lastgroup
 
     def read_all(self, pred):
         pos = origpos = self.loc.pos
@@ -174,6 +193,15 @@ class Tokenizer(object):
         '=': TokenKind.ASSIGN,
     }
 
+    _operators = {
+        'arrow': TokenKind.ARROW,
+        'lcb': TokenKind.LCB,
+        'rcb': TokenKind.RCB,
+        'semi': TokenKind.SEMI,
+        'comma': TokenKind.COMMA,
+        'assign': TokenKind.ASSIGN,
+    }
+
     def _get(self):
         '''TODO syntax sugar location passing'''
 
@@ -206,30 +234,22 @@ class Tokenizer(object):
                 self.comments.append(Token(TokenKind.COMMENT, string, locs=(loc, self._loc)))
                 continue
 
-            ch = self.input.read()
-            loc = self._loc
-
-            # END
-            if ch == '':
-                return Token(TokenKind.END)
-
             # ARROW ->
-            if ch == '-':
-                ch = self.input.read()
-                if ch == '>':
-                    return Token(TokenKind.ARROW, locs=(loc, self._loc))
-                else:
-                    raise TokenizerError("character '-' can be used only as part of arrow operator '->'")
-
             # LCB {
             # RCB }
             # SEMI ;
             # COMMA ,
             # ASSIGN =
-            kind = self._unitokens.get(ch)
-            if kind:
-                return Token(kind, locs=(loc, self._loc))
+            pack = self.input.read_re_group(_is_operator)
+            if pack:
+                string, group = pack
+                return Token(self._operators[group], locs=(loc, self._loc))
 
+            # END
+            if self.input.is_end():
+                return Token(TokenKind.END)
+
+            ch = self.input.read()
             raise TokenizerError("unexpected character: '%s', ord=%s" % (ch, ord(ch)))
 
 class Parser(object):
