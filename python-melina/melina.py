@@ -57,6 +57,8 @@ class TokenKind(enum.Enum):
     END = 10
 
 class Token(object):
+    __slots__ = ('kind', 'value', 'locs')
+
     _repr_vals = {
         TokenKind.LCB: '{',
         TokenKind.RCB: '}',
@@ -90,14 +92,7 @@ _is_name = re.compile(r'[a-zA-Z_][a-zA-Z0-9_]*')
 _is_number = re.compile(r'[1-9][0-9]*')
 _is_space = re.compile(r'\s*')
 _is_comment = re.compile(r'(//.*\n|/\*(\*(?!/)|[^*])*\*/)')
-_is_operator = re.compile('|'.join((
-    r'(?P<arrow>->)',
-    r'(?P<lcb>{)',
-    r'(?P<rcb>})',
-    r'(?P<semi>;)',
-    r'(?P<comma>,)',
-    r'(?P<assign>=)'
-)))
+_is_operator = re.compile(r'(->)|[{};,=]')
 
 class TokenizerInput(object):
     def __init__(self, input):
@@ -123,14 +118,6 @@ class TokenizerInput(object):
             '''TODO use match.end() to move pos and handle newlines in some clever way'''
             self.loc.progress(string)
             return string
-
-    def read_re_group(self, re):
-        match = re.match(self.input, self.loc.pos)
-        if match:
-            string = match.group()
-            '''TODO use match.end() to move pos and handle newlines in some clever way'''
-            self.loc.progress(string)
-            return string, match.lastgroup
 
     def read_all(self, pred):
         pos = origpos = self.loc.pos
@@ -185,21 +172,13 @@ class Tokenizer(object):
 
     _keywords = ('mo', 'struct', 'enum', 'repeated', 'optional', 'int', 'float', 'string')
 
-    _unitokens = {
+    _operators = {
+        '->': TokenKind.ARROW,
         '{': TokenKind.LCB,
         '}': TokenKind.RCB,
         ';': TokenKind.SEMI,
         ',': TokenKind.COMMA,
         '=': TokenKind.ASSIGN,
-    }
-
-    _operators = {
-        'arrow': TokenKind.ARROW,
-        'lcb': TokenKind.LCB,
-        'rcb': TokenKind.RCB,
-        'semi': TokenKind.SEMI,
-        'comma': TokenKind.COMMA,
-        'assign': TokenKind.ASSIGN,
     }
 
     def _get(self):
@@ -240,10 +219,9 @@ class Tokenizer(object):
             # SEMI ;
             # COMMA ,
             # ASSIGN =
-            pack = self.input.read_re_group(_is_operator)
-            if pack:
-                string, group = pack
-                return Token(self._operators[group], locs=(loc, self._loc))
+            string = self.input.read_re(_is_operator)
+            if string:
+                return Token(self._operators[string], locs=(loc, self._loc))
 
             # END
             if self.input.is_end():
