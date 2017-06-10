@@ -15,7 +15,7 @@ def tokens(filename, tuples = False):
 
 def tok2tuple(tok):
     return (
-        tok.locs and '%s-%s' % (tok.locs),
+        tok.span and str(tok.span),
         tok.kind.name,
         tok.value
     )

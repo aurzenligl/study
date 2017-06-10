@@ -14,17 +14,6 @@ class Location(object):
         self.line = 1
         self.col = 0
 
-    def clone(self):
-        loc = Location()
-        loc.pos = self.pos
-        loc.line = self.line
-        loc.col = self.col
-        return loc
-
-    def newchar(self, n = 1):
-        self.pos += n
-        self.col += n
-
     def progress(self, string):
         slen = len(string)
         nlcount = string.count('\n')
@@ -35,8 +24,14 @@ class Location(object):
         else:
             self.col += slen
 
+class Span(object):
+    __slots__ = 'span'
+
+    def __init__(self, span):
+        self.span = span
+
     def __repr__(self):
-        return '%s:%s' % (self.line, self.col)
+        return '%s:%s-%s:%s' % (self.span[0][0], self.span[0][1], self.span[1][0], self.span[1][1])
 
 class TokenKind(enum.Enum):
     KEYW = 0    # mo, struct, enum, repeated, optional, int, float, string
@@ -52,7 +47,7 @@ class TokenKind(enum.Enum):
     END = 10
 
 class Token(object):
-    __slots__ = ('kind', 'value', 'locs')
+    __slots__ = ('kind', 'value', 'span')
 
     _repr_vals = {
         TokenKind.LCB: '{',
@@ -65,14 +60,14 @@ class Token(object):
 
     _repr_direct = (TokenKind.KEYW, TokenKind.NAME, TokenKind.NUMBER, TokenKind.COMMENT)
 
-    def __init__(self, kind, value = None, locs = None):
+    def __init__(self, kind, value = None, span = None):
         self.kind = kind
         self.value = value
-        self.locs = locs
+        self.span = span
 
     def __repr__(self):
         if self.locs:
-            repr = "<Token %s-%s %s" % (self.locs[0], self.locs[1], self.kind.name)
+            repr = "<Token %s %s" % (self.span, self.kind.name)
         else:
             repr = "<Token %s" % self.kind.name
 
@@ -133,7 +128,7 @@ class Tokenizer(object):
 
     @property
     def _loc(self):
-        return self.input.loc.clone()
+        return (self.input.loc.line, self.input.loc.col)
 
     _keywords = ('mo', 'struct', 'enum', 'repeated', 'optional', 'int', 'float', 'string')
 
@@ -150,24 +145,22 @@ class Tokenizer(object):
         '''TODO syntax sugar location passing'''
 
         while True:
-            '''TODO store 2-tuple of 2-tuples as span in token, e.g.: ((4, 56), (4, 60))'''
-            loc = self._loc
-            loc.newchar()
+            loc = (self.input.loc.line, self.input.loc.col + 1)
 
             pack = self.input.read_re(_mega_is)
             if pack:
                 string, group = pack
                 if group == 'name':
                     if string in self._keywords:
-                        return Token(TokenKind.KEYW, string, locs=(loc, self._loc))
+                        return Token(TokenKind.KEYW, string, span=Span((loc, self._loc)))
                     else:
-                        return Token(TokenKind.NAME, string, locs=(loc, self._loc))
+                        return Token(TokenKind.NAME, string, span=Span((loc, self._loc)))
                 elif group == 'number':
-                    return Token(TokenKind.NUMBER, int(string), locs=(loc, self._loc))
+                    return Token(TokenKind.NUMBER, int(string), span=Span((loc, self._loc)))
                 elif group == 'operator':
-                    return Token(self._operators[string], locs=(loc, self._loc))
+                    return Token(self._operators[string], span=Span((loc, self._loc)))
                 elif group == 'comment':
-                    self.comments.append(Token(TokenKind.COMMENT, string, locs=(loc, self._loc)))
+                    self.comments.append(Token(TokenKind.COMMENT, string, span=Span((loc, self._loc))))
                     continue
                 elif group == 'space':
                     continue
