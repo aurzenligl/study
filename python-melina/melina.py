@@ -86,14 +86,13 @@ class Token(object):
 _mega_is = re.compile('|'.join((
     r'(?P<name>[a-zA-Z_][a-zA-Z0-9_]*)',
     r'(?P<number>[1-9][0-9]*)',
-    r'(?P<space>\s+)',
-    r'(?P<comment>(//.*\n|/\*(\*(?!/)|[^*])*\*/))',
     r'(?P<operator>(->)|[{};,=])',
+    r'(?P<comment>(//.*\n|/\*(\*(?!/)|[^*])*\*/))',
+    r'(?P<space>\s+)',
 )))
 
 class TokenizerInput(object):
     def __init__(self, input):
-        '''TODO preload entire file and use regex'''
         self.input = input.read()
         self.loc = Location()
 
@@ -151,6 +150,7 @@ class Tokenizer(object):
         '''TODO syntax sugar location passing'''
 
         while True:
+            '''TODO store 2-tuple of 2-tuples as span in token, e.g.: ((4, 56), (4, 60))'''
             loc = self._loc
             loc.newchar()
 
@@ -164,13 +164,13 @@ class Tokenizer(object):
                         return Token(TokenKind.NAME, string, locs=(loc, self._loc))
                 elif group == 'number':
                     return Token(TokenKind.NUMBER, int(string), locs=(loc, self._loc))
-                elif group == 'space':
-                    continue
+                elif group == 'operator':
+                    return Token(self._operators[string], locs=(loc, self._loc))
                 elif group == 'comment':
                     self.comments.append(Token(TokenKind.COMMENT, string, locs=(loc, self._loc)))
                     continue
-                elif group == 'operator':
-                    return Token(self._operators[string], locs=(loc, self._loc))
+                elif group == 'space':
+                    continue
                 assert False, "o-oh, we shouldn't end up here"
 
             if self.input.is_end():
