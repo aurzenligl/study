@@ -25,11 +25,6 @@ class Location(object):
         self.pos += n
         self.col += n
 
-    def newline(self):
-        self.pos += 1
-        self.line += 1
-        self.col = 0
-
     def progress(self, string):
         slen = len(string)
         nlcount = string.count('\n')
@@ -105,13 +100,8 @@ class TokenizerInput(object):
     def is_end(self):
         return self.loc.pos == len(self.input)
 
-    def read(self):
-        if self.loc.pos < len(self.input):
-            ch = self.input[self.loc.pos]
-            self._advance_loc(ch)
-            return ch
-        else:
-            return ''
+    def peek(self):
+        return not self.is_end() and self.input[self.loc.pos] or ''
 
     def read_re(self, re):
         match = re.match(self.input, self.loc.pos)
@@ -120,12 +110,6 @@ class TokenizerInput(object):
             '''TODO use match.end() to move pos and handle newlines in some clever way'''
             self.loc.progress(string)
             return string, match.lastgroup
-
-    def _advance_loc(self, ch):
-        if ch == '\n':
-            self.loc.newline()
-        else:
-            self.loc.newchar()
 
 class TokenizerError(Exception):
     pass
@@ -192,7 +176,7 @@ class Tokenizer(object):
             if self.input.is_end():
                 return Token(TokenKind.END)
 
-            ch = self.input.read()
+            ch = self.input.peek()
             raise TokenizerError("unexpected character: '%s', ord=%s" % (ch, ord(ch)))
 
 class Parser(object):
