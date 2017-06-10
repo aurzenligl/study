@@ -27,6 +27,8 @@ class Location(object):
 class Span(object):
     __slots__ = ('start_line', 'start_col', 'end_line', 'end_col')
 
+    '''TODO store input and start/end pos, calculate line/col on demand'''
+
     def __init__(self, span):
         self.start_line = span[0][0]
         self.start_col = span[0][1]
