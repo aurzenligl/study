@@ -25,13 +25,16 @@ class Location(object):
             self.col += slen
 
 class Span(object):
-    __slots__ = 'span'
+    __slots__ = ('start_line', 'start_col', 'end_line', 'end_col')
 
     def __init__(self, span):
-        self.span = span
+        self.start_line = span[0][0]
+        self.start_col = span[0][1]
+        self.end_line = span[1][0]
+        self.end_col = span[1][1]
 
     def __repr__(self):
-        return '%s:%s-%s:%s' % (self.span[0][0], self.span[0][1], self.span[1][0], self.span[1][1])
+        return '%s:%s-%s:%s' % (self.start_line, self.start_col, self.end_line, self.end_col)
 
 class TokenKind(enum.Enum):
     KEYW = 0    # mo, struct, enum, repeated, optional, int, float, string
