@@ -6,37 +6,30 @@ import argparse
 import enum
 import re
 
-class Location(object):
-    __slots__ = ('pos', 'line', 'col')
+def _line(text, pos):
+    return text.count('\n', 0, pos) + 1
 
-    def __init__(self):
-        self.pos = 0
-        self.line = 1
-        self.col = 0
-
-    def progress(self, string):
-        slen = len(string)
-        nlcount = string.count('\n')
-        self.pos += slen
-        self.line += nlcount
-        if nlcount:
-            self.col = slen - string.rfind('\n') - 1
-        else:
-            self.col += slen
+def _col(text, pos):
+    return pos - text.rfind('\n', 0, pos)
 
 class Span(object):
-    __slots__ = ('start_line', 'start_col', 'end_line', 'end_col')
+    __slots__ = ('input', 'start', 'end')
 
-    '''TODO store input and start/end pos, calculate line/col on demand'''
+    def __init__(self, input, start, end):
+        self.input = input
+        self.start = start
+        self.end = end
 
-    def __init__(self, span):
-        self.start_line = span[0][0]
-        self.start_col = span[0][1]
-        self.end_line = span[1][0]
-        self.end_col = span[1][1]
+    @property
+    def start_linecol(self):
+        return (_line(self.input, self.start), _col(self.input, self.start))
+
+    @property
+    def end_linecol(self):
+        return (_line(self.input, self.end), _col(self.input, self.end))
 
     def __repr__(self):
-        return '%s:%s-%s:%s' % (self.start_line, self.start_col, self.end_line, self.end_col)
+        return '%s:%s-%s:%s' % (self.start_linecol + self.end_linecol)
 
 class TokenKind(enum.Enum):
     KEYW = 0    # mo, struct, enum, repeated, optional, int, float, string
@@ -97,7 +90,7 @@ class TokenizerError(Exception):
 class Tokenizer(object):
     def __init__(self, input):
         self.input = input.read()
-        self.loc = Location()
+        self.pos = 0
         self.token = Token(TokenKind.END)
         self.comments = []
 
@@ -113,10 +106,6 @@ class Tokenizer(object):
     def cur(self):
         return self.token
 
-    @property
-    def _loc(self):
-        return (self.loc.line, self.loc.col)
-
     _keywords = ('mo', 'struct', 'enum', 'repeated', 'optional', 'int', 'float', 'string')
 
     _operators = {
@@ -129,42 +118,42 @@ class Tokenizer(object):
     }
 
     def _get(self):
-        '''TODO syntax sugar location passing'''
+        '''TODO dispatch groups via indexing instead of if-else'''
 
         while True:
-            loc = (self.loc.line, self.loc.col + 1)
-
+            start = self.pos
             pack = self._read_re(_mega_is)
             if pack:
+                span = Span(self.input, start, self.pos - 1)
                 string, group = pack
                 if group == 'name':
                     if string in self._keywords:
-                        return Token(TokenKind.KEYW, string, span=Span((loc, self._loc)))
+                        return Token(TokenKind.KEYW, string, span=span)
                     else:
-                        return Token(TokenKind.NAME, string, span=Span((loc, self._loc)))
+                        return Token(TokenKind.NAME, string, span=span)
                 elif group == 'number':
-                    return Token(TokenKind.NUMBER, int(string), span=Span((loc, self._loc)))
+                    return Token(TokenKind.NUMBER, int(string), span=span)
                 elif group == 'operator':
-                    return Token(self._operators[string], span=Span((loc, self._loc)))
+                    return Token(self._operators[string], span=span)
                 elif group == 'comment':
-                    self.comments.append(Token(TokenKind.COMMENT, string, span=Span((loc, self._loc))))
+                    self.comments.append(Token(TokenKind.COMMENT, string, span=span))
                     continue
                 elif group == 'space':
                     continue
                 assert False, "o-oh, we shouldn't end up here"
 
-            if self.loc.pos == len(self.input):
+            if self.pos == len(self.input):
                 return Token(TokenKind.END)
             else:
-                ch = self.input[self.loc.pos]
+                ch = self.input[self.pos]
                 raise TokenizerError("unexpected character: '%s', ord=%s" % (ch, ord(ch)))
 
     def _read_re(self, re):
-        match = re.match(self.input, self.loc.pos)
+        match = re.match(self.input, self.pos)
         if match:
             string = match.group()
             '''TODO use match.end() to move pos and handle newlines in some clever way'''
-            self.loc.progress(string)
+            self.pos += len(string)
             return string, match.lastgroup
 
 class Parser(object):
