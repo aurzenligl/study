@@ -91,31 +91,13 @@ _mega_is = re.compile('|'.join((
     r'(?P<space>\s+)',
 )))
 
-class TokenizerInput(object):
-    def __init__(self, input):
-        self.input = input.read()
-        self.loc = Location()
-
-    def is_end(self):
-        return self.loc.pos == len(self.input)
-
-    def peek(self):
-        return not self.is_end() and self.input[self.loc.pos] or ''
-
-    def read_re(self, re):
-        match = re.match(self.input, self.loc.pos)
-        if match:
-            string = match.group()
-            '''TODO use match.end() to move pos and handle newlines in some clever way'''
-            self.loc.progress(string)
-            return string, match.lastgroup
-
 class TokenizerError(Exception):
     pass
 
 class Tokenizer(object):
     def __init__(self, input):
-        self.input = TokenizerInput(input)
+        self.input = input.read()
+        self.loc = Location()
         self.token = Token(TokenKind.END)
         self.comments = []
 
@@ -133,7 +115,7 @@ class Tokenizer(object):
 
     @property
     def _loc(self):
-        return (self.input.loc.line, self.input.loc.col)
+        return (self.loc.line, self.loc.col)
 
     _keywords = ('mo', 'struct', 'enum', 'repeated', 'optional', 'int', 'float', 'string')
 
@@ -150,9 +132,9 @@ class Tokenizer(object):
         '''TODO syntax sugar location passing'''
 
         while True:
-            loc = (self.input.loc.line, self.input.loc.col + 1)
+            loc = (self.loc.line, self.loc.col + 1)
 
-            pack = self.input.read_re(_mega_is)
+            pack = self._read_re(_mega_is)
             if pack:
                 string, group = pack
                 if group == 'name':
@@ -171,11 +153,19 @@ class Tokenizer(object):
                     continue
                 assert False, "o-oh, we shouldn't end up here"
 
-            if self.input.is_end():
+            if self.loc.pos == len(self.input):
                 return Token(TokenKind.END)
+            else:
+                ch = self.input[self.loc.pos]
+                raise TokenizerError("unexpected character: '%s', ord=%s" % (ch, ord(ch)))
 
-            ch = self.input.peek()
-            raise TokenizerError("unexpected character: '%s', ord=%s" % (ch, ord(ch)))
+    def _read_re(self, re):
+        match = re.match(self.input, self.loc.pos)
+        if match:
+            string = match.group()
+            '''TODO use match.end() to move pos and handle newlines in some clever way'''
+            self.loc.progress(string)
+            return string, match.lastgroup
 
 class Parser(object):
     '''
