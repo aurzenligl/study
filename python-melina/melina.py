@@ -64,7 +64,7 @@ class Token(object):
         self.span = span
 
     def __repr__(self):
-        if self.locs:
+        if self.span:
             repr = "<Token %s %s" % (self.span, self.kind.name)
         else:
             repr = "<Token %s" % self.kind.name
@@ -75,14 +75,6 @@ class Token(object):
         if reprval:
             return repr + " %s>" % reprval
         return repr + ">"
-
-_mega_is = re.compile('|'.join((
-    r'(?P<name>[a-zA-Z_][a-zA-Z0-9_]*)',
-    r'(?P<number>[1-9][0-9]*)',
-    r'(?P<operator>(->)|[{};,=])',
-    r'(?P<comment>(//.*\n|/\*(\*(?!/)|[^*])*\*/))',
-    r'(?P<space>\s+)',
-)))
 
 class TokenizerError(Exception):
     pass
@@ -106,6 +98,14 @@ class Tokenizer(object):
     def cur(self):
         return self.token
 
+    _sre = re.compile('|'.join((
+        r'(?P<name>[a-zA-Z_][a-zA-Z0-9_]*)',
+        r'(?P<number>[1-9][0-9]*)',
+        r'(?P<operator>(->)|[{};,=])',
+        r'(?P<comment>(//.*\n|/\*(\*(?!/)|[^*])*\*/))',
+        r'(?P<space>\s+)',
+    )))
+
     _keywords = ('mo', 'struct', 'enum', 'repeated', 'optional', 'int', 'float', 'string')
 
     _operators = {
@@ -118,11 +118,9 @@ class Tokenizer(object):
     }
 
     def _get(self):
-        '''TODO dispatch groups via indexing instead of if-else'''
-
         while True:
             start = self.pos
-            pack = self._read_re(_mega_is)
+            pack = self._read_raw()
             if pack:
                 span = Span(self.input, start, self.pos - 1)
                 string, group = pack
@@ -148,13 +146,11 @@ class Tokenizer(object):
                 ch = self.input[self.pos]
                 raise TokenizerError("unexpected character: '%s', ord=%s" % (ch, ord(ch)))
 
-    def _read_re(self, re):
-        match = re.match(self.input, self.pos)
+    def _read_raw(self):
+        match = self._sre.match(self.input, self.pos)
         if match:
-            string = match.group()
-            '''TODO use match.end() to move pos and handle newlines in some clever way'''
-            self.pos += len(string)
-            return string, match.lastgroup
+            self.pos = match.end()
+            return match.group(), match.lastgroup
 
 class Parser(object):
     '''
