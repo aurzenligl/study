@@ -45,6 +45,8 @@ class TokenKind(enum.Enum):
     END = 10
 
 class Token(object):
+    '''TODO __eq__ for tuple (kind, value)'''
+
     __slots__ = ('kind', 'value', 'span')
 
     _repr_vals = {
@@ -81,14 +83,14 @@ class TokenizerError(Exception):
 
 class Tokenizer(object):
     def __init__(self, input):
-        self.input = input.read()
+        self.input = input
         self.pos = 0
         self.token = Token(TokenKind.END)
         self.comments = []
 
     @classmethod
     def from_file(cls, filename):
-        return Tokenizer(open(filename))
+        return Tokenizer(open(filename).read())
 
     def get(self):
         self.token = token = self._get()
@@ -152,6 +154,9 @@ class Tokenizer(object):
             self.pos = match.end()
             return match.group(), match.lastgroup
 
+class ParserError(Exception):
+    pass
+
 class Parser(object):
     '''
     specification:
@@ -166,11 +171,11 @@ class Parser(object):
         mo_head { field_list } ;
 
     mo_head:
-        MO name -> mo_children_list
+        MO name -> mo_children
         MO name
 
-    mo_children_list:
-        name , mo_children_list
+    mo_children:
+        name , mo_children
         name
 
     field_list:
@@ -212,6 +217,130 @@ class Parser(object):
         FLOAT
         STRING
     '''
+
+    def __init__(self, input):
+        self.ts = Tokenizer(input)
+
+    @classmethod
+    def from_file(cls, filename):
+        return cls(open(filename).read())
+
+    def parse(self):
+        ts = self.ts
+
+        mos = []
+        while True:
+            ts.get()
+            if ts.cur.kind == TokenKind.END:
+                break
+            mos.append(self.mo())
+
+        return TranslationUnit(mos)
+
+    def mo(self):
+        ts = self.ts
+        if ts.cur != (TokenKind.KEYW, 'mo'):
+            raise ParserError('expected mo keyword, but got none')
+
+        ts.get()
+        if ts.cur.kind != TokenKind.NAME:
+            raise ParserError('expected mo name, but got none')
+
+        name = ts.cur.value
+        children = []
+        fields = []
+
+        ts.get()
+        if ts.cur.kind == TokenKind.ARROW:
+            children = self.mo_children()
+
+        if ts.cur.kind != TokenKind.LCB:
+            raise ParserError('expected mo definition, but got none')
+
+        while True:
+            ts.get()
+            if ts.cur.kind == TokenKind.RCB:
+                break
+            fields.append(self.field())
+
+        return Mo(name, children, fields)
+
+    def mo_children(self):
+        pass
+        '''TODO implement'''
+
+    def field(self):
+        ts = self.ts
+
+        cardinality = 'required'
+        if ts.cur == (TokenKind.KEYW, 'repeated'):
+            cardinality = 'repeated'
+            ts.get()
+        elif ts.cur == (TokenKind.KEYW, 'optional'):
+            cardinality = 'optional'
+            ts.get()
+
+        if ts.cur == (TokenKind.KEYW, 'struct'):
+            type_ = self.struct()
+            name = type_.name
+        elif ts.cur == (TokenKind.KEYW, 'enum'):
+            type_ = self.enum()
+            name = type_.name
+        elif ts.cur == (TokenKind.KEYW, 'scalar'):
+            type_, name = self.scalar()
+
+        return Field(name, cardinality, type_)
+
+    def struct(self):
+        pass
+        '''TODO implement'''
+
+    def enum(self):
+        pass
+        '''TODO implement'''
+
+    def scalar(self):
+        pass
+        '''TODO implement'''
+
+'''
+Mo
+    name
+    children
+    fields (Struct, Enum, Scalar)
+Field
+    name
+    cardinality
+    type
+Struct
+    name
+    fields (...)
+Enum
+    name
+    enumerators (...)
+Int
+Float
+'''
+
+class TranslationUnit(object):
+    pass
+    '''TODO implement'''
+
+class Mo(object):
+    pass
+    '''TODO implement'''
+
+class Field(object):
+    pass
+    '''TODO implement'''
+
+class Struct(object):
+    pass
+    '''TODO implement'''
+
+class Enum(object):
+    pass
+    '''TODO implement'''
 
 def parse_options():
     def readable_file(name):
