@@ -203,6 +203,7 @@ class Parser(object):
 
     enumerator_list:
         enumerator , enumerator_list
+        enumerator ,
         enumerator
 
     enumerator:
@@ -240,7 +241,7 @@ class Parser(object):
     def mo(self):
         ts = self.ts
         if ts.cur != (TokenKind.KEYW, 'mo'):
-            raise ParserError('expected mo keyword, but got none')
+            raise ParserError('expected keyword "mo", but got none')
 
         ts.get()
         if ts.cur.kind != TokenKind.NAME:
@@ -252,7 +253,7 @@ class Parser(object):
 
         ts.get()
         if ts.cur.kind == TokenKind.ARROW:
-            children = self.mo_children()
+            children = self.mo_child_list()
 
         if ts.cur.kind != TokenKind.LCB:
             raise ParserError('expected mo definition, but got none')
@@ -265,9 +266,25 @@ class Parser(object):
 
         return Mo(name, children, fields)
 
-    def mo_children(self):
-        pass
-        '''TODO implement'''
+    def mo_child_list(self):
+        ts = self.ts
+
+        ts.get()
+        if ts.cur.kind != TokenKind.NAME:
+            raise ParserError('expected mo child name, but got none')
+        children = [ts.cur.value]
+
+        while True:
+            ts.get()
+            if ts.cur.kind != TokenKind.COMMA:
+                break
+
+            ts.get()
+            if ts.cur.kind != TokenKind.NAME:
+                raise ParserError('expected mo child name, but got none')
+            children.append(ts.cur.value)
+
+        return children
 
     def field(self):
         ts = self.ts
@@ -280,28 +297,127 @@ class Parser(object):
             cardinality = 'optional'
             ts.get()
 
+        if not (ts.cur.kind == TokenKind.KEYW and ts.cur.value in ('struct', 'enum', 'int', 'float', 'string')):
+            raise ParserError('expected "struct", "enum" or type name "int", "float", "string", but got none')
+
         if ts.cur == (TokenKind.KEYW, 'struct'):
             type_ = self.struct()
             name = type_.name
         elif ts.cur == (TokenKind.KEYW, 'enum'):
             type_ = self.enum()
             name = type_.name
-        elif ts.cur == (TokenKind.KEYW, 'scalar'):
+        else:
             type_, name = self.scalar()
 
         return Field(name, cardinality, type_)
 
     def struct(self):
-        pass
-        '''TODO implement'''
+        ts = self.ts
+
+        if ts.cur != (TokenKind.KEYW, 'struct'):
+            raise ParserError('expected keyword "struct", but got none')
+
+        ts.get()
+        if ts.cur.kind != TokenKind.NAME:
+            raise ParserError('expected struct name, but got none')
+
+        name = ts.cur.value
+        fields = []
+
+        ts.get()
+        if ts.cur.kind != TokenKind.LCB:
+            raise ParserError('expected struct definition, but got none')
+
+        while True:
+            ts.get()
+            if ts.cur.kind == TokenKind.RCB:
+                break
+            fields.append(self.field())
+
+        ts.get()
+        if ts.cur.kind != TokenKind.SEMI:
+            raise ParserError('expected semicolon closing struct definition, but got none')
+
+        return Struct(name, fields)
 
     def enum(self):
-        pass
-        '''TODO implement'''
+        ts = self.ts
+
+        if ts.cur != (TokenKind.KEYW, 'enum'):
+            raise ParserError('expected keyword "enum", but got none')
+
+        ts.get()
+        if ts.cur.kind != TokenKind.NAME:
+            raise ParserError('expected enum name, but got none')
+
+        ts.get()
+        if ts.cur.kind != TokenKind.LCB:
+            raise ParserError('expected enum definition, but got none')
+
+        name = ts.cur.value
+        enumerators = self.enumerator_list()
+
+        if ts.cur.kind != TokenKind.RCB:
+            raise ParserError('expected enum definition, but got none')
+
+        ts.get()
+        if ts.cur.kind != TokenKind.SEMI:
+            raise ParserError('expected semicolon closing enum definition, but got none')
+
+        return Enum(name, enumerators)
+
+    def enumerator_list(self):
+        ts = self.ts
+
+        enumerators = []
+        value = 0
+
+        while True:
+            ts.get()
+            if ts.cur.kind != TokenKind.NAME:
+                break
+
+            name = ts.cur.value
+
+            ts.get()
+            if ts.cur.kind == TokenKind.ASSIGN:
+                ts.get()
+                if ts.cur.kind != TokenKind.NUMBER:
+                    raise ParserError('expected enumerator value, but got none')
+                value = ts.cur.value
+                ts.get()
+
+            enumerators.append(Enumerator(name, value))
+            value += 1
+
+            if ts.cur.kind != TokenKind.COMMA:
+                break
+
+        return enumerators
 
     def scalar(self):
-        pass
-        '''TODO implement'''
+        ts = self.ts
+
+        if ts.cur == (TokenKind.KEYW, 'int'):
+            type_ = Int()
+        elif ts.cur == (TokenKind.KEYW, 'float'):
+            type_ = Float()
+        elif ts.cur == (TokenKind.KEYW, 'string'):
+            type_ = String()
+        else:
+            raise ParserError('expected type name "int", "float", "string", but got none')
+
+        ts.get()
+        if ts.cur.kind != TokenKind.NAME:
+            raise ParserError('expected field name, but got none')
+
+        name = ts.cur.value
+
+        ts.get()
+        if ts.cur.kind != TokenKind.SEMI:
+            raise ParserError('expected semicolon closing field definition, but got none')
+
+        return type_, name
 
 '''
 Mo
@@ -320,6 +436,7 @@ Enum
     enumerators (...)
 Int
 Float
+String
 '''
 
 class TranslationUnit(object):
@@ -341,6 +458,19 @@ class Struct(object):
 class Enum(object):
     pass
     '''TODO implement'''
+
+class Enumerator(object):
+    pass
+    '''TODO implement'''
+
+class Int(object):
+    pass
+
+class Float(object):
+    pass
+
+class String(object):
+    pass
 
 def parse_options():
     def readable_file(name):
