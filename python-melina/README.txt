@@ -1,3 +1,56 @@
+meta recursive-descent parser
+----------------------------------------------------------------------
+
+1. [meta -> tu] parser meliny
+    - use on examples / test
+    - design and implement syntax spec definitions
+    - move comments from Tokenizer to Parser
+    - handle errors
+2. [xml -> tu]
+    - rozpoznaj język po rozszerzeniu
+    - opcja cmdlinowa + --xml --meta
+3. [tu -> xml] generator meliny
+    - generuj xml
+4. [tu -> meta]
+5. [tu -> proto]
+6. [tu -> hpp/cpp]
+
+[parsers/generators]
+parsers
+    meta
+    xml
+generators
+    meta
+    xml
+    proto
+    hpp/cpp
+
+[value sets]
+optional int(0..17) mac;  // comment
+
+[compiler errors]
+dupa.meta:12:23: expected comma, got xx instead:
+mo MACHINE -> a xx, v, c, d
+                ^^
+
+[prepare ast]
+Mo
+    name
+    children
+    fields (Struct, Enum, Scalar)
+Field
+    name
+    qual
+    type
+Struct
+    name
+    fields (...)
+Enum
+    name
+    enumerators (...)
+Int
+Float
+
 grammar
 ----------------------------------------------------------------------
 
