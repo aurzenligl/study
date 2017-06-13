@@ -1,7 +1,7 @@
 meta recursive-descent parser
 ----------------------------------------------------------------------
 
-1. [meta -> tu] parser meliny
+1. [meta -> tu]
     - use on examples / test
     - design and implement syntax spec definitions
     - move comments from Tokenizer to Parser
@@ -9,11 +9,18 @@ meta recursive-descent parser
 2. [xml -> tu]
     - rozpoznaj język po rozszerzeniu
     - opcja cmdlinowa + --xml --meta
-3. [tu -> xml] generator meliny
-    - generuj xml
-4. [tu -> meta]
-5. [tu -> proto]
-6. [tu -> hpp/cpp]
+3. [meta -> tu]
+    - extended parser with all xml features
+4. [tu -> xml]
+5. [tu -> meta]
+6. [tu -> proto]
+7. [tu -> hpp/cpp]
+
+[melina cmdline]
+melina --proto-out=. dupa.xml
+melina --cpp-out=.  dupa.meta
+melina --meta-out=. dupa.xml
+melina --xml-out=. dupa.xml
 
 [parsers/generators]
 parsers
