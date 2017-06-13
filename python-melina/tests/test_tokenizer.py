@@ -20,7 +20,7 @@ def tok2tuple(tok):
         tok.value
     )
 
-class TestExample():
+class TestTokenizer():
     def test_configure(self):
         toks = tokens('configure.meta', tuples=True)
         assert toks == [
