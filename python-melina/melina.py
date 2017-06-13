@@ -65,6 +65,10 @@ class Token(object):
         self.value = value
         self.span = span
 
+    @property
+    def pair(self):
+        return (self.kind, self.value)
+
     def __repr__(self):
         if self.span:
             repr = "<Token %s %s" % (self.span, self.kind.name)
@@ -240,7 +244,7 @@ class Parser(object):
 
     def mo(self):
         ts = self.ts
-        if ts.cur != (TokenKind.KEYW, 'mo'):
+        if ts.cur.pair != (TokenKind.KEYW, 'mo'):
             raise ParserError('expected keyword "mo", but got none')
 
         ts.get()
@@ -264,7 +268,11 @@ class Parser(object):
                 break
             fields.append(self.field())
 
-        return Mo(name, children, fields)
+        ts.get()
+        if ts.cur.kind != TokenKind.SEMI:
+            raise ParserError('expected semicolon after mo definition, but got none')
+
+        return Mo(name, fields, children)
 
     def mo_child_list(self):
         ts = self.ts
@@ -290,31 +298,31 @@ class Parser(object):
         ts = self.ts
 
         cardinality = 'required'
-        if ts.cur == (TokenKind.KEYW, 'repeated'):
+        if ts.cur.pair == (TokenKind.KEYW, 'repeated'):
             cardinality = 'repeated'
             ts.get()
-        elif ts.cur == (TokenKind.KEYW, 'optional'):
+        elif ts.cur.pair == (TokenKind.KEYW, 'optional'):
             cardinality = 'optional'
             ts.get()
 
         if not (ts.cur.kind == TokenKind.KEYW and ts.cur.value in ('struct', 'enum', 'int', 'float', 'string')):
             raise ParserError('expected "struct", "enum" or type name "int", "float", "string", but got none')
 
-        if ts.cur == (TokenKind.KEYW, 'struct'):
+        if ts.cur.pair == (TokenKind.KEYW, 'struct'):
             type_ = self.struct()
             name = type_.name
-        elif ts.cur == (TokenKind.KEYW, 'enum'):
+        elif ts.cur.pair == (TokenKind.KEYW, 'enum'):
             type_ = self.enum()
             name = type_.name
         else:
             type_, name = self.scalar()
 
-        return Field(name, cardinality, type_)
+        return Field(name, type_, cardinality)
 
     def struct(self):
         ts = self.ts
 
-        if ts.cur != (TokenKind.KEYW, 'struct'):
+        if ts.cur.pair != (TokenKind.KEYW, 'struct'):
             raise ParserError('expected keyword "struct", but got none')
 
         ts.get()
@@ -336,25 +344,26 @@ class Parser(object):
 
         ts.get()
         if ts.cur.kind != TokenKind.SEMI:
-            raise ParserError('expected semicolon closing struct definition, but got none')
+            raise ParserError('expected semicolon after struct definition, but got none')
 
         return Struct(name, fields)
 
     def enum(self):
         ts = self.ts
 
-        if ts.cur != (TokenKind.KEYW, 'enum'):
+        if ts.cur.pair != (TokenKind.KEYW, 'enum'):
             raise ParserError('expected keyword "enum", but got none')
 
         ts.get()
         if ts.cur.kind != TokenKind.NAME:
             raise ParserError('expected enum name, but got none')
 
+        name = ts.cur.value
+
         ts.get()
         if ts.cur.kind != TokenKind.LCB:
             raise ParserError('expected enum definition, but got none')
 
-        name = ts.cur.value
         enumerators = self.enumerator_list()
 
         if ts.cur.kind != TokenKind.RCB:
@@ -362,7 +371,7 @@ class Parser(object):
 
         ts.get()
         if ts.cur.kind != TokenKind.SEMI:
-            raise ParserError('expected semicolon closing enum definition, but got none')
+            raise ParserError('expected semicolon after enum definition, but got none')
 
         return Enum(name, enumerators)
 
@@ -398,11 +407,11 @@ class Parser(object):
     def scalar(self):
         ts = self.ts
 
-        if ts.cur == (TokenKind.KEYW, 'int'):
+        if ts.cur.pair == (TokenKind.KEYW, 'int'):
             type_ = Int()
-        elif ts.cur == (TokenKind.KEYW, 'float'):
+        elif ts.cur.pair == (TokenKind.KEYW, 'float'):
             type_ = Float()
-        elif ts.cur == (TokenKind.KEYW, 'string'):
+        elif ts.cur.pair == (TokenKind.KEYW, 'string'):
             type_ = String()
         else:
             raise ParserError('expected type name "int", "float", "string", but got none')
@@ -439,37 +448,103 @@ Float
 String
 '''
 
+def _indent(text, value):
+    return ''.join((' ' * value + line + '\n' for line in text.splitlines()))
+
 class TranslationUnit(object):
-    pass
-    '''TODO implement'''
+    def __init__(self, mos):
+        self.mos = mos
+
+    def __repr__(self):
+        return '<TranslationUnit with %s mos>' % len(self.mos)
+
+    def __str__(self):
+        return ''.join((str(mo) for mo in self.mos))
 
 class Mo(object):
-    pass
-    '''TODO implement'''
+    def __init__(self, name, fields, children):
+        self.name = name
+        self.fields = fields
+        self.children = children
+
+    def __repr__(self):
+        return '<Mo %s>' % self.name
+
+    def __str__(self):
+        return (
+            'mo %s\n' % self.name +
+            _indent(''.join((str(field) for field in self.fields)), 4)
+        )
 
 class Field(object):
-    pass
-    '''TODO implement'''
+    def __init__(self, name, type_, cardinality):
+        self.name = name
+        self.type = type_
+        self.cardinality = cardinality
+
+    def __repr__(self):
+        return '<Field %s>' % self.name
+
+    def __str__(self):
+        if isinstance(self.type, Scalar):
+            return '%s %s %s\n' % (self.cardinality, self.type, self.name)
+        else:
+            return '%s %s' % (self.cardinality, self.type)
 
 class Struct(object):
-    pass
-    '''TODO implement'''
+    def __init__(self, name, fields):
+        self.name = name
+        self.fields = fields
+
+    def __repr__(self):
+        return '<Struct %s>' % self.name
+
+    def __str__(self):
+        return (
+            'struct %s\n' % self.name +
+            _indent(''.join((str(field) for field in self.fields)), 4)
+        )
 
 class Enum(object):
-    pass
-    '''TODO implement'''
+    def __init__(self, name, enumerators):
+        self.name = name
+        self.enumerators = enumerators
+
+    def __repr__(self):
+        return '<Enum %s>' % self.name
+
+    def __str__(self):
+        return (
+            'enum %s\n' % self.name +
+            _indent(''.join((str(enumer) for enumer in self.enumerators)), 4)
+        )
 
 class Enumerator(object):
-    pass
-    '''TODO implement'''
+    def __init__(self, name, value):
+        self.name = name
+        self.value = value
 
-class Int(object):
+    def __repr__(self):
+        return '<Enumerator %s>' % self.name
+
+    def __str__(self):
+        return '%s = %s\n' % (self.name, self.value)
+
+class Scalar(object):
+
+    def __repr__(self):
+        return '<%s>' % self.__class__.__name__
+
+    def __str__(self):
+        return '%s' % self.__class__.__name__
+
+class Int(Scalar):
     pass
 
-class Float(object):
+class Float(Scalar):
     pass
 
-class String(object):
+class String(Scalar):
     pass
 
 def parse_options():
