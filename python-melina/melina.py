@@ -547,6 +547,45 @@ class Float(Scalar):
 class String(Scalar):
     pass
 
+class Generator(object):
+    def __init__(self, tu):
+        self.tu = tu
+
+    def to_file(self, filename):
+        open(filename, 'w').write(self.to_string())
+
+    def to_string(self):
+        return '\n'.join(self.mo(mo) for mo in self.tu.mos)
+
+    def mo(self, mo):
+        out = 'mo %s' % mo.name
+        if mo.children:
+            out += ' -> ' + ', '.join(mo.children)
+        '''TODO no newline between scalars, test this'''
+        out += '\n{\n' + _indent('\n'.join((self.field(field) for field in mo.fields)), 4) + '};\n'
+        return out
+
+    def field(self, field):
+        out = field.cardinality == 'required' and '' or field.cardinality + ' '
+        if isinstance(field.type, Struct):
+            out += self.struct(field.type)
+        elif isinstance(field.type, Enum):
+            out += self.enum(field.type)
+        else:
+            out += '%s %s;\n' % (field.type, field.name)
+        return out
+
+    def struct(self, struct_):
+        out = 'struct %s\n' % struct_.name
+        out += '{\n' + _indent('\n'.join((self.field(field) for field in struct_.fields)), 4) + '};\n'
+        return out
+
+    def enum(self, enum_):
+        out = 'enum %s\n{\n' % enum_.name
+        out += _indent(',\n'.join(('%s = %s' % (er.name, er.value) for er in enum_.enumerators)), 4)
+        out += '};\n'
+        return out
+
 def parse_options():
     def readable_file(name):
         if not os.path.isfile(name):
