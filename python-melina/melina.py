@@ -449,7 +449,7 @@ String
 '''
 
 def _indent(text, value):
-    return ''.join((' ' * value + line + '\n' for line in text.splitlines()))
+    return '\n'.join(x and (' ' * value + x) or '' for x in text.split('\n'))
 
 class TranslationUnit(object):
     def __init__(self, mos):
@@ -536,7 +536,7 @@ class Scalar(object):
         return '<%s>' % self.__class__.__name__
 
     def __str__(self):
-        return '%s' % self.__class__.__name__
+        return '%s' % self.__class__.__name__.lower()
 
 class Int(Scalar):
     pass
@@ -561,12 +561,24 @@ class Generator(object):
         out = 'mo %s' % mo.name
         if mo.children:
             out += ' -> ' + ', '.join(mo.children)
-        '''TODO no newline between scalars, test this'''
-        out += '\n{\n' + _indent('\n'.join((self.field(field) for field in mo.fields)), 4) + '};\n'
+        out += '\n{\n' + _indent(self.fields(mo.fields), 4) + '};\n'
+        return out
+
+    def fields(self, fields):
+        out = ''
+        last_type = None
+        for field in fields:
+            if last_type:
+                if not (isinstance(last_type, Scalar) and isinstance(field.type, Scalar)):
+                    out += '\n'
+            out += self.field(field)
+            last_type = field.type
         return out
 
     def field(self, field):
-        out = field.cardinality == 'required' and '' or field.cardinality + ' '
+        out = ''
+        if field.cardinality != 'required':
+            out += field.cardinality + ' '
         if isinstance(field.type, Struct):
             out += self.struct(field.type)
         elif isinstance(field.type, Enum):
@@ -576,13 +588,15 @@ class Generator(object):
         return out
 
     def struct(self, struct_):
-        out = 'struct %s\n' % struct_.name
-        out += '{\n' + _indent('\n'.join((self.field(field) for field in struct_.fields)), 4) + '};\n'
+        out = 'struct %s\n{\n' % struct_.name
+        out += _indent(self.fields(struct_.fields), 4) + '};\n'
         return out
 
     def enum(self, enum_):
         out = 'enum %s\n{\n' % enum_.name
         out += _indent(',\n'.join(('%s = %s' % (er.name, er.value) for er in enum_.enumerators)), 4)
+        if enum_.enumerators:
+            out += '\n'
         out += '};\n'
         return out
 

@@ -28,12 +28,12 @@ mo MACHINE_L
             T1 = 1
             T2 = 2
         repeated struct Numbers
-            required Float x
-            required Float y
-        required Int a
-        required Int b
-    required Int x
-    required Int y
+            required float x
+            required float y
+        required int a
+        required int b
+    required int x
+    required int y
 '''
 
     def test_configure(self):
@@ -42,27 +42,27 @@ mo MACHINE_L
 mo CONFIGURE_MECHANISM_TASK
     required struct alphaDelta
         repeated struct modified
-            required String dn
-            required Int param
+            required string dn
+            required int param
     required struct betaDelta
         repeated struct added
-            required String devDn
-            required Int id
-            required Int param
+            required string devDn
+            required int id
+            required int param
         repeated struct modified
-            required String dn
-            required Int param
+            required string dn
+            required int param
         repeated struct removed
-            required String dn
+            required string dn
     required struct gammaDelta
         repeated struct modified
-            required String dn
+            required string dn
             optional struct config
-                optional Int param
+                optional int param
                 optional struct gammaConfig
-                    required Int placeholderJustToCompileMeta
+                    required int placeholderJustToCompileMeta
                 repeated struct gammaGimmickConfig
-                    required String dn
+                    required string dn
 '''
 
     def test_performance(self):
