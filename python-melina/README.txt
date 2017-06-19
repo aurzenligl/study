@@ -1,19 +1,16 @@
 meta recursive-descent parser
 ----------------------------------------------------------------------
 
-1. [meta -> tu]
-    - cmdline options
-    - handle errors
-    - move comments from Tokenizer to Parser
-2. [xml -> tu]
-    - rozpoznaj język po rozszerzeniu
-    - opcja cmdlinowa + --xml --meta
-3. [meta -> tu]
-    - extended parser with all xml features
-4. [tu -> xml]
-5. [tu -> meta]
-6. [tu -> proto]
-7. [tu -> hpp/cpp]
+tu -> meta: driver error printing
+tu -> meta: driver testing
+xml -> tu: implement xml parser
+xml -> tu: extend spec
+xml -> tu: know lang by extension or directly (--xml, --meta)
+tu -> xml: generate xml
+meta -> tu: extended lang/parser with all xml features
+tu -> meta: generate extended features
+tu -> proto: ...
+tu -> hpp/cpp: ...
 
 [melina cmdline]
 melina --meta-out=. text.meta
