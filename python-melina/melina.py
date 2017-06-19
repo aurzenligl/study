@@ -601,6 +601,10 @@ class Generator(object):
         return out
 
 def parse_options():
+    def readable_dir(name):
+        if not os.path.isdir(name):
+            raise argparse.ArgumentTypeError("%s directory not found" % name)
+        return name
     def readable_file(name):
         if not os.path.isfile(name):
             raise argparse.ArgumentTypeError("%s file not found" % name)
@@ -615,6 +619,10 @@ def parse_options():
                         type = readable_file,
                         nargs = '?',
                         help = ('Input in melina language.'))
+    parser.add_argument('--meta-out',
+                        metavar = 'OUT_DIR',
+                        type = readable_dir,
+                        help = 'Generate C++ simple POD-based codec header and source files.')
 
     opts = parser.parse_args()
     if not opts.input:
@@ -622,25 +630,20 @@ def parse_options():
         sys.exit()
     return opts
 
-def get_tokens(tokenizer):
-    toks = []
-    while True:
-        tok = tokenizer.get()
-        toks.append(tok)
-        if tok.kind == TokenKind.END:
-            return toks
+class DriverError(Exception):
+    pass
 
 def main():
+    def check_for_overwrite(opts):
+        if os.path.abspath(opts.input + '/..') == os.path.abspath(opts.meta_out):
+            raise DriverError('file "%s" would be overwritten' % opts.input)
+    def make_meta_name(opts):
+        return opts.meta_out + '/' + os.path.splitext(os.path.basename(opts.input))[0] + '.meta'
+
     opts = parse_options()
-    input = open(opts.input)
-    ts = Tokenizer(input)
-
-    for tok in get_tokens(ts):
-        print tok
-    for com in ts.comments:
-        print com
-
-    print "ok"
+    check_for_overwrite(opts)
+    tu = Parser.from_file(opts.input).parse()
+    Generator(tu).to_file(make_meta_name(opts))
 
 if __name__ == '__main__':
     main()
