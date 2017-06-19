@@ -106,7 +106,7 @@ class Tokenizer(object):
 
     _sre = re.compile('|'.join((
         r'(?P<name>[a-zA-Z_][a-zA-Z0-9_]*)',
-        r'(?P<number>[1-9][0-9]*)',
+        r'(?P<number>[0-9]+)',
         r'(?P<operator>(->)|[{};,=])',
         r'(?P<comment>(//.*\n|/\*(\*(?!/)|[^*])*\*/))',
         r'(?P<space>\s+)',
@@ -634,11 +634,14 @@ class DriverError(Exception):
     pass
 
 def main():
-    def check_for_overwrite(opts):
-        if os.path.abspath(opts.input + '/..') == os.path.abspath(opts.meta_out):
-            raise DriverError('file "%s" would be overwritten' % opts.input)
+    '''TODO: add driver tests'''
+    '''TODO: add driver error printing'''
+
     def make_meta_name(opts):
         return opts.meta_out + '/' + os.path.splitext(os.path.basename(opts.input))[0] + '.meta'
+    def check_for_overwrite(opts):
+        if os.path.abspath(opts.input) == os.path.abspath(make_meta_name(opts)):
+            raise DriverError('file "%s" would be overwritten' % opts.input)
 
     opts = parse_options()
     check_for_overwrite(opts)

@@ -1,8 +1,6 @@
 meta recursive-descent parser
 ----------------------------------------------------------------------
 
-tu -> meta: driver error printing
-tu -> meta: driver testing
 xml -> tu: implement xml parser
 xml -> tu: extend spec
 xml -> tu: know lang by extension or directly (--xml, --meta)
