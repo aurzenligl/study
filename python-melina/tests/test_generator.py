@@ -109,12 +109,18 @@ mo CONFIGURE_MECHANISM_TASK -> RESULT
 
                 optional struct gammaConfig
                 {
-                    int placeholderJustToCompileMeta;
+                    enum attitude
+                    {
+                        Disabled = 0,
+                        Enabled = 1
+                    };
                 };
 
                 repeated struct gammaGimmickConfig
                 {
                     string dn;
+                    int rate;
+                    int size;
                 };
             };
         };

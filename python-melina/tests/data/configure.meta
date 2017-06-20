@@ -43,11 +43,17 @@ mo CONFIGURE_MECHANISM_TASK -> RESULT
                 optional int param;
                 optional struct gammaConfig
                 {
-                    int placeholderJustToCompileMeta;  // meta_compiler cannot produce empty structs
+                    enum attitude
+                    {
+                        Disabled = 0,
+                        Enabled = 1
+                    };
                 };
                 repeated struct gammaGimmickConfig
                 {
                     string dn;
+                    int rate;
+                    int size;
                 };
             };
         };

@@ -60,9 +60,13 @@ mo CONFIGURE_MECHANISM_TASK
             optional struct config
                 optional int param
                 optional struct gammaConfig
-                    required int placeholderJustToCompileMeta
+                    required enum attitude
+                        Disabled = 0
+                        Enabled = 1
                 repeated struct gammaGimmickConfig
                     required string dn
+                    required int rate
+                    required int size
 '''
 
     def hardskip_test_performance(self):
