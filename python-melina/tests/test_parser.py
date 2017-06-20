@@ -65,5 +65,5 @@ mo CONFIGURE_MECHANISM_TASK
                     required string dn
 '''
 
-    def test_performance(self):
+    def hardskip_test_performance(self):
         print timeit.timeit("parse('longexample.meta')", "from %s import parse" % __name__, number=1)

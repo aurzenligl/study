@@ -226,7 +226,7 @@ class TestTokenizer():
             (None, 'END', None)
         ]
 
-    def test_performance(self):
+    def hardskip_test_performance(self):
         print timeit.timeit("tokens('longexample.meta')", "from %s import tokens" % __name__, number=1)
 
 if __name__ == '__main__':
