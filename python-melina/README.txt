@@ -1,20 +1,31 @@
 meta recursive-descent parser
 ----------------------------------------------------------------------
 
-xml -> tu: implement xml parser
-xml -> tu: extend spec
-xml -> tu: know lang by extension or directly (--xml, --meta)
-tu -> xml: generate xml
-meta -> tu: extended lang/parser with all xml features
-tu -> meta: generate extended features
-tu -> proto: ...
-tu -> hpp/cpp: ...
+tu -> xml: [generator] generate xml
+xml -> tu: [driver] implement input/output logic (--meta/xml-(std)out, --meta, --xml)
+
+tu,
+meta -> tu,
+tu -> meta,
+xml -> tu,
+tu -> xml: [spec/parser/generator] solve langfeature todos
 
 [melina cmdline]
+
+// just check syntax when no output specified
+melina text.meta
+
+// figure out input type by extension
 melina --meta-out=. text.meta
 melina --xml-out=. text.xml
-melina --proto-out=. text.xml
-melina --cpp-out=.  text.meta
+
+// when extension is not xml or meta, user must provide it explicitly
+melina --meta-out=. --meta text
+melina --meta-out=. --xml text.ext
+
+// stdout - only one type of output possible
+melina --meta-stdout text.meta
+melina --xml-stdout text.xml
 
 [parsers/generators]
 parsers
@@ -51,101 +62,3 @@ Enum
     enumerators (...)
 Int
 Float
-
-grammar
-----------------------------------------------------------------------
-
-specification:
-    mo_list end
-    end
-
-mo_list:
-    mo mo_list
-    mo
-
-mo:
-    mo_head { field_list } ;
-
-mo_head:
-    MO name -> mo_children_list
-    MO name
-
-mo_children_list:
-    name , mo_children_list
-    name
-
-field_list:
-    field field_list
-    field
-
-field:
-    field_qualifier field_definition
-    field_definition
-
-field_qualifier:
-    repeated
-    optional
-
-field_definition:
-    struct
-    enum
-    scalar
-
-struct:
-    STRUCT name { field_list } ;
-
-enum:
-    ENUM name { enumerator_list } ;
-
-enumerator_list:
-    enumerator , enumerator_list
-    enumerator
-
-enumerator:
-    name = number
-    name
-
-scalar:
-    scalar_type name ;
-
-scalar_type:
-    INT
-    FLOAT
-    STRING
-
-example
-----------------------------------------------------------------------
-
-mo MACHINE_L -> SENSOR, WHEEL, ARM
-{
-    struct StateBox
-    {
-        repeated enum FaultStatus { Empty, Disconnected, RoofFlewOff };
-        enum AdminStatus { Locked, Unlocked };
-        enum AvailStatus { Online, Offline };
-    };
-
-    optional struct Core
-    {
-        repeated enum Types
-        {
-            T1,
-            T2
-        };
-
-        /**
-         * This is the heart of the machine.
-         */
-        repeated struct Numbers
-        {
-            float x;
-            float y;
-        };
-
-        int a;
-        int b;
-    };
-
-    int x;  // comment about something
-    int y;  // another comment
-};

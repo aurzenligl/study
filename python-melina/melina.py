@@ -457,6 +457,8 @@ class XmlParserError(Exception):
 class XmlParser(object):
     def __init__(self, input_):
         '''TODO handle xml parser errors in driver'''
+        '''TODO [langfeature] pdmeta version=int.int,
+           header domain='str' product='str' release='str' version='str' revision='str' '''
         self.et = xml.etree.ElementTree.fromstring(input_)
 
     @classmethod
