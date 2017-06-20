@@ -5,6 +5,7 @@ import sys
 import argparse
 import enum
 import re
+import xml.etree.ElementTree
 
 def _line(text, pos):
     return text.count('\n', 0, pos) + 1
@@ -427,6 +428,176 @@ class Parser(object):
             raise ParserError('expected semicolon closing field definition, but got none')
 
         return type_, name
+
+def _int(text):
+    try:
+        return int(text)
+    except ValueError:
+        return
+
+def _positive_int(text):
+    x = _int(text)
+    if x is not None and x > 0:
+        return x
+
+def _nonnegative_int(text):
+    x = _int(text)
+    if x is not None and x >= 0:
+        return x
+
+def _float(text):
+    try:
+        return float(text)
+    except ValueError:
+        return
+
+class XmlParserError(Exception):
+    pass
+
+class XmlParser(object):
+    def __init__(self, input_):
+        '''TODO handle xml parser errors in driver'''
+        self.et = xml.etree.ElementTree.fromstring(input_)
+
+    @classmethod
+    def from_file(cls, filename):
+        return cls(open(filename).read())
+
+    def parse(self):
+        mos = [self.mo(mo) for mo in self.et.findall('.//managedObject')]
+        return TranslationUnit(mos)
+
+    def mo(self, mo):
+        '''TODO [langfeature] add fullName comment to mo'''
+        '''TODO [langfeature] add hidden/create/update/delete flags to mo'''
+
+        name = mo.attrib.get('class')
+        if not name:
+            raise XmlParserError('mo definition has no name')
+        children = self.mo_child_list(mo)
+        fields = [self.field(field) for field in mo.findall('p')]
+        return Mo(name, fields, children)
+
+    def mo_child_list(self, mo):
+        '''TODO [langfeature] add maxOccurs="1" to mo children'''
+
+        children = []
+        for child in mo.findall('childManagedObject'):
+            name = mo.attrib.get('class')
+            if not name:
+                raise XmlParserError('mo child definition has no name')
+            children.append(name)
+        return children
+
+    def field(self, field):
+        '''TODO [langfeature] add fullName comment to field'''
+
+        '''TODO [langfeature] field name has to begin with small letter (xml)'''
+        '''TODO [langfeature] enum/struct name has to begin with capital letter (meta)'''
+        name = field.attrib.get('name')
+        if not name:
+            raise XmlParserError('field declaration has no name')
+
+        '''TODO figure out 'optional' cardinality <creation priority="optional"/>'''
+        '''TODO [langfeature] add max_occurs value to repeated cardinality'''
+        max_occurs = _positive_int(field.attrib.get('maxOccurs'))
+        if not max_occurs:
+            raise XmlParserError('field declaration has no cardinality ("maxOccurs" attribute)')
+
+        if max_occurs == 1:
+            creation = field.find('creation')
+            if creation is not None:
+                prio = creation.attrib.get('priority')
+                if prio != 'optional':
+                    raise XmlParserError('priority tag present, but no optional attribute found')
+                cardinality = 'optional'
+            else:
+                cardinality = 'required'
+        else:
+            cardinality = 'repeated'
+
+        complex_ = field.find('complexType')
+        simple = field.find('simpleType')
+        if complex_ is not None:
+            type_ = self.struct(complex_, name)
+        elif simple is not None:
+            if simple.find('enumeration') is not None:
+                type_ = self.enum(simple, name)
+            else:
+                type_ = self.scalar(simple)
+        else:
+            raise XmlParserError('field definition not found')
+
+        return Field(name, type_, cardinality)
+
+    def struct(self, complex_, name):
+        fields = [self.field(field) for field in complex_.findall('p')]
+        return Struct(name, fields)
+
+    def enum(self, simple, name):
+        enumerators = self.enumerator_list(simple)
+        '''TODO [langfeature] add default enum value'''
+        return Enum(name, enumerators)
+
+    def enumerator_list(self, simple):
+        enumerators = []
+        for enumer in simple.findall('enumeration'):
+            name = enumer.attrib.get('text')
+            if name is None:
+                raise XmlParserError('enumerator name not found')
+            value = _int(enumer.attrib.get('value'))
+            if value is None:
+                raise XmlParserError('enumerator value not found')
+            enumerators.append(Enumerator(name, value))
+        return enumerators
+
+    def scalar(self, simple):
+        '''TODO [langfeature] add decimal scalar base (fixed-point values)'''
+        '''TODO [langfeature] add boolean scalar base'''
+
+        base = simple.attrib.get('base')
+        if not base:
+            raise XmlParserError('scalar field declaration has no base')
+
+        if base == 'integer':
+            editing = simple.find('editing')
+            if editing is not None:
+                '''TODO [langfeature] add integer range/step'''
+                range = editing.find('range')
+                if range is not None:
+                    min_val = _float(range.attrib.get('minIncl'))
+                    if min_val is None:
+                        raise XmlParserError('scalar range min val is not a float')
+                    max_val = _float(range.attrib.get('maxIncl'))
+                    if max_val is None:
+                        raise XmlParserError('scalar range max val is not a float')
+
+                units = editing.attrib.get('units')
+                '''TODO [langfeature] add integer units'''
+
+                default = editing.find('default')
+                '''TODO [langfeature] add default integer value'''
+
+                return Int()
+            else:
+                return Int()
+        elif base == 'string':
+            min_ = simple.find('minLength')
+            max_ = simple.find('maxLength')
+            if min_ is not None and max_ is not None:
+                min_val = _nonnegative_int(min_.attrib.get('value'))
+                if min_val is None:
+                    raise XmlParserError('min val is not a positive integer')
+                max_val = _nonnegative_int(max_.attrib.get('value'))
+                if max_val is None:
+                    raise XmlParserError('max val is not a positive integer')
+                '''TODO [langfeature] add min/max string lengths'''
+
+                return String()
+            else:
+                return String()
+        else:
+            raise XmlParserError('scalar field base unknown: %s' % base)
 
 '''
 Mo
