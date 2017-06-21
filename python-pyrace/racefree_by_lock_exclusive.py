@@ -29,8 +29,25 @@ def make_numbered_dir(cls, prefix='session-', rootdir=None, keep=3,
         bn = path.basename
         return bn.startswith(removingprefix)
 
-    '''TODO bring back atexit .lock removal'''
     mypid = os.getpid()
+
+    def schedule_lockfile_removal(lockfile):
+        """ ensure lockfile is removed at process exit """
+
+        def try_remove_lockfile():
+            # in a fork() situation, only the last process should
+            # remove the .lock, otherwise the other processes run the
+            # risk of seeing their temporary dir disappear.  For now
+            # we remove the .lock in the parent only (i.e. we assume
+            # that the children finish before the parent).
+            if os.getpid() != mypid:
+                return
+            try:
+                lockfile.remove()
+            except py.error.Error:
+                pass
+
+        atexit.register(try_remove_lockfile)
 
     # compute the maximum number currently in use with the
     # prefix
@@ -46,7 +63,9 @@ def make_numbered_dir(cls, prefix='session-', rootdir=None, keep=3,
         try:
             udir = rootdir.mkdir(prefix + str(maxnum+1))
             if lock_timeout:
-                udir.join('.lock').write(str(mypid), 'wx')
+                lockfile = udir.join('.lock')
+                lockfile.write(str(mypid), 'wx')
+                schedule_lockfile_removal(lockfile)
         except (py.error.EEXIST, py.error.ENOENT):
             # race condition: another thread/process created the dir
             # in the meantime.  Try counting again
