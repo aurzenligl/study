@@ -31,6 +31,15 @@ def make_numbered_dir(cls, prefix='session-', rootdir=None, keep=3,
 
     mypid = os.getpid()
 
+    def create_lockfile(path):
+        """ exclusively create lockfile. Throw when failed """
+        lockfile = path.join('.lock')
+        if hasattr(lockfile, 'mksymlinkto'):
+            lockfile.mksymlinkto(str(mypid))
+        else:
+            lockfile.write(str(mypid), 'wx')
+        return lockfile
+
     def schedule_lockfile_removal(lockfile):
         """ ensure lockfile is removed at process exit """
 
@@ -70,8 +79,7 @@ def make_numbered_dir(cls, prefix='session-', rootdir=None, keep=3,
         try:
             udir = rootdir.mkdir(prefix + str(maxnum+1))
             if lock_timeout:
-                lockfile = udir.join('.lock')
-                lockfile.write(str(mypid), 'wx')
+                lockfile = create_lockfile(udir)
                 schedule_lockfile_removal(lockfile)
         except (py.error.EEXIST, py.error.ENOENT):
             # race condition (1): another thread/process created the dir
@@ -92,7 +100,7 @@ def make_numbered_dir(cls, prefix='session-', rootdir=None, keep=3,
             if num is not None and num <= (maxnum - keep):
                 try:
                     # try acquiring lock to remove directory as exclusive user
-                    path.join('.lock').write(str(mypid), 'wx')
+                    create_lockfile(path)
                 except (py.error.EEXIST, py.error.ENOENT):
                     t1 = get_mtime(path)
                     if not t1:
