@@ -49,6 +49,13 @@ def make_numbered_dir(cls, prefix='session-', rootdir=None, keep=3,
 
         atexit.register(try_remove_lockfile)
 
+    def get_mtime(path):
+        """ read file modification time """
+        try:
+            return path.lstat().mtime
+        except py.error.Error:
+            pass
+
     # compute the maximum number currently in use with the
     # prefix
     lastmax = None
@@ -67,8 +74,10 @@ def make_numbered_dir(cls, prefix='session-', rootdir=None, keep=3,
                 lockfile.write(str(mypid), 'wx')
                 schedule_lockfile_removal(lockfile)
         except (py.error.EEXIST, py.error.ENOENT):
-            # race condition: another thread/process created the dir
+            # race condition (1): another thread/process created the dir
             # in the meantime.  Try counting again
+            # race condition (2): another thread/process acquired lock
+            # treating empty directory as candidate for removal.  Try again
             if lastmax == maxnum:
                 raise
             lastmax = maxnum
@@ -76,41 +85,39 @@ def make_numbered_dir(cls, prefix='session-', rootdir=None, keep=3,
         break
 
     # prune old directories
-    if lock_timeout and keep:
-        try:
-            t2 = udir.lstat().mtime
-        except py.error.Error:
-            pass
-        if t2:
-            for path in rootdir.listdir():
-                num = parse_num(path)
-                if num is not None and num <= (maxnum - keep):
-                    try:
-                        t1 = path.lstat().mtime
-                    except py.error.Error:
+    t2 = get_mtime(udir)
+    if keep and lock_timeout and t2:
+        for path in rootdir.listdir():
+            num = parse_num(path)
+            if num is not None and num <= (maxnum - keep):
+                try:
+                    # try acquiring lock to remove directory as exclusive user
+                    path.join('.lock').write(str(mypid), 'wx')
+                except (py.error.EEXIST, py.error.ENOENT):
+                    t1 = get_mtime(path)
+                    if not t1:
                         continue
-                    try:
-                        path.join('.lock').write(str(mypid), 'wx')
-                    except (py.error.EEXIST, py.error.ENOENT):
-                        if abs(t2-t1) < lock_timeout:
-                            continue
+                    if abs(t2-t1) < lock_timeout:
+                        continue
 
-                    newname = removingprefix + str(uuid.uuid4())
-                    renamed = rootdir.join(newname)
-                    try:
-                        path.rename(renamed)
-                        renamed.remove(rec=1)
-                    except KeyboardInterrupt:
-                        raise
-                    except: # this might be py.error.Error, WindowsError ...
-                        pass
-                if is_removing(path):
-                    try:
-                        path.remove(rec=1)
-                    except KeyboardInterrupt:
-                        raise
-                    except: # this might be py.error.Error, WindowsError ...
-                        pass
+                # rename dir scheduled for removal to avoid another thread/process
+                # treating it as a new directory or to-remove directory
+                newname = removingprefix + str(uuid.uuid4())
+                renamed = rootdir.join(newname)
+                try:
+                    path.rename(renamed)
+                    renamed.remove(rec=1)
+                except KeyboardInterrupt:
+                    raise
+                except: # this might be py.error.Error, WindowsError ...
+                    pass
+            if is_removing(path):
+                try:
+                    path.remove(rec=1)
+                except KeyboardInterrupt:
+                    raise
+                except: # this might be py.error.Error, WindowsError ...
+                    pass
 
     # make link...
     try:
