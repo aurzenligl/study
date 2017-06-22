@@ -163,8 +163,6 @@ class MetaTokenKind(enum.Enum):
     END = 10
 
 class MetaToken(object):
-    '''TODO __eq__ for tuple (kind, value)'''
-
     __slots__ = ('kind', 'value', 'span')
 
     _repr_vals = {
@@ -546,6 +544,62 @@ class MetaParser(object):
 
         return type_, name
 
+class MetaGenerator(object):
+    def __init__(self, tu):
+        self.tu = tu
+
+    def to_file(self, filename):
+        open(filename, 'w').write(self.to_string())
+
+    def to_string(self):
+        return '\n'.join(self.mo(mo) for mo in self.tu.mos)
+
+    def mo(self, mo):
+        out = 'mo %s' % mo.name
+        if mo.children:
+            out += ' -> ' + ', '.join(mo.children)
+        out += '\n{\n' + _indent(self.fields(mo.fields), 4) + '};\n'
+        return out
+
+    def fields(self, fields):
+        out = ''
+        last_type = None
+        for field in fields:
+            if last_type:
+                if not (isinstance(last_type, Scalar) and isinstance(field.type, Scalar)):
+                    out += '\n'
+            out += self.field(field)
+            last_type = field.type
+        return out
+
+    def field(self, field):
+        out = ''
+        if field.cardinality != 'required':
+            out += field.cardinality + ' '
+        if isinstance(field.type, Struct):
+            out += self.struct(field.type)
+        elif isinstance(field.type, Enum):
+            out += self.enum(field.type)
+        else:
+            out += self.scalar(field.type, field.name)
+        return out
+
+    def struct(self, struct_):
+        out = 'struct %s\n{\n' % struct_.name
+        out += _indent(self.fields(struct_.fields), 4) + '};\n'
+        return out
+
+    def enum(self, enum_):
+        out = 'enum %s\n{\n' % enum_.name
+        out += _indent(',\n'.join(('%s = %s' % (er.name, er.value) for er in enum_.enumerators)), 4)
+        if enum_.enumerators:
+            out += '\n'
+        out += '};\n'
+        return out
+
+    def scalar(self, type_, name):
+        return '%s %s;\n' % (type_, name)
+
 def _int(text):
     try:
         return int(text)
@@ -718,62 +772,6 @@ class XmlParser(object):
                 return String()
         else:
             raise XmlParserError('scalar field base unknown: %s' % base)
-
-class MetaGenerator(object):
-    def __init__(self, tu):
-        self.tu = tu
-
-    def to_file(self, filename):
-        open(filename, 'w').write(self.to_string())
-
-    def to_string(self):
-        return '\n'.join(self.mo(mo) for mo in self.tu.mos)
-
-    def mo(self, mo):
-        out = 'mo %s' % mo.name
-        if mo.children:
-            out += ' -> ' + ', '.join(mo.children)
-        out += '\n{\n' + _indent(self.fields(mo.fields), 4) + '};\n'
-        return out
-
-    def fields(self, fields):
-        out = ''
-        last_type = None
-        for field in fields:
-            if last_type:
-                if not (isinstance(last_type, Scalar) and isinstance(field.type, Scalar)):
-                    out += '\n'
-            out += self.field(field)
-            last_type = field.type
-        return out
-
-    def field(self, field):
-        out = ''
-        if field.cardinality != 'required':
-            out += field.cardinality + ' '
-        if isinstance(field.type, Struct):
-            out += self.struct(field.type)
-        elif isinstance(field.type, Enum):
-            out += self.enum(field.type)
-        else:
-            out += self.scalar(field.type, field.name)
-        return out
-
-    def struct(self, struct_):
-        out = 'struct %s\n{\n' % struct_.name
-        out += _indent(self.fields(struct_.fields), 4) + '};\n'
-        return out
-
-    def enum(self, enum_):
-        out = 'enum %s\n{\n' % enum_.name
-        out += _indent(',\n'.join(('%s = %s' % (er.name, er.value) for er in enum_.enumerators)), 4)
-        if enum_.enumerators:
-            out += '\n'
-        out += '};\n'
-        return out
-
-    def scalar(self, type_, name):
-        return '%s %s;\n' % (type_, name)
 
 class XmlGenerator(object):
     def __init__(self, tu):

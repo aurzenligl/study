@@ -1,7 +1,6 @@
 meta recursive-descent parser
 ----------------------------------------------------------------------
 
-tu -> xml: [generator] generate xml
 xml -> tu: [driver] implement input/output logic (--meta/xml-(std)out, --meta, --xml)
 
 tu,
