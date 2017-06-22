@@ -16,3 +16,17 @@ class TestDriver():
         ret = melina.main(args='%s' % fromdata('configure.xml'))
         assert ret == melina.EXIT_FAILURE
         assert 'unexpected character' in capsys.readouterr()[1]
+
+# test_input_fail
+#     melina text.meta.concealed
+#     melina text.xml.concealed
+#
+# test_nooutput
+#     melina text.meta
+#     melina text.xml
+#     melina --meta text.meta.concealed
+#     melina --xml text.xml.concealed
+#
+# test_nooutput_fail
+#     melina wrong.meta
+#     melina wrong.xml

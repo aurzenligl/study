@@ -884,14 +884,19 @@ def driver(args=None):
         if os.path.abspath(opts.input) == os.path.abspath(make_meta_name(opts)):
             raise DriverError('file "%s" would be overwritten' % opts.input)
 
+    '''TODO add input lang deduction logic and exclusive --meta, --xml options'''
+    '''TODO add --meta-stdout, --xml-stdout options'''
     opts = parse_options(args=args)
 
     try:
+        '''TODO add --xml-out option'''
         if not opts.meta_out:
             MetaParser.from_file(opts.input).parse()
             sys.stderr.write('Your input is beautiful! No output selected though.\n')
             return 0
     except MetaParserError as e:
+        '''TODO prefix error with program name'''
+        '''TODO output offending line and token in case of parsing errors'''
         sys.stderr.write('%s.\n' % e.message)
         return EXIT_FAILURE
 
