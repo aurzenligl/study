@@ -890,6 +890,7 @@ def driver(args=None):
 
     try:
         '''TODO add --xml-out option'''
+        '''TODO add example.xml and test it'''
         if not opts.meta_out:
             MetaParser.from_file(opts.input).parse()
             sys.stderr.write('Your input is beautiful! No output selected though.\n')
