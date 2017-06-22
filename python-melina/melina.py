@@ -2,6 +2,7 @@
 
 import os
 import sys
+import shlex
 import argparse
 import enum
 import re
@@ -198,7 +199,7 @@ class MetaToken(object):
             return repr + " %s>" % reprval
         return repr + ">"
 
-class MetaTokenizerError(Exception):
+class MetaParserError(Exception):
     pass
 
 class MetaTokenizer(object):
@@ -266,16 +267,13 @@ class MetaTokenizer(object):
                 return MetaToken(MetaTokenKind.END)
             else:
                 ch = self.input[self.pos]
-                raise MetaTokenizerError("unexpected character: '%s', ord=%s" % (ch, ord(ch)))
+                raise MetaParserError("unexpected character: '%s', ord=%s" % (ch, ord(ch)))
 
     def _read_raw(self):
         match = self._sre.match(self.input, self.pos)
         if match:
             self.pos = match.end()
             return match.group(), match.lastgroup
-
-class MetaParserError(Exception):
-    pass
 
 class MetaParser(object):
     '''
@@ -836,7 +834,7 @@ class XmlGenerator(object):
         else:
             raise Exception('unknown scalar type: %s' % type_)
 
-def parse_options():
+def parse_options(args):
     def readable_dir(name):
         if not os.path.isdir(name):
             raise argparse.ArgumentTypeError("%s directory not found" % name)
@@ -860,18 +858,25 @@ def parse_options():
                         type = readable_dir,
                         help = 'Generate C++ simple POD-based codec header and source files.')
 
-    opts = parser.parse_args()
+    opts = parser.parse_args(args=args)
     if not opts.input:
         parser.print_help()
         sys.exit()
     return opts
 
+EXIT_OK = 0
+EXIT_FAILURE = 1
+
 class DriverError(Exception):
     pass
 
-def main():
-    '''TODO: add driver tests'''
-    '''TODO: add driver error printing'''
+def driver(args=None):
+    if args is None:
+        args = sys.argv[1:]
+    else:
+        if not isinstance(args, str):
+            raise Exception("not a string argument list: %s" % args)
+        args = shlex.split(args)
 
     def make_meta_name(opts):
         return opts.meta_out + '/' + os.path.splitext(os.path.basename(opts.input))[0] + '.meta'
@@ -879,10 +884,25 @@ def main():
         if os.path.abspath(opts.input) == os.path.abspath(make_meta_name(opts)):
             raise DriverError('file "%s" would be overwritten' % opts.input)
 
-    opts = parse_options()
+    opts = parse_options(args=args)
+
+    try:
+        if not opts.meta_out:
+            MetaParser.from_file(opts.input).parse()
+            sys.stderr.write('Your input is beautiful! No output selected though.\n')
+            return 0
+    except MetaParserError as e:
+        sys.stderr.write('%s.\n' % e.message)
+        return EXIT_FAILURE
+
     check_for_overwrite(opts)
     tu = MetaParser.from_file(opts.input).parse()
     MetaGenerator(tu).to_file(make_meta_name(opts))
+
+def main(args=None):
+    '''TODO: add driver tests'''
+    '''TODO: add driver error printing'''
+    return driver(args=args)
 
 if __name__ == '__main__':
     main()
