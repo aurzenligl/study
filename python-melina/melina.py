@@ -5,7 +5,8 @@ import sys
 import argparse
 import enum
 import re
-import xml.etree.ElementTree
+import io
+import lxml.etree as ET
 
 def _line(text, pos):
     return text.count('\n', 0, pos) + 1
@@ -459,7 +460,7 @@ class XmlParser(object):
         '''TODO handle xml parser errors in driver'''
         '''TODO [langfeature] pdmeta version=int.int,
            header domain='str' product='str' release='str' version='str' revision='str' '''
-        self.et = xml.etree.ElementTree.fromstring(input_)
+        self.et = ET.fromstring(input_)
 
     @classmethod
     def from_file(cls, filename):
@@ -486,6 +487,7 @@ class XmlParser(object):
         children = []
         for child in mo.findall('childManagedObject'):
             name = mo.attrib.get('class')
+            '''TODO [langfeature] maxOccurs in children'''
             if not name:
                 raise XmlParserError('mo child definition has no name')
             children.append(name)
@@ -757,7 +759,7 @@ class Generator(object):
         elif isinstance(field.type, Enum):
             out += self.enum(field.type)
         else:
-            out += '%s %s;\n' % (field.type, field.name)
+            out += self.scalar(field.type, field.name)
         return out
 
     def struct(self, struct_):
@@ -772,6 +774,61 @@ class Generator(object):
             out += '\n'
         out += '};\n'
         return out
+
+    def scalar(self, type_, name):
+        return '%s %s;\n' % (type_, name)
+
+class XmlGenerator(object):
+    def __init__(self, tu):
+        self.tu = tu
+
+    def to_file(self, filename):
+        open(filename, 'w').write(self.to_string())
+
+    def to_string(self):
+        root = ET.Element('pdmeta')
+        for mo in self.tu.mos:
+            self.mo(root, mo)
+        hdr = '''<?xml version="1.0" encoding="utf-8"?>\n'''  # lxml would put single quotes...
+        body = ET.tostring(root, pretty_print=True)
+        return hdr + body
+
+    def mo(self, parent, mo):
+        moelem = ET.SubElement(parent, 'managedObject', {'class': mo.name})
+        for child in mo.children:
+            ET.SubElement(moelem, 'childManagedObject', {'class': child})
+        self.fields(moelem, mo.fields)
+
+    def fields(self, parent, fields):
+        for field in fields:
+            self.field(parent, field)
+
+    def field(self, parent, field):
+        if field.cardinality != 'repeated':
+            max_occurs = '1'
+        else:
+            max_occurs = '999999'
+        pelem = ET.SubElement(parent, 'p', name=field.name)
+        pelem.set('maxOccurs', max_occurs)
+
+        if field.cardinality == 'optional':
+            ET.SubElement(pelem, 'creation', {'priority': field.name})
+
+        if isinstance(field.type, Struct):
+            self.struct(pelem, field.type)
+        elif isinstance(field.type, Enum):
+            self.enum(pelem, field.type)
+        else:
+            self.scalar(pelem, field.type)
+
+    def struct(self, parent, struct_):
+        pass
+
+    def enum(self, parent, enum_):
+        pass
+
+    def scalar(self, parent, type_):
+        pass
 
 def parse_options():
     def readable_dir(name):
