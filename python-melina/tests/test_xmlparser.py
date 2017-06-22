@@ -11,7 +11,7 @@ class TestParser():
     def test_configure(self):
         tu = parse('configure.xml')
         assert str(tu) == '''\
-mo CONFIGURE_MECHANISM_TASK
+mo CONFIGURE_MECHANISM_TASK: RESULT
     required struct alphaDelta
         repeated struct modified
             required string dn

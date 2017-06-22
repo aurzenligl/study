@@ -11,7 +11,7 @@ class TestParser():
     def test_example(self):
         tu = parse('example.meta')
         assert str(tu) == '''\
-mo MACHINE_L
+mo MACHINE_L: SENSOR WHEEL ARM
     required struct StateBox
         repeated enum FaultStatus
             Empty = 0
@@ -39,7 +39,7 @@ mo MACHINE_L
     def test_configure(self):
         tu = parse('configure.meta')
         assert str(tu) == '''\
-mo CONFIGURE_MECHANISM_TASK
+mo CONFIGURE_MECHANISM_TASK: RESULT
     required struct alphaDelta
         repeated struct modified
             required string dn

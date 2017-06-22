@@ -486,7 +486,7 @@ class XmlParser(object):
 
         children = []
         for child in mo.findall('childManagedObject'):
-            name = mo.attrib.get('class')
+            name = child.attrib.get('class')
             '''TODO [langfeature] maxOccurs in children'''
             if not name:
                 raise XmlParserError('mo child definition has no name')
@@ -647,7 +647,7 @@ class Mo(object):
 
     def __str__(self):
         return (
-            'mo %s\n' % self.name +
+            'mo %s' % self.name + ':' + ''.join((' ' + x for x in self.children)) + '\n' +
             _indent(''.join((str(field) for field in self.fields)), 4)
         )
 
