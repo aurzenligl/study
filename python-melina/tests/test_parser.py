@@ -28,8 +28,8 @@ mo MACHINE_L: SENSOR WHEEL ARM
             T1 = 1
             T2 = 2
         repeated struct Numbers
-            required float x
-            required float y
+            required int x
+            required int y
         required int a
         required int b
     required int x

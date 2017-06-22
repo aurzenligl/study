@@ -716,9 +716,6 @@ class Scalar(object):
 class Int(Scalar):
     pass
 
-class Float(Scalar):
-    pass
-
 class String(Scalar):
     pass
 
@@ -812,7 +809,7 @@ class XmlGenerator(object):
         pelem.set('maxOccurs', max_occurs)
 
         if field.cardinality == 'optional':
-            ET.SubElement(pelem, 'creation', {'priority': field.name})
+            ET.SubElement(pelem, 'creation', {'priority': 'optional'})
 
         if isinstance(field.type, Struct):
             self.struct(pelem, field.type)
@@ -822,13 +819,24 @@ class XmlGenerator(object):
             self.scalar(pelem, field.type)
 
     def struct(self, parent, struct_):
-        pass
+        celem = ET.SubElement(parent, 'complexType')
+        self.fields(celem, struct_.fields)
 
     def enum(self, parent, enum_):
-        pass
+        selem = ET.SubElement(parent, 'simpleType', base='integer')
+        for enumer in enum_.enumerators:
+            eelem = ET.SubElement(selem, 'enumeration', value=str(enumer.value))
+            eelem.set('text', enumer.name)
 
     def scalar(self, parent, type_):
-        pass
+        if isinstance(type_, Int):
+            selem = ET.SubElement(parent, 'simpleType', base='integer')
+        elif isinstance(type_, String):
+            selem = ET.SubElement(parent, 'simpleType', base='string')
+            ET.SubElement(selem, 'minLength', value='0')
+            ET.SubElement(selem, 'maxLength', value='2147483647')
+        else:
+            raise Exception('unknown scalar type: %s' % type_)
 
 def parse_options():
     def readable_dir(name):

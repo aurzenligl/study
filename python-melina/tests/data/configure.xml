@@ -125,8 +125,7 @@
                       </simpleType>
                     </p>
                     <p name="size" fullName="The size param" maxOccurs="1">
-                      <simpleType base="integer">
-                      </simpleType>
+                      <simpleType base="integer"/>
                     </p>
                   </complexType>
                 </p>
