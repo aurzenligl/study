@@ -5,7 +5,7 @@ import melina
 datadir = os.path.abspath(__file__ + '/../data')
 
 def tokens(filename, tuples = False):
-    ts = melina.Tokenizer.from_file(datadir + '/' + filename)
+    ts = melina.MetaTokenizer.from_file(datadir + '/' + filename)
     tokens = []
     while True:
         tok = ts.get()
@@ -20,7 +20,7 @@ def tok2tuple(tok):
         tok.value
     )
 
-class TestTokenizer():
+class TestMetaTokenizer():
     def test_configure(self):
         toks = tokens('configure.meta', tuples=True)
         assert toks == [

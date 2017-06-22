@@ -4,10 +4,10 @@ import melina
 datadir = os.path.abspath(__file__ + '/../data')
 
 def parse(filename):
-    return melina.Parser.from_file(datadir + '/' + filename).parse()
+    return melina.MetaParser.from_file(datadir + '/' + filename).parse()
 
 def generate(tu):
-    return melina.Generator(tu).to_string()
+    return melina.MetaGenerator(tu).to_string()
 
 class TestGenerator():
     def test_example(self):

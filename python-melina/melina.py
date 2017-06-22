@@ -8,13 +8,129 @@ import re
 import io
 import lxml.etree as ET
 
+'''
+Mo
+    name
+    children
+    fields (Struct, Enum, Scalar)
+Field
+    name
+    cardinality
+    type
+Struct
+    name
+    fields (...)
+Enum
+    name
+    enumerators (...)
+Int
+Float
+String
+'''
+
+def _indent(text, value):
+    return '\n'.join(x and (' ' * value + x) or '' for x in text.split('\n'))
+
+class TranslationUnit(object):
+    def __init__(self, mos):
+        self.mos = mos
+
+    def __repr__(self):
+        return '<TranslationUnit with %s mos>' % len(self.mos)
+
+    def __str__(self):
+        return ''.join((str(mo) for mo in self.mos))
+
+class Mo(object):
+    def __init__(self, name, fields, children):
+        self.name = name
+        self.fields = fields
+        self.children = children
+
+    def __repr__(self):
+        return '<Mo %s>' % self.name
+
+    def __str__(self):
+        return (
+            'mo %s' % self.name + ':' + ''.join((' ' + x for x in self.children)) + '\n' +
+            _indent(''.join((str(field) for field in self.fields)), 4)
+        )
+
+class Field(object):
+    def __init__(self, name, type_, cardinality):
+        self.name = name
+        self.type = type_
+        self.cardinality = cardinality
+
+    def __repr__(self):
+        return '<Field %s>' % self.name
+
+    def __str__(self):
+        if isinstance(self.type, Scalar):
+            return '%s %s %s\n' % (self.cardinality, self.type, self.name)
+        else:
+            return '%s %s' % (self.cardinality, self.type)
+
+class Struct(object):
+    def __init__(self, name, fields):
+        self.name = name
+        self.fields = fields
+
+    def __repr__(self):
+        return '<Struct %s>' % self.name
+
+    def __str__(self):
+        return (
+            'struct %s\n' % self.name +
+            _indent(''.join((str(field) for field in self.fields)), 4)
+        )
+
+class Enum(object):
+    def __init__(self, name, enumerators):
+        self.name = name
+        self.enumerators = enumerators
+
+    def __repr__(self):
+        return '<Enum %s>' % self.name
+
+    def __str__(self):
+        return (
+            'enum %s\n' % self.name +
+            _indent(''.join((str(enumer) for enumer in self.enumerators)), 4)
+        )
+
+class Enumerator(object):
+    def __init__(self, name, value):
+        self.name = name
+        self.value = value
+
+    def __repr__(self):
+        return '<Enumerator %s>' % self.name
+
+    def __str__(self):
+        return '%s = %s\n' % (self.name, self.value)
+
+class Scalar(object):
+
+    def __repr__(self):
+        return '<%s>' % self.__class__.__name__
+
+    def __str__(self):
+        return '%s' % self.__class__.__name__.lower()
+
+class Int(Scalar):
+    pass
+
+class String(Scalar):
+    pass
+
 def _line(text, pos):
     return text.count('\n', 0, pos) + 1
 
 def _col(text, pos):
     return pos - text.rfind('\n', 0, pos)
 
-class Span(object):
+class MetaSpan(object):
     __slots__ = ('input', 'start', 'end')
 
     def __init__(self, input, start, end):
@@ -33,7 +149,7 @@ class Span(object):
     def __repr__(self):
         return '%s:%s-%s:%s' % (self.start_linecol + self.end_linecol)
 
-class TokenKind(enum.Enum):
+class MetaTokenKind(enum.Enum):
     KEYW = 0    # mo, struct, enum, repeated, optional, int, float, string
     NAME = 1    # [_a-zA-Z][_a-zA-Z0-9]*
     NUMBER = 2  # [0-9]*
@@ -46,21 +162,21 @@ class TokenKind(enum.Enum):
     COMMENT = 9 # '//\n', '/**/' <ignored, stored>
     END = 10
 
-class Token(object):
+class MetaToken(object):
     '''TODO __eq__ for tuple (kind, value)'''
 
     __slots__ = ('kind', 'value', 'span')
 
     _repr_vals = {
-        TokenKind.LCB: '{',
-        TokenKind.RCB: '}',
-        TokenKind.SEMI: ';',
-        TokenKind.COMMA: ',',
-        TokenKind.ASSIGN: '=',
-        TokenKind.ARROW: '->',
+        MetaTokenKind.LCB: '{',
+        MetaTokenKind.RCB: '}',
+        MetaTokenKind.SEMI: ';',
+        MetaTokenKind.COMMA: ',',
+        MetaTokenKind.ASSIGN: '=',
+        MetaTokenKind.ARROW: '->',
     }
 
-    _repr_direct = (TokenKind.KEYW, TokenKind.NAME, TokenKind.NUMBER, TokenKind.COMMENT)
+    _repr_direct = (MetaTokenKind.KEYW, MetaTokenKind.NAME, MetaTokenKind.NUMBER, MetaTokenKind.COMMENT)
 
     def __init__(self, kind, value = None, span = None):
         self.kind = kind
@@ -73,9 +189,9 @@ class Token(object):
 
     def __repr__(self):
         if self.span:
-            repr = "<Token %s %s" % (self.span, self.kind.name)
+            repr = "<MetaToken %s %s" % (self.span, self.kind.name)
         else:
-            repr = "<Token %s" % self.kind.name
+            repr = "<MetaToken %s" % self.kind.name
 
         if self.kind in self._repr_direct:
             return repr + " %s>" % self.value
@@ -84,19 +200,19 @@ class Token(object):
             return repr + " %s>" % reprval
         return repr + ">"
 
-class TokenizerError(Exception):
+class MetaTokenizerError(Exception):
     pass
 
-class Tokenizer(object):
+class MetaTokenizer(object):
     def __init__(self, input):
         self.input = input
         self.pos = 0
-        self.token = Token(TokenKind.END)
+        self.token = MetaToken(MetaTokenKind.END)
         self.comments = []
 
     @classmethod
     def from_file(cls, filename):
-        return Tokenizer(open(filename).read())
+        return MetaTokenizer(open(filename).read())
 
     def get(self):
         self.token = token = self._get()
@@ -117,12 +233,12 @@ class Tokenizer(object):
     _keywords = ('mo', 'struct', 'enum', 'repeated', 'optional', 'int', 'float', 'string')
 
     _operators = {
-        '->': TokenKind.ARROW,
-        '{': TokenKind.LCB,
-        '}': TokenKind.RCB,
-        ';': TokenKind.SEMI,
-        ',': TokenKind.COMMA,
-        '=': TokenKind.ASSIGN,
+        '->': MetaTokenKind.ARROW,
+        '{': MetaTokenKind.LCB,
+        '}': MetaTokenKind.RCB,
+        ';': MetaTokenKind.SEMI,
+        ',': MetaTokenKind.COMMA,
+        '=': MetaTokenKind.ASSIGN,
     }
 
     def _get(self):
@@ -130,29 +246,29 @@ class Tokenizer(object):
             start = self.pos
             pack = self._read_raw()
             if pack:
-                span = Span(self.input, start, self.pos - 1)
+                span = MetaSpan(self.input, start, self.pos - 1)
                 string, group = pack
                 if group == 'name':
                     if string in self._keywords:
-                        return Token(TokenKind.KEYW, string, span=span)
+                        return MetaToken(MetaTokenKind.KEYW, string, span=span)
                     else:
-                        return Token(TokenKind.NAME, string, span=span)
+                        return MetaToken(MetaTokenKind.NAME, string, span=span)
                 elif group == 'number':
-                    return Token(TokenKind.NUMBER, int(string), span=span)
+                    return MetaToken(MetaTokenKind.NUMBER, int(string), span=span)
                 elif group == 'operator':
-                    return Token(self._operators[string], span=span)
+                    return MetaToken(self._operators[string], span=span)
                 elif group == 'comment':
-                    self.comments.append(Token(TokenKind.COMMENT, string, span=span))
+                    self.comments.append(MetaToken(MetaTokenKind.COMMENT, string, span=span))
                     continue
                 elif group == 'space':
                     continue
                 assert False, "o-oh, we shouldn't end up here"
 
             if self.pos == len(self.input):
-                return Token(TokenKind.END)
+                return MetaToken(MetaTokenKind.END)
             else:
                 ch = self.input[self.pos]
-                raise TokenizerError("unexpected character: '%s', ord=%s" % (ch, ord(ch)))
+                raise MetaTokenizerError("unexpected character: '%s', ord=%s" % (ch, ord(ch)))
 
     def _read_raw(self):
         match = self._sre.match(self.input, self.pos)
@@ -160,10 +276,10 @@ class Tokenizer(object):
             self.pos = match.end()
             return match.group(), match.lastgroup
 
-class ParserError(Exception):
+class MetaParserError(Exception):
     pass
 
-class Parser(object):
+class MetaParser(object):
     '''
     specification:
         mo_list end
@@ -226,7 +342,7 @@ class Parser(object):
     '''
 
     def __init__(self, input):
-        self.ts = Tokenizer(input)
+        self.ts = MetaTokenizer(input)
 
     @classmethod
     def from_file(cls, filename):
@@ -238,7 +354,7 @@ class Parser(object):
         mos = []
         while True:
             ts.get()
-            if ts.cur.kind == TokenKind.END:
+            if ts.cur.kind == MetaTokenKind.END:
                 break
             mos.append(self.mo())
 
@@ -246,33 +362,33 @@ class Parser(object):
 
     def mo(self):
         ts = self.ts
-        if ts.cur.pair != (TokenKind.KEYW, 'mo'):
-            raise ParserError('expected keyword "mo", but got none')
+        if ts.cur.pair != (MetaTokenKind.KEYW, 'mo'):
+            raise MetaParserError('expected keyword "mo", but got none')
 
         ts.get()
-        if ts.cur.kind != TokenKind.NAME:
-            raise ParserError('expected mo name, but got none')
+        if ts.cur.kind != MetaTokenKind.NAME:
+            raise MetaParserError('expected mo name, but got none')
 
         name = ts.cur.value
         children = []
         fields = []
 
         ts.get()
-        if ts.cur.kind == TokenKind.ARROW:
+        if ts.cur.kind == MetaTokenKind.ARROW:
             children = self.mo_child_list()
 
-        if ts.cur.kind != TokenKind.LCB:
-            raise ParserError('expected mo definition, but got none')
+        if ts.cur.kind != MetaTokenKind.LCB:
+            raise MetaParserError('expected mo definition, but got none')
 
         while True:
             ts.get()
-            if ts.cur.kind == TokenKind.RCB:
+            if ts.cur.kind == MetaTokenKind.RCB:
                 break
             fields.append(self.field())
 
         ts.get()
-        if ts.cur.kind != TokenKind.SEMI:
-            raise ParserError('expected semicolon after mo definition, but got none')
+        if ts.cur.kind != MetaTokenKind.SEMI:
+            raise MetaParserError('expected semicolon after mo definition, but got none')
 
         return Mo(name, fields, children)
 
@@ -280,18 +396,18 @@ class Parser(object):
         ts = self.ts
 
         ts.get()
-        if ts.cur.kind != TokenKind.NAME:
-            raise ParserError('expected mo child name, but got none')
+        if ts.cur.kind != MetaTokenKind.NAME:
+            raise MetaParserError('expected mo child name, but got none')
         children = [ts.cur.value]
 
         while True:
             ts.get()
-            if ts.cur.kind != TokenKind.COMMA:
+            if ts.cur.kind != MetaTokenKind.COMMA:
                 break
 
             ts.get()
-            if ts.cur.kind != TokenKind.NAME:
-                raise ParserError('expected mo child name, but got none')
+            if ts.cur.kind != MetaTokenKind.NAME:
+                raise MetaParserError('expected mo child name, but got none')
             children.append(ts.cur.value)
 
         return children
@@ -300,20 +416,20 @@ class Parser(object):
         ts = self.ts
 
         cardinality = 'required'
-        if ts.cur.pair == (TokenKind.KEYW, 'repeated'):
+        if ts.cur.pair == (MetaTokenKind.KEYW, 'repeated'):
             cardinality = 'repeated'
             ts.get()
-        elif ts.cur.pair == (TokenKind.KEYW, 'optional'):
+        elif ts.cur.pair == (MetaTokenKind.KEYW, 'optional'):
             cardinality = 'optional'
             ts.get()
 
-        if not (ts.cur.kind == TokenKind.KEYW and ts.cur.value in ('struct', 'enum', 'int', 'float', 'string')):
-            raise ParserError('expected "struct", "enum" or type name "int", "float", "string", but got none')
+        if not (ts.cur.kind == MetaTokenKind.KEYW and ts.cur.value in ('struct', 'enum', 'int', 'float', 'string')):
+            raise MetaParserError('expected "struct", "enum" or type name "int", "float", "string", but got none')
 
-        if ts.cur.pair == (TokenKind.KEYW, 'struct'):
+        if ts.cur.pair == (MetaTokenKind.KEYW, 'struct'):
             type_ = self.struct()
             name = type_.name
-        elif ts.cur.pair == (TokenKind.KEYW, 'enum'):
+        elif ts.cur.pair == (MetaTokenKind.KEYW, 'enum'):
             type_ = self.enum()
             name = type_.name
         else:
@@ -324,56 +440,56 @@ class Parser(object):
     def struct(self):
         ts = self.ts
 
-        if ts.cur.pair != (TokenKind.KEYW, 'struct'):
-            raise ParserError('expected keyword "struct", but got none')
+        if ts.cur.pair != (MetaTokenKind.KEYW, 'struct'):
+            raise MetaParserError('expected keyword "struct", but got none')
 
         ts.get()
-        if ts.cur.kind != TokenKind.NAME:
-            raise ParserError('expected struct name, but got none')
+        if ts.cur.kind != MetaTokenKind.NAME:
+            raise MetaParserError('expected struct name, but got none')
 
         name = ts.cur.value
         fields = []
 
         ts.get()
-        if ts.cur.kind != TokenKind.LCB:
-            raise ParserError('expected struct definition, but got none')
+        if ts.cur.kind != MetaTokenKind.LCB:
+            raise MetaParserError('expected struct definition, but got none')
 
         while True:
             ts.get()
-            if ts.cur.kind == TokenKind.RCB:
+            if ts.cur.kind == MetaTokenKind.RCB:
                 break
             fields.append(self.field())
 
         ts.get()
-        if ts.cur.kind != TokenKind.SEMI:
-            raise ParserError('expected semicolon after struct definition, but got none')
+        if ts.cur.kind != MetaTokenKind.SEMI:
+            raise MetaParserError('expected semicolon after struct definition, but got none')
 
         return Struct(name, fields)
 
     def enum(self):
         ts = self.ts
 
-        if ts.cur.pair != (TokenKind.KEYW, 'enum'):
-            raise ParserError('expected keyword "enum", but got none')
+        if ts.cur.pair != (MetaTokenKind.KEYW, 'enum'):
+            raise MetaParserError('expected keyword "enum", but got none')
 
         ts.get()
-        if ts.cur.kind != TokenKind.NAME:
-            raise ParserError('expected enum name, but got none')
+        if ts.cur.kind != MetaTokenKind.NAME:
+            raise MetaParserError('expected enum name, but got none')
 
         name = ts.cur.value
 
         ts.get()
-        if ts.cur.kind != TokenKind.LCB:
-            raise ParserError('expected enum definition, but got none')
+        if ts.cur.kind != MetaTokenKind.LCB:
+            raise MetaParserError('expected enum definition, but got none')
 
         enumerators = self.enumerator_list()
 
-        if ts.cur.kind != TokenKind.RCB:
-            raise ParserError('expected enum definition, but got none')
+        if ts.cur.kind != MetaTokenKind.RCB:
+            raise MetaParserError('expected enum definition, but got none')
 
         ts.get()
-        if ts.cur.kind != TokenKind.SEMI:
-            raise ParserError('expected semicolon after enum definition, but got none')
+        if ts.cur.kind != MetaTokenKind.SEMI:
+            raise MetaParserError('expected semicolon after enum definition, but got none')
 
         return Enum(name, enumerators)
 
@@ -385,23 +501,23 @@ class Parser(object):
 
         while True:
             ts.get()
-            if ts.cur.kind != TokenKind.NAME:
+            if ts.cur.kind != MetaTokenKind.NAME:
                 break
 
             name = ts.cur.value
 
             ts.get()
-            if ts.cur.kind == TokenKind.ASSIGN:
+            if ts.cur.kind == MetaTokenKind.ASSIGN:
                 ts.get()
-                if ts.cur.kind != TokenKind.NUMBER:
-                    raise ParserError('expected enumerator value, but got none')
+                if ts.cur.kind != MetaTokenKind.NUMBER:
+                    raise MetaParserError('expected enumerator value, but got none')
                 value = ts.cur.value
                 ts.get()
 
             enumerators.append(Enumerator(name, value))
             value += 1
 
-            if ts.cur.kind != TokenKind.COMMA:
+            if ts.cur.kind != MetaTokenKind.COMMA:
                 break
 
         return enumerators
@@ -409,24 +525,24 @@ class Parser(object):
     def scalar(self):
         ts = self.ts
 
-        if ts.cur.pair == (TokenKind.KEYW, 'int'):
+        if ts.cur.pair == (MetaTokenKind.KEYW, 'int'):
             type_ = Int()
-        elif ts.cur.pair == (TokenKind.KEYW, 'float'):
+        elif ts.cur.pair == (MetaTokenKind.KEYW, 'float'):
             type_ = Float()
-        elif ts.cur.pair == (TokenKind.KEYW, 'string'):
+        elif ts.cur.pair == (MetaTokenKind.KEYW, 'string'):
             type_ = String()
         else:
-            raise ParserError('expected type name "int", "float", "string", but got none')
+            raise MetaParserError('expected type name "int", "float", "string", but got none')
 
         ts.get()
-        if ts.cur.kind != TokenKind.NAME:
-            raise ParserError('expected field name, but got none')
+        if ts.cur.kind != MetaTokenKind.NAME:
+            raise MetaParserError('expected field name, but got none')
 
         name = ts.cur.value
 
         ts.get()
-        if ts.cur.kind != TokenKind.SEMI:
-            raise ParserError('expected semicolon closing field definition, but got none')
+        if ts.cur.kind != MetaTokenKind.SEMI:
+            raise MetaParserError('expected semicolon closing field definition, but got none')
 
         return type_, name
 
@@ -603,123 +719,7 @@ class XmlParser(object):
         else:
             raise XmlParserError('scalar field base unknown: %s' % base)
 
-'''
-Mo
-    name
-    children
-    fields (Struct, Enum, Scalar)
-Field
-    name
-    cardinality
-    type
-Struct
-    name
-    fields (...)
-Enum
-    name
-    enumerators (...)
-Int
-Float
-String
-'''
-
-def _indent(text, value):
-    return '\n'.join(x and (' ' * value + x) or '' for x in text.split('\n'))
-
-class TranslationUnit(object):
-    def __init__(self, mos):
-        self.mos = mos
-
-    def __repr__(self):
-        return '<TranslationUnit with %s mos>' % len(self.mos)
-
-    def __str__(self):
-        return ''.join((str(mo) for mo in self.mos))
-
-class Mo(object):
-    def __init__(self, name, fields, children):
-        self.name = name
-        self.fields = fields
-        self.children = children
-
-    def __repr__(self):
-        return '<Mo %s>' % self.name
-
-    def __str__(self):
-        return (
-            'mo %s' % self.name + ':' + ''.join((' ' + x for x in self.children)) + '\n' +
-            _indent(''.join((str(field) for field in self.fields)), 4)
-        )
-
-class Field(object):
-    def __init__(self, name, type_, cardinality):
-        self.name = name
-        self.type = type_
-        self.cardinality = cardinality
-
-    def __repr__(self):
-        return '<Field %s>' % self.name
-
-    def __str__(self):
-        if isinstance(self.type, Scalar):
-            return '%s %s %s\n' % (self.cardinality, self.type, self.name)
-        else:
-            return '%s %s' % (self.cardinality, self.type)
-
-class Struct(object):
-    def __init__(self, name, fields):
-        self.name = name
-        self.fields = fields
-
-    def __repr__(self):
-        return '<Struct %s>' % self.name
-
-    def __str__(self):
-        return (
-            'struct %s\n' % self.name +
-            _indent(''.join((str(field) for field in self.fields)), 4)
-        )
-
-class Enum(object):
-    def __init__(self, name, enumerators):
-        self.name = name
-        self.enumerators = enumerators
-
-    def __repr__(self):
-        return '<Enum %s>' % self.name
-
-    def __str__(self):
-        return (
-            'enum %s\n' % self.name +
-            _indent(''.join((str(enumer) for enumer in self.enumerators)), 4)
-        )
-
-class Enumerator(object):
-    def __init__(self, name, value):
-        self.name = name
-        self.value = value
-
-    def __repr__(self):
-        return '<Enumerator %s>' % self.name
-
-    def __str__(self):
-        return '%s = %s\n' % (self.name, self.value)
-
-class Scalar(object):
-
-    def __repr__(self):
-        return '<%s>' % self.__class__.__name__
-
-    def __str__(self):
-        return '%s' % self.__class__.__name__.lower()
-
-class Int(Scalar):
-    pass
-
-class String(Scalar):
-    pass
-
-class Generator(object):
+class MetaGenerator(object):
     def __init__(self, tu):
         self.tu = tu
 
@@ -883,8 +883,8 @@ def main():
 
     opts = parse_options()
     check_for_overwrite(opts)
-    tu = Parser.from_file(opts.input).parse()
-    Generator(tu).to_file(make_meta_name(opts))
+    tu = MetaParser.from_file(opts.input).parse()
+    MetaGenerator(tu).to_file(make_meta_name(opts))
 
 if __name__ == '__main__':
     main()
