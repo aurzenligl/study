@@ -409,33 +409,29 @@ class MetaParser(object):
             raise MetaParserError('expected mo definition', self.filename, ts.cur.span)
 
         while True:
-            ts.get()
-            if ts.cur.kind == MetaTokenKind.RCB:
+            if ts.get().kind == MetaTokenKind.RCB:
                 break
             fields.append(self.field())
 
-        ts.get()
-        if ts.cur.kind != MetaTokenKind.SEMI:
-            raise MetaParserError('expected semicolon after mo definition, but got none')
+        prev = ts.cur
+        if ts.get().kind != MetaTokenKind.SEMI:
+            raise MetaParserError('expected semicolon after mo definition', self.filename, prev.span)
 
         return Mo(name, fields, children)
 
     def mo_child_list(self):
         ts = self.ts
 
-        ts.get()
-        if ts.cur.kind != MetaTokenKind.NAME:
-            raise MetaParserError('expected mo child name, but got none')
+        if ts.get().kind != MetaTokenKind.NAME:
+            raise MetaParserError('expected mo child name', self.filename, ts.cur.span)
         children = [ts.cur.value]
 
         while True:
-            ts.get()
-            if ts.cur.kind != MetaTokenKind.COMMA:
+            if ts.get().kind != MetaTokenKind.COMMA:
                 break
 
-            ts.get()
-            if ts.cur.kind != MetaTokenKind.NAME:
-                raise MetaParserError('expected mo child name, but got none')
+            if ts.get().kind != MetaTokenKind.NAME:
+                raise MetaParserError('expected mo child name', self.filename, ts.cur.span)
             children.append(ts.cur.value)
 
         return children

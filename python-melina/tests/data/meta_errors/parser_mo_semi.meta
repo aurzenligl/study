@@ -1,0 +1,6 @@
+mo NAME
+{
+    int x;
+}
+mo ANOTHER
+{};

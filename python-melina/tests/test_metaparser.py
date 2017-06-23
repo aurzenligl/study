@@ -23,7 +23,11 @@ class TestParserErrors():
             ('tokenizer.meta', ':1:4: error: unexpected character: "?", ord=63\nmo ? SHORT\n   ^\n'),
             ('parser_mo_keyw_mo.meta', ':2:3: error: expected keyword "mo"\n  does not start with mo\n  ^\n'),
             ('parser_mo_name.meta', ':1:4: error: expected mo name\nmo {};\n   ^\n'),
-            ('parser_mo_lcb.meta', ':1:8: error: expected mo definition\nmo NAME;\n       ^\n')
+            ('parser_mo_lcb.meta', ':1:8: error: expected mo definition\nmo NAME;\n       ^\n'),
+            ('parser_mo_semi.meta', ':4:1: error: expected semicolon after mo definition\n}\n^\n'),
+            ('parser_mo_child_list_name.meta', ':2:1: error: expected mo child name\n{};\n^\n'),
+            ('parser_mo_child_list_nocomma.meta', ':1:19: error: expected mo definition\nmo NAME -> CHILD1 CHILD2\n                  ^\n'),
+            ('parser_mo_child_list_2ndname.meta', ':2:1: error: expected mo child name\n{};\n^\n'),
         ],
         ids=id_func
     )
