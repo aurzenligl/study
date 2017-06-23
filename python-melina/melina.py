@@ -636,7 +636,7 @@ class MetaGenerator(object):
 def _int(text):
     try:
         return int(text)
-    except ValueError:
+    except (ValueError, TypeError):
         return
 
 def _positive_int(text):
@@ -652,7 +652,7 @@ def _nonnegative_int(text):
 def _float(text):
     try:
         return float(text)
-    except ValueError:
+    except (ValueError, TypeError):
         return
 
 class XmlParserError(Exception):
@@ -705,10 +705,10 @@ class XmlParser(object):
         if not name:
             raise XmlParserError('field declaration has no name')
 
-        '''TODO figure out 'optional' cardinality <creation priority="optional"/>'''
         '''TODO [langfeature] add max_occurs value to repeated cardinality'''
         max_occurs = _positive_int(field.attrib.get('maxOccurs'))
         if not max_occurs:
+            '''TODO [langfeature] field does not need to have maxOccurs attrib, in which case it's considered required'''
             raise XmlParserError('field declaration has no cardinality ("maxOccurs" attribute)')
 
         if max_occurs == 1:
