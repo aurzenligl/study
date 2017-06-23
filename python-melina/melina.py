@@ -212,8 +212,7 @@ class MetaToken(object):
         return repr + ">"
 
 class MetaParserError(Exception):
-    def __init__(self, message, filename=None, span=None):
-        '''TODO remove =None =None default args to ensure every raise passes all information'''
+    def __init__(self, message, filename, span):
         Exception.__init__(self, message)
         self.filename = filename
         self.span = span
@@ -224,9 +223,6 @@ class MetaParserError(Exception):
 
     @property
     def prettymsg(self):
-        '''TODO remove this awful clutch, span must be there always'''
-        if not self.span:
-            return self.message + '\n'
         return '%s: error: %s\n%s\n%s\n' % (
             self.origin,
             self.message,
@@ -367,7 +363,6 @@ class MetaParser(object):
 
     scalar_type:
         INT
-        FLOAT
         STRING
     '''
 
