@@ -20,26 +20,10 @@ class TestParserErrors():
     @pytest.mark.parametrize(
         'filename, message',
         [
-            ('tokenizer.meta', '''\
-tokenizer.meta:1:4: error: unexpected character: "?", ord=63
-mo ? SHORT
-   ^
-'''),
-            ('parser_mo_keyw_mo.meta', '''\
-parser_mo_keyw_mo.meta:2:3: error: expected keyword "mo"
-  does not start with mo
-  ^
-'''),
-            ('parser_mo_name.meta', '''\
-parser_mo_name.meta:1:4: error: expected mo name
-mo {};
-   ^
-'''),
-            ('parser_mo_lcb.meta', '''\
-parser_mo_lcb.meta:1:8: error: expected mo definition
-mo NAME;
-       ^
-''')
+            ('tokenizer.meta', ':1:4: error: unexpected character: "?", ord=63\nmo ? SHORT\n   ^\n'),
+            ('parser_mo_keyw_mo.meta', ':2:3: error: expected keyword "mo"\n  does not start with mo\n  ^\n'),
+            ('parser_mo_name.meta', ':1:4: error: expected mo name\nmo {};\n   ^\n'),
+            ('parser_mo_lcb.meta', ':1:8: error: expected mo definition\nmo NAME;\n       ^\n')
         ],
         ids=id_func
     )
@@ -48,7 +32,7 @@ mo NAME;
             tu = parse('meta_errors/' + filename)
         actualmsg = e.value.prettymsg
         shortpath_actualmsg = actualmsg.split('/tests/data/meta_errors/')[1]
-        assert shortpath_actualmsg == message
+        assert shortpath_actualmsg == filename + message
 
 class TestParser():
     def test_example(self):
