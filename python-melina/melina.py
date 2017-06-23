@@ -517,17 +517,14 @@ class MetaParser(object):
         value = 0
 
         while True:
-            ts.get()
-            if ts.cur.kind != MetaTokenKind.NAME:
+            if ts.get().kind != MetaTokenKind.NAME:
                 break
 
             name = ts.cur.value
 
-            ts.get()
-            if ts.cur.kind == MetaTokenKind.ASSIGN:
-                ts.get()
-                if ts.cur.kind != MetaTokenKind.NUMBER:
-                    raise MetaParserError('expected enumerator value, but got none')
+            if ts.get().kind == MetaTokenKind.ASSIGN:
+                if ts.get().kind != MetaTokenKind.NUMBER:
+                    raise MetaParserError('expected enumerator value', self.filename, ts.cur.span)
                 value = ts.cur.value
                 ts.get()
 

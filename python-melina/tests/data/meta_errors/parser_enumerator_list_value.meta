@@ -1,0 +1,7 @@
+mo NAME
+{
+    repeated enum Name
+    {
+        A = novalue
+    };
+};

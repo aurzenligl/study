@@ -36,6 +36,7 @@ class TestParserErrors():
             ('parser_enum_lcb.meta', ':3:23: error: expected enum definition\n    repeated enum Name;\n                      ^\n'),
             ('parser_enum_rcb.meta', ':6:9: error: expected brace closing enum definition\n        B = 2\n        ^\n'),
             ('parser_enum_semi.meta', ':6:5: error: expected semicolon after enum definition\n    }\n    ^\n'),
+            ('parser_enumerator_list_value.meta', ':5:13: error: expected enumerator value\n        A = novalue\n            ^\n'),
         ],
         ids=id_func
     )
