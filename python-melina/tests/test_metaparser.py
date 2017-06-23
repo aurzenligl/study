@@ -32,6 +32,10 @@ class TestParserErrors():
             ('parser_struct_name.meta', ':3:20: error: expected struct name\n    optional struct;\n                   ^\n'),
             ('parser_struct_lcb.meta', ':3:25: error: expected struct definition\n    optional struct Name;\n                        ^\n'),
             ('parser_struct_semi.meta', ':3:27: error: expected semicolon after struct definition\n    optional struct Name {}\n                          ^\n'),
+            ('parser_enum_name.meta', ':3:19: error: expected enum name\n    repeated enum {};\n                  ^\n'),
+            ('parser_enum_lcb.meta', ':3:23: error: expected enum definition\n    repeated enum Name;\n                      ^\n'),
+            ('parser_enum_rcb.meta', ':6:9: error: expected brace closing enum definition\n        B = 2\n        ^\n'),
+            ('parser_enum_semi.meta', ':6:5: error: expected semicolon after enum definition\n    }\n    ^\n'),
         ],
         ids=id_func
     )

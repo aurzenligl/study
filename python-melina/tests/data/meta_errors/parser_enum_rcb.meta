@@ -1,0 +1,8 @@
+mo NAME
+{
+    repeated enum Name
+    {
+        A = 1
+        B = 2
+    };
+};

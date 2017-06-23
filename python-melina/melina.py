@@ -489,27 +489,24 @@ class MetaParser(object):
     def enum(self):
         ts = self.ts
 
-        if ts.cur.pair != (MetaTokenKind.KEYW, 'enum'):
-            raise MetaParserError('expected keyword "enum", but got none')
+        assert ts.cur.pair == (MetaTokenKind.KEYW, 'enum')
 
-        ts.get()
-        if ts.cur.kind != MetaTokenKind.NAME:
-            raise MetaParserError('expected enum name, but got none')
+        if ts.get().kind != MetaTokenKind.NAME:
+            raise MetaParserError('expected enum name', self.filename, ts.cur.span)
 
         name = ts.cur.value
 
-        ts.get()
-        if ts.cur.kind != MetaTokenKind.LCB:
-            raise MetaParserError('expected enum definition, but got none')
+        if ts.get().kind != MetaTokenKind.LCB:
+            raise MetaParserError('expected enum definition', self.filename, ts.cur.span)
 
         enumerators = self.enumerator_list()
 
         if ts.cur.kind != MetaTokenKind.RCB:
-            raise MetaParserError('expected enum definition, but got none')
+            raise MetaParserError('expected brace closing enum definition', self.filename, ts.cur.span)
 
-        ts.get()
-        if ts.cur.kind != MetaTokenKind.SEMI:
-            raise MetaParserError('expected semicolon after enum definition, but got none')
+        prev = ts.cur
+        if ts.get().kind != MetaTokenKind.SEMI:
+            raise MetaParserError('expected semicolon after enum definition', self.filename, prev.span)
 
         return Enum(name, enumerators)
 
