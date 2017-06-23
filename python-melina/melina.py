@@ -834,11 +834,18 @@ class XmlGenerator(object):
         else:
             raise Exception('unknown scalar type: %s' % type_)
 
-def parse_options(args):
+EXIT_OK = 0
+EXIT_FAILURE = 1
+
+class DriverError(Exception):
+    pass
+
+def driver_parseopts(args):
     def readable_dir(name):
         if not os.path.isdir(name):
             raise argparse.ArgumentTypeError("%s directory not found" % name)
         return name
+
     def readable_file(name):
         if not os.path.isfile(name):
             raise argparse.ArgumentTypeError("%s file not found" % name)
@@ -846,22 +853,13 @@ def parse_options(args):
 
     class ArgumentParser(argparse.ArgumentParser):
         def error(self, msg):
-            sys.exit('melina' + ': error: ' + msg)
+            raise DriverError(msg)
 
     parser = ArgumentParser('melina')
     parser.add_argument('input',
                         type = readable_file,
                         nargs = '?',
                         help = ('Input in melina language.'))
-
-    group = parser.add_mutually_exclusive_group()
-    group.add_argument('--meta',
-                       action = 'store_true',
-                       help = 'Parse input files as xml.')
-    group.add_argument('--xml',
-                       action = 'store_true',
-                       help = 'Parse input files as meta.')
-
     parser.add_argument('--meta-out',
                         metavar = 'OUT_DIR',
                         type = readable_dir,
@@ -871,17 +869,20 @@ def parse_options(args):
                         type = readable_dir,
                         help = 'Generate xml output files in given directory.')
 
+    group = parser.add_mutually_exclusive_group()
+    group.add_argument('--meta',
+                       action = 'store_true',
+                       help = 'Parse input files as xml.')
+    group.add_argument('--xml',
+                       action = 'store_true',
+                       help = 'Parse input files as meta.')
+
     opts = parser.parse_args(args=args)
+
     if not opts.input:
-        parser.print_help()
-        sys.exit()
+        raise DriverError('missing input')
+
     return opts
-
-EXIT_OK = 0
-EXIT_FAILURE = 1
-
-class DriverError(Exception):
-    pass
 
 def driver(args=None):
     if args is None:
@@ -915,20 +916,20 @@ def driver(args=None):
     '''TODO add --meta-stdout, --xml-stdout options'''
 
     try:
-        opts = parse_options(args=args)
+        opts = driver_parseopts(args=args)
         parser = get_parser_cls(opts.input, opts)
         tu = parser.from_file(opts.input).parse()
-        if not opts.meta_out and not opts.xml_out:
-            sys.stderr.write('Your input is beautiful! No output selected though.\n')
         if opts.meta_out:
             MetaGenerator(tu).to_file(make_output_filepath(opts.input, opts.meta_out, '.meta'))
         if opts.xml_out:
             XmlGenerator(tu).to_file(make_output_filepath(opts.input, opts.xml_out, '.xml'))
+        if not opts.meta_out and not opts.xml_out:
+            sys.stderr.write('Your input is beautiful! No output selected though.\n')
         return EXIT_OK
     except (DriverError, MetaParserError, XmlParserError) as e:
         '''TODO prefix error with program name'''
         '''TODO output offending line and token in case of parsing errors'''
-        sys.stderr.write('%s.\n' % e.message)
+        sys.stderr.write('melina: error: %s\n' % e.message)
         return EXIT_FAILURE
 
 def main(args=None):

@@ -9,6 +9,16 @@ def fromdata(basename):
 
 class TestDriver():
 
+    def test_options_fail_noinput(self, capsys):
+        ret = melina.main('')
+        assert ret == melina.EXIT_FAILURE
+        assert capsys.readouterr()[1] == 'melina: error: missing input\n'
+
+    def test_options_fail_unknownopt(self, capsys):
+        ret = melina.main('--unknown')
+        assert ret == melina.EXIT_FAILURE
+        assert capsys.readouterr()[1] == 'melina: error: unrecognized arguments: --unknown\n'
+
     @pytest.mark.parametrize('args', [
         fromdata('short.meta'),
         fromdata('short.xml'),
@@ -16,7 +26,7 @@ class TestDriver():
         '--xml ' + fromdata('short.xml.concealed'),
     ])
     def test_input(self, capsys, args):
-        ret = melina.main(args=args)
+        ret = melina.main(args)
         assert ret == melina.EXIT_OK
         assert capsys.readouterr()[1] == 'Your input is beautiful! No output selected though.\n'
 
@@ -25,7 +35,7 @@ class TestDriver():
         fromdata('short.xml.concealed'),
     ])
     def test_input_fail_parser_choice(self, capsys, args):
-        ret = melina.main(args=args)
+        ret = melina.main(args)
         assert ret == melina.EXIT_FAILURE
         assert 'Input type was not given and cannot be deduced' in capsys.readouterr()[1]
 
@@ -34,15 +44,15 @@ class TestDriver():
         fromdata('wrong.xml'),
     ])
     def test_input_fail_parsing(self, capsys, args):
-        ret = melina.main(args=args)
+        ret = melina.main(args)
         assert ret == melina.EXIT_FAILURE
         assert capsys.readouterr()[1]
 
     def test_output(self, capsys, tmpdir):
-        ret = melina.main(args='--meta-out %s --xml-out %s %s' % (tmpdir, tmpdir, fromdata('short.meta')))
+        ret = melina.main('--meta-out %s --xml-out %s %s' % (tmpdir, tmpdir, fromdata('short.meta')))
         assert ret == melina.EXIT_OK
         assert capsys.readouterr()[1] == ''
-        ret = melina.main(args=str(tmpdir.join('short.meta')))
+        ret = melina.main(str(tmpdir.join('short.meta')))
         assert ret == melina.EXIT_OK
-        ret = melina.main(args=str(tmpdir.join('short.xml')))
+        ret = melina.main(str(tmpdir.join('short.xml')))
         assert ret == melina.EXIT_OK
