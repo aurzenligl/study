@@ -974,4 +974,4 @@ def main(args=None):
     return driver(args=args)
 
 if __name__ == '__main__':
-    main()
+    sys.exit(main())
