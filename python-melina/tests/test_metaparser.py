@@ -28,6 +28,10 @@ class TestParserErrors():
             ('parser_mo_child_list_name.meta', ':2:1: error: expected mo child name\n{};\n^\n'),
             ('parser_mo_child_list_nocomma.meta', ':1:19: error: expected mo definition\nmo NAME -> CHILD1 CHILD2\n                  ^\n'),
             ('parser_mo_child_list_2ndname.meta', ':2:1: error: expected mo child name\n{};\n^\n'),
+            ('parser_field_keyw.meta', ':3:5: error: expected field definition\n    unknown x;\n    ^\n'),
+            ('parser_struct_name.meta', ':3:20: error: expected struct name\n    optional struct;\n                   ^\n'),
+            ('parser_struct_lcb.meta', ':3:25: error: expected struct definition\n    optional struct Name;\n                        ^\n'),
+            ('parser_struct_semi.meta', ':3:27: error: expected semicolon after struct definition\n    optional struct Name {}\n                          ^\n'),
         ],
         ids=id_func
     )

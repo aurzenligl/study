@@ -448,7 +448,7 @@ class MetaParser(object):
             ts.get()
 
         if not (ts.cur.kind == MetaTokenKind.KEYW and ts.cur.value in ('struct', 'enum', 'int', 'float', 'string')):
-            raise MetaParserError('expected "struct", "enum" or type name "int", "float", "string", but got none')
+            raise MetaParserError('expected field definition', self.filename, ts.cur.span)
 
         if ts.cur.pair == (MetaTokenKind.KEYW, 'struct'):
             type_ = self.struct()
@@ -464,29 +464,25 @@ class MetaParser(object):
     def struct(self):
         ts = self.ts
 
-        if ts.cur.pair != (MetaTokenKind.KEYW, 'struct'):
-            raise MetaParserError('expected keyword "struct", but got none')
+        assert ts.cur.pair == (MetaTokenKind.KEYW, 'struct')
 
-        ts.get()
-        if ts.cur.kind != MetaTokenKind.NAME:
-            raise MetaParserError('expected struct name, but got none')
+        if ts.get().kind != MetaTokenKind.NAME:
+            raise MetaParserError('expected struct name', self.filename, ts.cur.span)
 
         name = ts.cur.value
         fields = []
 
-        ts.get()
-        if ts.cur.kind != MetaTokenKind.LCB:
-            raise MetaParserError('expected struct definition, but got none')
+        if ts.get().kind != MetaTokenKind.LCB:
+            raise MetaParserError('expected struct definition', self.filename, ts.cur.span)
 
         while True:
-            ts.get()
-            if ts.cur.kind == MetaTokenKind.RCB:
+            if ts.get().kind == MetaTokenKind.RCB:
                 break
             fields.append(self.field())
 
-        ts.get()
-        if ts.cur.kind != MetaTokenKind.SEMI:
-            raise MetaParserError('expected semicolon after struct definition, but got none')
+        prev = ts.cur
+        if ts.get().kind != MetaTokenKind.SEMI:
+            raise MetaParserError('expected semicolon after struct definition', self.filename, prev.span)
 
         return Struct(name, fields)
 
