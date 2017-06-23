@@ -37,6 +37,8 @@ class TestParserErrors():
             ('parser_enum_rcb.meta', ':6:9: error: expected brace closing enum definition\n        B = 2\n        ^\n'),
             ('parser_enum_semi.meta', ':6:5: error: expected semicolon after enum definition\n    }\n    ^\n'),
             ('parser_enumerator_list_value.meta', ':5:13: error: expected enumerator value\n        A = novalue\n            ^\n'),
+            ('parser_scalar_name.meta', ':3:9: error: expected scalar name\n    int int;\n        ^\n'),
+            ('parser_scalar_semi.meta', ':3:9: error: expected semicolon closing field definition\n    int x\n        ^\n'),
         ],
         ids=id_func
     )

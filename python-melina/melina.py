@@ -447,7 +447,7 @@ class MetaParser(object):
             cardinality = 'optional'
             ts.get()
 
-        if not (ts.cur.kind == MetaTokenKind.KEYW and ts.cur.value in ('struct', 'enum', 'int', 'float', 'string')):
+        if not (ts.cur.kind == MetaTokenKind.KEYW and ts.cur.value in ('struct', 'enum', 'int', 'string')):
             raise MetaParserError('expected field definition', self.filename, ts.cur.span)
 
         if ts.cur.pair == (MetaTokenKind.KEYW, 'struct'):
@@ -541,22 +541,19 @@ class MetaParser(object):
 
         if ts.cur.pair == (MetaTokenKind.KEYW, 'int'):
             type_ = Int()
-        elif ts.cur.pair == (MetaTokenKind.KEYW, 'float'):
-            type_ = Float()
         elif ts.cur.pair == (MetaTokenKind.KEYW, 'string'):
             type_ = String()
         else:
-            raise MetaParserError('expected type name "int", "float", "string", but got none')
+            assert False, "o-oh, we shouldn't end up here"
 
-        ts.get()
-        if ts.cur.kind != MetaTokenKind.NAME:
-            raise MetaParserError('expected field name, but got none')
+        if ts.get().kind != MetaTokenKind.NAME:
+            raise MetaParserError('expected scalar name', self.filename, ts.cur.span)
 
         name = ts.cur.value
 
-        ts.get()
-        if ts.cur.kind != MetaTokenKind.SEMI:
-            raise MetaParserError('expected semicolon closing field definition, but got none')
+        prev = ts.cur
+        if ts.get().kind != MetaTokenKind.SEMI:
+            raise MetaParserError('expected semicolon closing field definition', self.filename, prev.span)
 
         return type_, name
 
