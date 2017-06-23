@@ -10,10 +10,80 @@ def generate(tu):
     return melina.XmlGenerator(tu).to_string()
 
 class TestGenerator():
+    def test_example(self):
+        tu = parse('example.xml')
+        xml = generate(tu)
+        assert xml == '''\
+<?xml version="1.0" encoding="utf-8"?>
+<pdmeta>
+  <managedObject class="MACHINE_L">
+    <childManagedObject class="SENSOR"/>
+    <childManagedObject class="WHEEL"/>
+    <childManagedObject class="ARM"/>
+    <p name="StateBox" maxOccurs="1">
+      <complexType>
+        <p name="FaultStatus" maxOccurs="999999">
+          <simpleType base="integer">
+            <enumeration value="0" text="Empty"/>
+            <enumeration value="1" text="Disconnected"/>
+            <enumeration value="2" text="RoofFlewOff"/>
+          </simpleType>
+        </p>
+        <p name="AdminStatus" maxOccurs="1">
+          <simpleType base="integer">
+            <enumeration value="0" text="Locked"/>
+            <enumeration value="1" text="Unlocked"/>
+          </simpleType>
+        </p>
+        <p name="AvailStatus" maxOccurs="1">
+          <simpleType base="integer">
+            <enumeration value="0" text="Online"/>
+            <enumeration value="1" text="Offline"/>
+          </simpleType>
+        </p>
+      </complexType>
+    </p>
+    <p name="Core" maxOccurs="1">
+      <creation priority="optional"/>
+      <complexType>
+        <p name="Types" maxOccurs="999999">
+          <simpleType base="integer">
+            <enumeration value="1" text="T1"/>
+            <enumeration value="2" text="T2"/>
+          </simpleType>
+        </p>
+        <p name="Numbers" maxOccurs="999999">
+          <complexType>
+            <p name="x" maxOccurs="1">
+              <simpleType base="integer"/>
+            </p>
+            <p name="y" maxOccurs="1">
+              <simpleType base="integer"/>
+            </p>
+          </complexType>
+        </p>
+        <p name="a" maxOccurs="1">
+          <simpleType base="integer"/>
+        </p>
+        <p name="b" maxOccurs="1">
+          <simpleType base="integer"/>
+        </p>
+      </complexType>
+    </p>
+    <p name="x" maxOccurs="1">
+      <simpleType base="integer"/>
+    </p>
+    <p name="y" maxOccurs="1">
+      <simpleType base="integer"/>
+    </p>
+  </managedObject>
+</pdmeta>
+'''
+
     def test_configure(self):
         tu = parse('configure.xml')
-        meta = generate(tu)
-        assert meta == '''\
+        xml = generate(tu)
+        assert xml == '''\
 <?xml version="1.0" encoding="utf-8"?>
 <pdmeta>
   <managedObject class="CONFIGURE_MECHANISM_TASK">

@@ -8,6 +8,34 @@ def parse(filename):
     return melina.XmlParser.from_file(datadir + '/' + filename).parse()
 
 class TestParser():
+    def test_example(self):
+        tu = parse('example.xml')
+        assert str(tu) == '''\
+mo MACHINE_L: SENSOR WHEEL ARM
+    required struct StateBox
+        repeated enum FaultStatus
+            Empty = 0
+            Disconnected = 1
+            RoofFlewOff = 2
+        required enum AdminStatus
+            Locked = 0
+            Unlocked = 1
+        required enum AvailStatus
+            Online = 0
+            Offline = 1
+    optional struct Core
+        repeated enum Types
+            T1 = 1
+            T2 = 2
+        repeated struct Numbers
+            required int x
+            required int y
+        required int a
+        required int b
+    required int x
+    required int y
+'''
+
     def test_configure(self):
         tu = parse('configure.xml')
         assert str(tu) == '''\
