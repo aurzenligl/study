@@ -134,7 +134,7 @@ def _col(text, pos):
 class MetaSpan(object):
     __slots__ = ('input', 'start', 'end')
 
-    def __init__(self, input, start, end):
+    def __init__(self, input, start, end=None):
         self.input = input
         self.start = start
         self.end = end
@@ -144,8 +144,20 @@ class MetaSpan(object):
         return (_line(self.input, self.start), _col(self.input, self.start))
 
     @property
+    def start_repr(self):
+        return '%s:%s' % self.start_linecol
+
+    @property
+    def start_line(self):
+        return self.input.splitlines()[self.start_linecol[0] - 1]
+
+    @property
     def end_linecol(self):
         return (_line(self.input, self.end), _col(self.input, self.end))
+
+    @property
+    def end_repr(self):
+        return '%s:%s' % self.end_linecol
 
     def __repr__(self):
         return '%s:%s-%s:%s' % (self.start_linecol + self.end_linecol)
@@ -200,11 +212,32 @@ class MetaToken(object):
         return repr + ">"
 
 class MetaParserError(Exception):
-    pass
+    def __init__(self, message, filename=None, span=None):
+        '''TODO remove =None =None default args to ensure every raise passes all information'''
+        Exception.__init__(self, message)
+        self.filename = filename
+        self.span = span
+
+    @property
+    def origin(self):
+        return '%s:%s' % (self.filename or 'stdin', self.span.start_repr)
+
+    @property
+    def prettymsg(self):
+        '''TODO remove this awful clutch, span must be there always'''
+        if not self.span:
+            return self.message + '\n'
+        return '%s: error: %s\n%s\n%s\n' % (
+            self.origin,
+            self.message,
+            self.span.start_line,
+            ' ' * (self.span.start_linecol[1] - 1) + '^'
+        )
 
 class MetaTokenizer(object):
-    def __init__(self, input):
+    def __init__(self, input, filename=None):
         self.input = input
+        self.filename = filename
         self.pos = 0
         self.token = MetaToken(MetaTokenKind.END)
         self.comments = []
@@ -267,7 +300,8 @@ class MetaTokenizer(object):
                 return MetaToken(MetaTokenKind.END)
             else:
                 ch = self.input[self.pos]
-                raise MetaParserError("unexpected character: '%s', ord=%s" % (ch, ord(ch)))
+                span = MetaSpan(self.input, self.pos, self.pos)
+                raise MetaParserError('unexpected character: "%s", ord=%s' % (ch, ord(ch)), self.filename, span)
 
     def _read_raw(self):
         match = self._sre.match(self.input, self.pos)
@@ -337,12 +371,13 @@ class MetaParser(object):
         STRING
     '''
 
-    def __init__(self, input):
-        self.ts = MetaTokenizer(input)
+    def __init__(self, input, filename=None):
+        self.ts = MetaTokenizer(input, filename)
+        self.filename = filename
 
     @classmethod
     def from_file(cls, filename):
-        return cls(open(filename).read())
+        return cls(open(filename).read(), filename)
 
     def parse(self):
         ts = self.ts
@@ -359,7 +394,7 @@ class MetaParser(object):
     def mo(self):
         ts = self.ts
         if ts.cur.pair != (MetaTokenKind.KEYW, 'mo'):
-            raise MetaParserError('expected keyword "mo", but got none')
+            raise MetaParserError('expected keyword "mo"', self.filename, ts.cur.span)
 
         ts.get()
         if ts.cur.kind != MetaTokenKind.NAME:
@@ -927,9 +962,12 @@ def driver(args=None):
             sys.stderr.write('Your input is beautiful! No output selected though.\n')
         return EXIT_OK
     except (DriverError, MetaParserError, XmlParserError) as e:
-        '''TODO prefix error with program name'''
         '''TODO output offending line and token in case of parsing errors'''
-        sys.stderr.write('melina: error: %s\n' % e.message)
+        pretty = getattr(e, 'prettymsg', None)
+        if pretty:
+            sys.stderr.write(pretty)
+        else:
+            sys.stderr.write('melina: error: %s\n' % e.message)
         return EXIT_FAILURE
 
 def main(args=None):

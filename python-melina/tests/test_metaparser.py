@@ -1,11 +1,33 @@
 import os
 import timeit
+import pytest
 import melina
 
 datadir = os.path.abspath(__file__ + '/../data')
 
 def parse(filename):
     return melina.MetaParser.from_file(datadir + '/' + filename).parse()
+
+class TestParserErrors():
+    def test_error_tokenizer(self):
+        with pytest.raises(melina.MetaParserError) as e:
+            tu = parse('meta_errors/tokenizer.meta')
+        assert e.value.origin.endswith('tokenizer.meta:1:4')
+        assert e.value.message == '''unexpected character: "?", ord=63'''
+        assert e.value.prettymsg.endswith('''\
+tokenizer.meta:1:4: error: unexpected character: "?", ord=63
+mo ? SHORT
+   ^
+''')
+
+    def test_error_mo_expected_mo(self):
+        with pytest.raises(melina.MetaParserError) as e:
+            tu = parse('meta_errors/parser_mo_expected_mo.meta')
+        assert e.value.prettymsg.endswith('''\
+parser_mo_expected_mo.meta:2:3: error: expected keyword "mo"
+  does not start with mo
+  ^
+''')
 
 class TestParser():
     def test_example(self):

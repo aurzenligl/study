@@ -46,7 +46,7 @@ class TestDriver():
     def test_input_fail_parsing(self, capsys, args):
         ret = melina.main(args)
         assert ret == melina.EXIT_FAILURE
-        assert capsys.readouterr()[1]
+        assert capsys.readouterr()[1] != ''
 
     def test_output(self, capsys, tmpdir):
         ret = melina.main('--meta-out %s --xml-out %s %s' % (tmpdir, tmpdir, fromdata('short.meta')))

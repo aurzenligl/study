@@ -1,4 +1,4 @@
 mo SHORT
 {
-    int ? value;
+    int;
 };
