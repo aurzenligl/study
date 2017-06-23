@@ -891,16 +891,6 @@ def driver(args=None):
             raise Exception("not a string argument list: %s" % args)
         args = shlex.split(args)
 
-    def make_output_filepath(input_filepath, output_dir, wanted_extension):
-        basename = os.path.splitext(opts.input)[0]
-        output_filepath = os.path.join(output_dir, basename) + wanted_extension
-        return output_filepath
-
-    def make_meta_name(opts):
-        return opts.meta_out + '/' + os.path.splitext(os.path.basename(opts.input))[0] + '.meta'
-    def check_for_overwrite(opts):
-        if os.path.abspath(opts.input) == os.path.abspath(make_meta_name(opts)):
-            raise DriverError('file "%s" would be overwritten' % opts.input)
     def get_parser_cls(filepath, opts):
         if opts.meta:
             return MetaParser
@@ -916,28 +906,30 @@ def driver(args=None):
         raise DriverError("Input type was not given and cannot be deduced from extension: %s"
                           % os.path.basename(filepath))
 
+    def make_output_filepath(input_filepath, output_dir, wanted_extension):
+        stem = os.path.splitext(os.path.basename(opts.input))[0]
+        basename = stem + wanted_extension
+        output_filepath = os.path.join(output_dir, basename)
+        return output_filepath
+
     '''TODO add --meta-stdout, --xml-stdout options'''
-    opts = parse_options(args=args)
 
     try:
+        opts = parse_options(args=args)
         parser = get_parser_cls(opts.input, opts)
         tu = parser.from_file(opts.input).parse()
         if not opts.meta_out and not opts.xml_out:
             sys.stderr.write('Your input is beautiful! No output selected though.\n')
-            return 0
         if opts.meta_out:
             MetaGenerator(tu).to_file(make_output_filepath(opts.input, opts.meta_out, '.meta'))
         if opts.xml_out:
             XmlGenerator(tu).to_file(make_output_filepath(opts.input, opts.xml_out, '.xml'))
+        return EXIT_OK
     except (DriverError, MetaParserError, XmlParserError) as e:
         '''TODO prefix error with program name'''
         '''TODO output offending line and token in case of parsing errors'''
         sys.stderr.write('%s.\n' % e.message)
         return EXIT_FAILURE
-
-    check_for_overwrite(opts)
-    tu = MetaParser.from_file(opts.input).parse()
-    MetaGenerator(tu).to_file(make_meta_name(opts))
 
 def main(args=None):
     return driver(args=args)

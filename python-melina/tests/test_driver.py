@@ -37,3 +37,12 @@ class TestDriver():
         ret = melina.main(args=args)
         assert ret == melina.EXIT_FAILURE
         assert capsys.readouterr()[1]
+
+    def test_output(self, capsys, tmpdir):
+        ret = melina.main(args='--meta-out %s --xml-out %s %s' % (tmpdir, tmpdir, fromdata('short.meta')))
+        assert ret == melina.EXIT_OK
+        assert capsys.readouterr()[1] == ''
+        ret = melina.main(args=str(tmpdir.join('short.meta')))
+        assert ret == melina.EXIT_OK
+        ret = melina.main(args=str(tmpdir.join('short.xml')))
+        assert ret == melina.EXIT_OK
