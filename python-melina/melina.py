@@ -867,7 +867,7 @@ class XmlGenerator(object):
             ET.SubElement(selem, 'minLength', value='0')
             ET.SubElement(selem, 'maxLength', value='2147483647')
         else:
-            raise Exception('unknown scalar type: %s' % type_)
+            assert False, "o-oh, we shouldn't end up here"
 
 EXIT_OK = 0
 EXIT_FAILURE = 1
