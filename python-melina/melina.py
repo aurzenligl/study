@@ -853,10 +853,23 @@ def parse_options(args):
                         type = readable_file,
                         nargs = '?',
                         help = ('Input in melina language.'))
+
+    group = parser.add_mutually_exclusive_group()
+    group.add_argument('--meta',
+                       action = 'store_true',
+                       help = 'Parse input files as xml.')
+    group.add_argument('--xml',
+                       action = 'store_true',
+                       help = 'Parse input files as meta.')
+
     parser.add_argument('--meta-out',
                         metavar = 'OUT_DIR',
                         type = readable_dir,
-                        help = 'Generate C++ simple POD-based codec header and source files.')
+                        help = 'Generate meta output files in given directory.')
+    parser.add_argument('--xml-out',
+                        metavar = 'OUT_DIR',
+                        type = readable_dir,
+                        help = 'Generate xml output files in given directory.')
 
     opts = parser.parse_args(args=args)
     if not opts.input:
@@ -878,24 +891,45 @@ def driver(args=None):
             raise Exception("not a string argument list: %s" % args)
         args = shlex.split(args)
 
+    def make_output_filepath(input_filepath, output_dir, wanted_extension):
+        basename = os.path.splitext(opts.input)[0]
+        output_filepath = os.path.join(output_dir, basename) + wanted_extension
+        return output_filepath
+
     def make_meta_name(opts):
         return opts.meta_out + '/' + os.path.splitext(os.path.basename(opts.input))[0] + '.meta'
     def check_for_overwrite(opts):
         if os.path.abspath(opts.input) == os.path.abspath(make_meta_name(opts)):
             raise DriverError('file "%s" would be overwritten' % opts.input)
+    def get_parser_cls(filepath, opts):
+        if opts.meta:
+            return MetaParser
+        if opts.xml:
+            return XmlParser
 
-    '''TODO add input lang deduction logic and exclusive --meta, --xml options'''
+        ext = os.path.splitext(filepath)[1]
+        if ext == '.meta':
+            return MetaParser
+        elif ext == '.xml':
+            return XmlParser
+
+        raise DriverError("Input type was not given and cannot be deduced from extension: %s"
+                          % os.path.basename(filepath))
+
     '''TODO add --meta-stdout, --xml-stdout options'''
     opts = parse_options(args=args)
 
     try:
-        '''TODO add --xml-out option'''
-        '''TODO add example.xml and test it'''
-        if not opts.meta_out:
-            MetaParser.from_file(opts.input).parse()
+        parser = get_parser_cls(opts.input, opts)
+        tu = parser.from_file(opts.input).parse()
+        if not opts.meta_out and not opts.xml_out:
             sys.stderr.write('Your input is beautiful! No output selected though.\n')
             return 0
-    except MetaParserError as e:
+        if opts.meta_out:
+            MetaGenerator(tu).to_file(make_output_filepath(opts.input, opts.meta_out, '.meta'))
+        if opts.xml_out:
+            XmlGenerator(tu).to_file(make_output_filepath(opts.input, opts.xml_out, '.xml'))
+    except (DriverError, MetaParserError, XmlParserError) as e:
         '''TODO prefix error with program name'''
         '''TODO output offending line and token in case of parsing errors'''
         sys.stderr.write('%s.\n' % e.message)
@@ -906,8 +940,6 @@ def driver(args=None):
     MetaGenerator(tu).to_file(make_meta_name(opts))
 
 def main(args=None):
-    '''TODO: add driver tests'''
-    '''TODO: add driver error printing'''
     return driver(args=args)
 
 if __name__ == '__main__':

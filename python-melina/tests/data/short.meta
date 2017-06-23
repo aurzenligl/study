@@ -1,0 +1,4 @@
+mo SHORT
+{
+    int value;
+};
