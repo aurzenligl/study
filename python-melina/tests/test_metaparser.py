@@ -8,26 +8,47 @@ datadir = os.path.abspath(__file__ + '/../data')
 def parse(filename):
     return melina.MetaParser.from_file(datadir + '/' + filename).parse()
 
+def id_func(param):
+    if isinstance(param, str):
+        name, ext = os.path.splitext(param)
+        if ext == '.meta':
+            return name
+        else:
+            return 'msg'
+
 class TestParserErrors():
-    def test_error_tokenizer(self):
-        with pytest.raises(melina.MetaParserError) as e:
-            tu = parse('meta_errors/tokenizer.meta')
-        assert e.value.origin.endswith('tokenizer.meta:1:4')
-        assert e.value.message == '''unexpected character: "?", ord=63'''
-        assert e.value.prettymsg.endswith('''\
+    @pytest.mark.parametrize(
+        'filename, message',
+        [
+            ('tokenizer.meta', '''\
 tokenizer.meta:1:4: error: unexpected character: "?", ord=63
 mo ? SHORT
    ^
-''')
-
-    def test_error_mo_expected_mo(self):
-        with pytest.raises(melina.MetaParserError) as e:
-            tu = parse('meta_errors/parser_mo_expected_mo.meta')
-        assert e.value.prettymsg.endswith('''\
-parser_mo_expected_mo.meta:2:3: error: expected keyword "mo"
+'''),
+            ('parser_mo_keyw_mo.meta', '''\
+parser_mo_keyw_mo.meta:2:3: error: expected keyword "mo"
   does not start with mo
   ^
+'''),
+            ('parser_mo_name.meta', '''\
+parser_mo_name.meta:1:4: error: expected mo name
+mo {};
+   ^
+'''),
+            ('parser_mo_lcb.meta', '''\
+parser_mo_lcb.meta:1:8: error: expected mo definition
+mo NAME;
+       ^
 ''')
+        ],
+        ids=id_func
+    )
+    def test_errors(self, filename, message):
+        with pytest.raises(melina.MetaParserError) as e:
+            tu = parse('meta_errors/' + filename)
+        actualmsg = e.value.prettymsg
+        shortpath_actualmsg = actualmsg.split('/tests/data/meta_errors/')[1]
+        assert shortpath_actualmsg == message
 
 class TestParser():
     def test_example(self):

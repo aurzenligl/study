@@ -384,8 +384,7 @@ class MetaParser(object):
 
         mos = []
         while True:
-            ts.get()
-            if ts.cur.kind == MetaTokenKind.END:
+            if ts.get().kind == MetaTokenKind.END:
                 break
             mos.append(self.mo())
 
@@ -396,20 +395,18 @@ class MetaParser(object):
         if ts.cur.pair != (MetaTokenKind.KEYW, 'mo'):
             raise MetaParserError('expected keyword "mo"', self.filename, ts.cur.span)
 
-        ts.get()
-        if ts.cur.kind != MetaTokenKind.NAME:
-            raise MetaParserError('expected mo name, but got none')
+        if ts.get().kind != MetaTokenKind.NAME:
+            raise MetaParserError('expected mo name', self.filename, ts.cur.span)
 
         name = ts.cur.value
         children = []
         fields = []
 
-        ts.get()
-        if ts.cur.kind == MetaTokenKind.ARROW:
+        if ts.get().kind == MetaTokenKind.ARROW:
             children = self.mo_child_list()
 
         if ts.cur.kind != MetaTokenKind.LCB:
-            raise MetaParserError('expected mo definition, but got none')
+            raise MetaParserError('expected mo definition', self.filename, ts.cur.span)
 
         while True:
             ts.get()
