@@ -1,11 +1,22 @@
 import os
 import timeit
+import pytest
 import melina
 
 datadir = os.path.abspath(__file__ + '/../data')
 
 def parse(filename):
     return melina.XmlParser.from_file(datadir + '/' + filename).parse()
+
+class TestParserErrors():
+    def test_errors(self):
+        filename = 'syntax.xml'
+        message = ':3:11: error: error parsing attribute name\n  <managed<>?)\n          ^\n'
+        with pytest.raises(melina.XmlParserError) as e:
+            tu = parse('xml_errors/' + filename)
+        actualmsg = e.value.prettymsg
+        shortpath_actualmsg = actualmsg.split('/tests/data/xml_errors/')[1]
+        assert shortpath_actualmsg == filename + message
 
 class TestParser():
     def test_example(self):

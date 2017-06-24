@@ -631,18 +631,48 @@ def _float(text):
         return
 
 class XmlParserError(Exception):
-    pass
+    def __init__(self, message, filename=None, position=None, input_=None):
+        '''TODO rempove None defaults'''
+        Exception.__init__(self, message)
+        self.filename = filename
+        self.position = position
+        self.input = input_
+
+    @property
+    def line(self):
+        return self.input.splitlines()[self.position[0] - 1]
+
+    @property
+    def origin(self):
+        return '%s:%s:%s' % ((self.filename or 'stdin',) + self.position)
+
+    @property
+    def prettymsg(self):
+        '''TODO rempove None defaults'''
+        if not self.position or not self.input:
+            return self.message + '\n'
+        return '%s: error: %s\n%s\n%s\n' % (
+            self.origin,
+            self.message,
+            self.line,
+            ' ' * (self.position[1] - 1) + '^'
+        )
 
 class XmlParser(object):
-    def __init__(self, input_):
+    def __init__(self, input_, filename=None):
         '''TODO handle xml parser errors in driver'''
         '''TODO [langfeature] pdmeta version=int.int,
            header domain='str' product='str' release='str' version='str' revision='str' '''
-        self.et = ET.fromstring(input_)
+        self.filename = filename
+        self.input = input_
+        try:
+            self.et = ET.fromstring(input_)
+        except ET.XMLSyntaxError as e:
+            raise XmlParserError(e.message.split(', line ')[0], self.filename, e.position, self.input)
 
     @classmethod
-    def from_file(cls, filename):
-        return cls(open(filename).read())
+    def from_file(cls, filename=None):
+        return cls(open(filename).read(), filename)
 
     def parse(self):
         mos = [self.mo(mo) for mo in self.et.findall('.//managedObject')]
@@ -937,7 +967,6 @@ def driver(args=None):
             sys.stderr.write('Your input is beautiful! No output selected though.\n')
         return EXIT_OK
     except (DriverError, MetaParserError, XmlParserError) as e:
-        '''TODO output offending line and token in case of parsing errors'''
         pretty = getattr(e, 'prettymsg', None)
         if pretty:
             sys.stderr.write(pretty)
