@@ -915,13 +915,21 @@ def driver_parseopts(args):
                         type = readable_dir,
                         help = 'Generate xml output files in given directory.')
 
-    group = parser.add_mutually_exclusive_group()
-    group.add_argument('--meta',
-                       action = 'store_true',
-                       help = 'Parse input files as xml.')
-    group.add_argument('--xml',
-                       action = 'store_true',
-                       help = 'Parse input files as meta.')
+    stdoutgroup = parser.add_mutually_exclusive_group()
+    stdoutgroup.add_argument('--meta-stdout',
+                             action = 'store_true',
+                             help = 'Output as meta to stdout.')
+    stdoutgroup.add_argument('--xml-stdout',
+                             action = 'store_true',
+                             help = 'Output as xml to stdout.')
+
+    inputgroup = parser.add_mutually_exclusive_group()
+    inputgroup.add_argument('--meta',
+                            action = 'store_true',
+                            help = 'Parse input files as meta.')
+    inputgroup.add_argument('--xml',
+                            action = 'store_true',
+                            help = 'Parse input files as xml.')
 
     opts = parser.parse_args(args=args)
 
@@ -959,8 +967,6 @@ def driver(args=None):
         output_filepath = os.path.join(output_dir, basename)
         return output_filepath
 
-    '''TODO add --meta-stdout, --xml-stdout options'''
-
     try:
         opts = driver_parseopts(args=args)
         parser = get_parser_cls(opts.input, opts)
@@ -969,7 +975,11 @@ def driver(args=None):
             MetaGenerator(tu).to_file(make_output_filepath(opts.input, opts.meta_out, '.meta'))
         if opts.xml_out:
             XmlGenerator(tu).to_file(make_output_filepath(opts.input, opts.xml_out, '.xml'))
-        if not opts.meta_out and not opts.xml_out:
+        if opts.meta_stdout:
+            sys.stdout.write(MetaGenerator(tu).to_string())
+        if opts.xml_stdout:
+            sys.stdout.write(XmlGenerator(tu).to_string())
+        if not (opts.meta_out or opts.xml_out or opts.meta_stdout or opts.xml_stdout):
             sys.stderr.write('Your input is beautiful! No output selected though.\n')
         return EXIT_OK
     except (DriverError, MetaParserError, XmlParserError) as e:

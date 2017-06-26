@@ -39,6 +39,11 @@ class TestDriver():
         assert ret == melina.EXIT_FAILURE
         assert 'Input type was not given and cannot be deduced' in capsys.readouterr()[1]
 
+    def test_input_fail_multiple_choice(self, capsys):
+        ret = melina.main('--meta --xml short.xml')
+        assert ret == melina.EXIT_FAILURE
+        assert '--xml: not allowed with argument --meta' in capsys.readouterr()[1]
+
     @pytest.mark.parametrize('args', [
         fromdata('wrong.meta'),
         fromdata('wrong.xml'),
@@ -56,3 +61,18 @@ class TestDriver():
         assert ret == melina.EXIT_OK
         ret = melina.main(str(tmpdir.join('short.xml')))
         assert ret == melina.EXIT_OK
+
+    def test_output_stdout_meta(self, capsys, tmpdir):
+        ret = melina.main('--meta-stdout --meta-out %s %s' % (tmpdir, fromdata('short.meta')))
+        assert ret == melina.EXIT_OK
+        assert capsys.readouterr()[0] == tmpdir.join('short.meta').read()
+
+    def test_output_stdout_xml(self, capsys, tmpdir):
+        ret = melina.main('--xml-stdout --xml-out %s %s' % (tmpdir, fromdata('short.xml')))
+        assert ret == melina.EXIT_OK
+        assert capsys.readouterr()[0] == tmpdir.join('short.xml').read()
+
+    def test_output_fail_multiple_stdout(self, capsys):
+        ret = melina.main('--meta-stdout --xml-stdout short.xml')
+        assert ret == melina.EXIT_FAILURE
+        assert '--xml-stdout: not allowed with argument --meta-stdout' in capsys.readouterr()[1]
