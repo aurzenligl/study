@@ -113,8 +113,8 @@ class CardinalityKind(enum.Enum):
 
 class Struct(object):
     def __init__(self, name, fields):
-        self.name = name
-        self.fields = fields
+        self.name = _sanitize_identifier(name)
+        self.fields = _sanitize_list(fields, Field)
 
     def __repr__(self):
         return '<Struct %s>' % self.name
@@ -127,8 +127,8 @@ class Struct(object):
 
 class Enum(object):
     def __init__(self, name, enumerators):
-        self.name = name
-        self.enumerators = enumerators
+        self.name = _sanitize_identifier(name)
+        self.enumerators = _sanitize_list(enumerators, Enumerator)
 
     def __repr__(self):
         return '<Enum %s>' % self.name
@@ -141,8 +141,8 @@ class Enum(object):
 
 class Enumerator(object):
     def __init__(self, name, value):
-        self.name = name
-        self.value = value
+        self.name = _sanitize_identifier(name)
+        self.value = _sanitize(value, (int, long))
 
     def __repr__(self):
         return '<Enumerator %s>' % self.name
