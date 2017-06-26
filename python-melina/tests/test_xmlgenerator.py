@@ -37,7 +37,7 @@ class TestGenerator():
         </p>
         <p name="AvailStatus" maxOccurs="1">
           <simpleType base="integer">
-            <enumeration value="0" text="Online"/>
+            <enumeration value="0" text="On_line"/>
             <enumeration value="1" text="Offline"/>
           </simpleType>
         </p>

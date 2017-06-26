@@ -210,17 +210,18 @@ class MetaSpan(object):
         return '%s:%s-%s:%s' % (self.start_linecol + self.end_linecol)
 
 class MetaTokenKind(enum.Enum):
-    KEYW = 0    # mo, struct, enum, repeated, optional, int, float, string
-    NAME = 1    # [_a-zA-Z][_a-zA-Z0-9]*
-    NUMBER = 2  # [0-9]*
-    LCB = 3     # {
-    RCB = 4     # }
-    SEMI = 5    # ;
-    COMMA = 6   # ,
-    ASSIGN = 7  # =
-    ARROW = 8   # ->
-    COMMENT = 9 # '//\n', '/**/' <ignored, stored>
-    END = 10
+    KEYW = 0      # mo, struct, enum, repeated, optional, int, float, string
+    NAME = 1      # [_a-zA-Z][_a-zA-Z0-9]*
+    NUMBER = 2    # [0-9]*
+    NUMNAME = 3   # [_a-zA-Z0-9]+
+    LCB = 4       # {
+    RCB = 5       # }
+    SEMI = 6      # ;
+    COMMA = 7     # ,
+    ASSIGN = 8    # =
+    ARROW = 9     # ->
+    COMMENT = 10  # '//\n', '/**/' <ignored, stored>
+    END = 11
 
 class MetaToken(object):
     __slots__ = ('kind', 'value', 'span')
@@ -234,7 +235,7 @@ class MetaToken(object):
         MetaTokenKind.ARROW: '->',
     }
 
-    _repr_direct = (MetaTokenKind.KEYW, MetaTokenKind.NAME, MetaTokenKind.NUMBER, MetaTokenKind.COMMENT)
+    _repr_direct = (MetaTokenKind.KEYW, MetaTokenKind.NAME, MetaTokenKind.NUMBER, MetaTokenKind.NUMNAME, MetaTokenKind.COMMENT)
 
     def __init__(self, kind, value = None, span = None):
         self.kind = kind
@@ -299,7 +300,8 @@ class MetaTokenizer(object):
 
     _sre = re.compile('|'.join((
         r'(?P<name>[a-zA-Z_][a-zA-Z0-9_]*)',
-        r'(?P<number>[0-9]+)',
+        r'(?P<number>[0-9]+(?![a-zA-Z_]))',
+        r'(?P<numname>[0-9]+[a-zA-Z_][a-zA-Z0-9_]*)',
         r'(?P<operator>(->)|[{};,=])',
         r'(?P<comment>(//.*\n|/\*(\*(?!/)|[^*])*\*/))',
         r'(?P<space>\s+)',
@@ -328,6 +330,8 @@ class MetaTokenizer(object):
                         return MetaToken(MetaTokenKind.KEYW, string, span=span)
                     else:
                         return MetaToken(MetaTokenKind.NAME, string, span=span)
+                elif group == 'numname':
+                    return MetaToken(MetaTokenKind.NUMNAME, string, span=span)
                 elif group == 'number':
                     return MetaToken(MetaTokenKind.NUMBER, int(string), span=span)
                 elif group == 'operator':
@@ -559,7 +563,7 @@ class MetaParser(object):
         value = 0
 
         while True:
-            if ts.get().kind != MetaTokenKind.NAME:
+            if ts.get().kind not in (MetaTokenKind.NAME, MetaTokenKind.NUMNAME):
                 break
 
             name = ts.cur.value

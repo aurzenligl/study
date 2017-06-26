@@ -65,7 +65,7 @@ mo MACHINE_L: SENSOR WHEEL ARM
             Locked = 0
             Unlocked = 1
         required enum AvailStatus
-            Online = 0
+            On_line = 0
             Offline = 1
     optional struct Core
         repeated enum Types

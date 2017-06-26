@@ -12,7 +12,8 @@ mo MACHINE_L -> SENSOR, WHEEL, ARM
         repeated enum Types
         {
             T1 = 1,
-            T2 = 2
+            T2 = 2,
+            3Val = 3
         };
 
         /**
