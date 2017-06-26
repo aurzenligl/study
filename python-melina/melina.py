@@ -631,8 +631,7 @@ def _float(text):
         return
 
 class XmlParserError(Exception):
-    def __init__(self, message, filename=None, position=None, input_=None):
-        '''TODO rempove None defaults'''
+    def __init__(self, message, filename, position, input_):
         Exception.__init__(self, message)
         self.filename = filename
         self.input = input_
@@ -654,9 +653,6 @@ class XmlParserError(Exception):
 
     @property
     def prettymsg(self):
-        '''TODO rempove None defaults'''
-        if not self.lineno or not self.input:
-            return self.message + '\n'
         msg = '%s: error: %s\n%s\n' % (
             self.origin,
             self.message,
