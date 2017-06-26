@@ -777,9 +777,7 @@ class XmlParser(object):
         '''TODO [langfeature] add decimal scalar base (fixed-point values)'''
         '''TODO [langfeature] add boolean scalar base'''
 
-        base = simple.attrib.get('base')
-        if not base:
-            raise XmlParserError('scalar field declaration has no base')
+        base = self.ensured_getattr(simple, 'base')
 
         if base == 'integer':
             editing = simple.find('editing')
@@ -787,14 +785,14 @@ class XmlParser(object):
                 '''TODO [langfeature] add integer range/step'''
                 range = editing.find('range')
                 if range is not None:
-                    min_val = _float(range.attrib.get('minIncl'))
+                    min_val = _float(self.ensured_getattr(range, 'minIncl'))
                     if min_val is None:
-                        raise XmlParserError('scalar range min val is not a float')
-                    max_val = _float(range.attrib.get('maxIncl'))
+                        raise XmlParserError('expected float in "minIncl"', self.filename, range.sourceline, self.input)
+                    max_val = _float(self.ensured_getattr(range, 'maxIncl'))
                     if max_val is None:
-                        raise XmlParserError('scalar range max val is not a float')
+                        raise XmlParserError('expected float in "maxIncl"', self.filename, range.sourceline, self.input)
 
-                units = editing.attrib.get('units')
+                units = editing.get('units')
                 '''TODO [langfeature] add integer units'''
 
                 default = editing.find('default')
@@ -807,19 +805,19 @@ class XmlParser(object):
             min_ = simple.find('minLength')
             max_ = simple.find('maxLength')
             if min_ is not None and max_ is not None:
-                min_val = _nonnegative_int(min_.attrib.get('value'))
+                min_val = _nonnegative_int(self.ensured_getattr(min_, 'value'))
                 if min_val is None:
-                    raise XmlParserError('min val is not a positive integer')
-                max_val = _nonnegative_int(max_.attrib.get('value'))
+                    raise XmlParserError('expected non-negative integer in "value" attribute', self.filename, min_.sourceline, self.input)
+                max_val = _nonnegative_int(self.ensured_getattr(max_, 'value'))
                 if max_val is None:
-                    raise XmlParserError('max val is not a positive integer')
+                    raise XmlParserError('expected non-negative integer in "value" attribute', self.filename, max_.sourceline, self.input)
                 '''TODO [langfeature] add min/max string lengths'''
 
                 return String()
             else:
                 return String()
         else:
-            raise XmlParserError('scalar field base unknown: %s' % base)
+            raise XmlParserError('expected "integer" or "string" in "base" attribute', self.filename, simple.sourceline, self.input)
 
 class XmlGenerator(object):
     def __init__(self, tu):

@@ -32,6 +32,16 @@ class TestParserErrors():
             ('parser_field_enum_text.xml', ':6: error: expected "text" attribute in enumeration tag\n        <enumeration/>\n'),
             ('parser_field_enum_value.xml', ':6: error: expected "value" attribute in enumeration tag\n        <enumeration text="Disabled"/>\n'),
             ('parser_field_enum_value_int.xml', ':6: error: expected integer enumerator value\n        <enumeration value="nonint" text="Disabled"/>\n'),
+            ('parser_scalar_base.xml', ':5: error: expected "base" attribute in simpleType tag\n      <simpleType/>\n'),
+            ('parser_scalar_base_unknown.xml', ':5: error: expected "integer" or "string" in "base" attribute\n      <simpleType base="unknown"/>\n'),
+            ('parser_scalar_int_minincl.xml', ':7: error: expected "minIncl" attribute in range tag\n          <range maxIncl="9500"/>\n'),
+            ('parser_scalar_int_minincl_float.xml', ':7: error: expected float in "minIncl"\n          <range minIncl="nonfloat" maxIncl="9500"/>\n'),
+            ('parser_scalar_int_maxincl.xml', ':7: error: expected "maxIncl" attribute in range tag\n          <range minIncl="0"/>\n'),
+            ('parser_scalar_int_maxincl_float.xml', ':7: error: expected float in "maxIncl"\n          <range minIncl="0" maxIncl="nonfloat"/>\n'),
+            ('parser_scalar_string_minlen.xml', ':6: error: expected "value" attribute in minLength tag\n        <minLength/>\n'),
+            ('parser_scalar_string_minlen_nonneg.xml', ':6: error: expected non-negative integer in "value" attribute\n        <minLength value="-1"/>\n'),
+            ('parser_scalar_string_maxlen.xml', ':7: error: expected "value" attribute in maxLength tag\n        <maxLength/>\n'),
+            ('parser_scalar_string_maxlen_nonneg.xml', ':7: error: expected non-negative integer in "value" attribute\n        <maxLength value="-1"/>\n'),
         ],
         ids=id_func
     )

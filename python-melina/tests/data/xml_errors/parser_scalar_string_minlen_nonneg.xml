@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<pdmeta>
+  <managedObject class="NAME">
+    <p name="member" maxOccurs="1">
+      <simpleType base="string">
+        <minLength value="-1"/>
+        <maxLength value="32767"/>
+      </simpleType>
+    </p>
+  </managedObject>
+</pdmeta>
