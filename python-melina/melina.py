@@ -686,13 +686,18 @@ class XmlParser(object):
         mos = [self.mo(mo) for mo in self.et.findall('.//managedObject')]
         return TranslationUnit(mos)
 
+    def ensured_getattr(self, elem, name):
+        value = elem.get(name)
+        if not value:
+            raise XmlParserError('expected "%s" attribute in %s tag' % (name, elem.tag),
+                                 self.filename, elem.sourceline, self.input)
+        return value
+
     def mo(self, mo):
         '''TODO [langfeature] add fullName comment to mo'''
         '''TODO [langfeature] add hidden/create/update/delete flags to mo'''
 
-        name = mo.attrib.get('class')
-        if not name:
-            raise XmlParserError('expected "class" attribute in mo tag', self.filename, mo.sourceline, self.input)
+        name = self.ensured_getattr(mo, 'class')
         children = self.mo_child_list(mo)
         fields = [self.field(field) for field in mo.findall('p')]
         return Mo(name, fields, children)
@@ -702,10 +707,8 @@ class XmlParser(object):
 
         children = []
         for child in mo.findall('childManagedObject'):
-            name = child.attrib.get('class')
             '''TODO [langfeature] maxOccurs in children'''
-            if not name:
-                raise XmlParserError('mo child definition has no name')
+            name = self.ensured_getattr(child, 'class')
             children.append(name)
         return children
 
@@ -714,9 +717,7 @@ class XmlParser(object):
 
         '''TODO [langfeature] field name has to begin with small letter (xml)'''
         '''TODO [langfeature] enum/struct name has to begin with capital letter (meta)'''
-        name = field.attrib.get('name')
-        if not name:
-            raise XmlParserError('field declaration has no name')
+        name = self.ensured_getattr(field, 'name')
 
         '''TODO [langfeature] add max_occurs value to repeated cardinality'''
         max_occurs = _positive_int(field.attrib.get('maxOccurs'))

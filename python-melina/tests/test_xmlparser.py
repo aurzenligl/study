@@ -21,7 +21,9 @@ class TestParserErrors():
         'filename, message',
         [
             ('xml_syntax.xml', ':3:11: error: error parsing attribute name\n  <managed<>?)\n          ^\n'),
-            ('parser_mo_name.xml', ':3: error: expected "class" attribute in mo tag\n  <managedObject>\n'),
+            ('parser_mo_name.xml', ':3: error: expected "class" attribute in managedObject tag\n  <managedObject>\n'),
+            ('parser_mo_child_name.xml', ':4: error: expected "class" attribute in childManagedObject tag\n    <childManagedObject/>\n'),
+            ('parser_field_name.xml', ':4: error: expected "name" attribute in p tag\n    <p/>\n'),
         ],
         ids=id_func
     )
