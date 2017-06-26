@@ -728,10 +728,13 @@ class XmlParser(object):
         if max_occurs == 1:
             creation = field.find('creation')
             if creation is not None:
-                prio = creation.attrib.get('priority')
-                if prio != 'optional':
-                    raise XmlParserError('priority tag present, but no optional attribute found')
-                cardinality = 'optional'
+                prio = self.ensured_getattr(creation, 'priority')
+                if prio == 'optional':
+                    cardinality = 'optional'
+                elif prio == 'mandatory':
+                    cardinality = 'required'
+                else:
+                    raise XmlParserError('expected "optional" or "mandatory" cardinality', self.filename, creation.sourceline, self.input)
             else:
                 cardinality = 'required'
         else:
