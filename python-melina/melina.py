@@ -829,10 +829,13 @@ class XmlParser(object):
 
         if base == 'boolean':
             return Bool()
-        elif base == 'integer':
+        elif base in ('integer', 'decimal'):
             editing = simple.find('editing')
             if editing is not None:
                 '''TODO [langfeature] add integer range/step'''
+                '''TODO [langfeature] is 'integer' and 'decimal' the same?'''
+                '''TODO [langfeature] add how does step and divisor differ?'''
+                '''TODO [langfeature] does internalValue always follow divisor/step?'''
                 range = editing.find('range')
                 if range is not None:
                     min_val = _float(self.ensured_getattr(range, 'minIncl'))
