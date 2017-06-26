@@ -816,6 +816,7 @@ class XmlParser(object):
         enumerators = []
         for enumer in simple.findall('enumeration'):
             name = self.ensured_getattr(enumer, 'text')
+            name = name.replace('-', '_')
             value = _int(self.ensured_getattr(enumer, 'value'))
             if value is None:
                 self.error('expected integer enumerator value', enumer)
