@@ -32,9 +32,19 @@ String
 def _indent(text, value):
     return '\n'.join(x and (' ' * value + x) or '' for x in text.split('\n'))
 
+def _sanitize_list(lst, classes):
+    for elem in lst:
+        assert isinstance(elem, classes), 'List element is an instance of unexpected class'
+    return lst
+
+_re_identifier = re.compile('^[a-zA-Z_][a-zA-Z0-9_]*$')
+def _sanitize_identifier(name):
+    assert _re_identifier.match(name)
+    return name
+
 class TranslationUnit(object):
     def __init__(self, mos):
-        self.mos = mos
+        self.mos = _sanitize_list(mos, Mo)
 
     def __repr__(self):
         return '<TranslationUnit with %s mos>' % len(self.mos)
@@ -44,18 +54,28 @@ class TranslationUnit(object):
 
 class Mo(object):
     def __init__(self, name, fields, children):
-        self.name = name
-        self.fields = fields
-        self.children = children
+        self.name = _sanitize_identifier(name)
+        self.fields = _sanitize_list(fields, Field)
+        self.children = _sanitize_list(children, MoChild)
 
     def __repr__(self):
         return '<Mo %s>' % self.name
 
     def __str__(self):
         return (
-            'mo %s' % self.name + ':' + ''.join((' ' + x for x in self.children)) + '\n' +
+            'mo %s' % self.name + ':' + ''.join((' ' + x.name for x in self.children)) + '\n' +
             _indent(''.join((str(field) for field in self.fields)), 4)
         )
+
+class MoChild(object):
+    def __init__(self, name):
+        self.name = _sanitize_identifier(name)
+
+    def __repr__(self):
+        return '<MoChild %s>' % self.name
+
+    def __str__(self):
+        return self.name
 
 class Field(object):
     def __init__(self, name, type_, cardinality):
@@ -419,7 +439,7 @@ class MetaParser(object):
 
         if ts.get().kind != MetaTokenKind.NAME:
             raise MetaParserError('expected mo child name', self.filename, ts.cur.span)
-        children = [ts.cur.value]
+        children = [MoChild(ts.cur.value)]
 
         while True:
             if ts.get().kind != MetaTokenKind.COMMA:
@@ -427,7 +447,7 @@ class MetaParser(object):
 
             if ts.get().kind != MetaTokenKind.NAME:
                 raise MetaParserError('expected mo child name', self.filename, ts.cur.span)
-            children.append(ts.cur.value)
+            children.append(MoChild(ts.cur.value))
 
         return children
 
@@ -565,7 +585,7 @@ class MetaGenerator(object):
     def mo(self, mo):
         out = 'mo %s' % mo.name
         if mo.children:
-            out += ' -> ' + ', '.join(mo.children)
+            out += ' -> ' + ', '.join((child.name for child in mo.children))
         out += '\n{\n' + _indent(self.fields(mo.fields), 4) + '};\n'
         return out
 
@@ -707,7 +727,7 @@ class XmlParser(object):
         for child in mo.findall('childManagedObject'):
             '''TODO [langfeature] maxOccurs in children'''
             name = self.ensured_getattr(child, 'class')
-            children.append(name)
+            children.append(MoChild(name))
         return children
 
     def field(self, field):
@@ -837,7 +857,7 @@ class XmlGenerator(object):
     def mo(self, parent, mo):
         moelem = ET.SubElement(parent, 'managedObject', {'class': mo.name})
         for child in mo.children:
-            ET.SubElement(moelem, 'childManagedObject', {'class': child})
+            ET.SubElement(moelem, 'childManagedObject', {'class': child.name})
         self.fields(moelem, mo.fields)
 
     def fields(self, parent, fields):
