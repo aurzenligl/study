@@ -12,3 +12,5 @@ check if all meta/xml inputs parse/generate the same way to/from meta/xml
 
 [value sets]
 optional int(0..17) mac;  // comment
+
+study -> ownrepo: [repoize melina]
