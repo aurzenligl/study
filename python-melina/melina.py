@@ -718,12 +718,14 @@ class XmlParser(object):
         name = self.ensured_getattr(field, 'name')
 
         '''TODO [langfeature] add max_occurs value to repeated cardinality'''
-        max_occurs = _positive_int(self.ensured_getattr(field, 'maxOccurs'))
-        if max_occurs is None:
-            '''TODO [langfeature] field does not need to have maxOccurs attrib, in which case it's considered required'''
-            self.error('expected positive integer in "maxOccurs"', field)
+        max_occurs = field.get('maxOccurs')
+        if max_occurs is not None:
+            max_occurs = _positive_int(max_occurs)
+            if max_occurs is None:
+                '''TODO [langfeature] field does not need to have maxOccurs attrib, in which case it's considered required'''
+                self.error('expected positive integer in "maxOccurs"', field)
 
-        if max_occurs == 1:
+        if max_occurs == 1 or max_occurs == None:
             creation = field.find('creation')
             if creation is not None:
                 prio = self.ensured_getattr(creation, 'priority')

@@ -24,7 +24,6 @@ class TestParserErrors():
             ('parser_mo_name.xml', ':3: error: expected "class" attribute in "managedObject" tag\n  <managedObject>\n'),
             ('parser_mo_child_name.xml', ':4: error: expected "class" attribute in "childManagedObject" tag\n    <childManagedObject/>\n'),
             ('parser_field_name.xml', ':4: error: expected "name" attribute in "p" tag\n    <p/>\n'),
-            ('parser_field_max_occurs.xml', ':4: error: expected "maxOccurs" attribute in "p" tag\n    <p name="member"/>\n'),
             ('parser_field_max_occurs_positive.xml', ':4: error: expected positive integer in "maxOccurs"\n    <p name="member" maxOccurs="0"/>\n'),
             ('parser_field_priority.xml', ':5: error: expected "priority" attribute in "creation" tag\n      <creation/>\n'),
             ('parser_field_priority_unknown.xml', ':5: error: expected "optional" or "mandatory" cardinality\n      <creation priority="unknown"/>\n'),
