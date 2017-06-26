@@ -686,11 +686,13 @@ class XmlParser(object):
         mos = [self.mo(mo) for mo in self.et.findall('.//managedObject')]
         return TranslationUnit(mos)
 
+    def error(self, msg, elem):
+        raise XmlParserError(msg, self.filename, elem.sourceline, self.input)
+
     def ensured_getattr(self, elem, name):
         value = elem.get(name)
         if not value:
-            raise XmlParserError('expected "%s" attribute in %s tag' % (name, elem.tag),
-                                 self.filename, elem.sourceline, self.input)
+            self.error('expected "%s" attribute in %s tag' % (name, elem.tag), elem)
         return value
 
     def mo(self, mo):
@@ -723,7 +725,7 @@ class XmlParser(object):
         max_occurs = _positive_int(self.ensured_getattr(field, 'maxOccurs'))
         if max_occurs is None:
             '''TODO [langfeature] field does not need to have maxOccurs attrib, in which case it's considered required'''
-            raise XmlParserError('expected positive integer in "maxOccurs"', self.filename, field.sourceline, self.input)
+            self.error('expected positive integer in "maxOccurs"', field)
 
         if max_occurs == 1:
             creation = field.find('creation')
@@ -734,7 +736,7 @@ class XmlParser(object):
                 elif prio == 'mandatory':
                     cardinality = 'required'
                 else:
-                    raise XmlParserError('expected "optional" or "mandatory" cardinality', self.filename, creation.sourceline, self.input)
+                    self.error('expected "optional" or "mandatory" cardinality', creation)
             else:
                 cardinality = 'required'
         else:
@@ -750,7 +752,7 @@ class XmlParser(object):
             else:
                 type_ = self.scalar(simple)
         else:
-            raise XmlParserError('expected "simpleType" or "complexType" tag under "p" tag', self.filename, field.sourceline, self.input)
+            self.error('expected "simpleType" or "complexType" tag under "p" tag', field)
 
         return Field(name, type_, cardinality)
 
@@ -769,7 +771,7 @@ class XmlParser(object):
             name = self.ensured_getattr(enumer, 'text')
             value = _int(self.ensured_getattr(enumer, 'value'))
             if value is None:
-                raise XmlParserError('expected integer enumerator value', self.filename, enumer.sourceline, self.input)
+                self.error('expected integer enumerator value', enumer)
             enumerators.append(Enumerator(name, value))
         return enumerators
 
@@ -787,10 +789,10 @@ class XmlParser(object):
                 if range is not None:
                     min_val = _float(self.ensured_getattr(range, 'minIncl'))
                     if min_val is None:
-                        raise XmlParserError('expected float in "minIncl"', self.filename, range.sourceline, self.input)
+                        self.error('expected float in "minIncl"', range)
                     max_val = _float(self.ensured_getattr(range, 'maxIncl'))
                     if max_val is None:
-                        raise XmlParserError('expected float in "maxIncl"', self.filename, range.sourceline, self.input)
+                        self.error('expected float in "maxIncl"', range)
 
                 units = editing.get('units')
                 '''TODO [langfeature] add integer units'''
@@ -807,17 +809,17 @@ class XmlParser(object):
             if min_ is not None and max_ is not None:
                 min_val = _nonnegative_int(self.ensured_getattr(min_, 'value'))
                 if min_val is None:
-                    raise XmlParserError('expected non-negative integer in "value" attribute', self.filename, min_.sourceline, self.input)
+                    self.error('expected non-negative integer in "value" attribute', min_)
                 max_val = _nonnegative_int(self.ensured_getattr(max_, 'value'))
                 if max_val is None:
-                    raise XmlParserError('expected non-negative integer in "value" attribute', self.filename, max_.sourceline, self.input)
+                    self.error('expected non-negative integer in "value" attribute', max_)
                 '''TODO [langfeature] add min/max string lengths'''
 
                 return String()
             else:
                 return String()
         else:
-            raise XmlParserError('expected "integer" or "string" in "base" attribute', self.filename, simple.sourceline, self.input)
+            self.error('expected "integer" or "string" in "base" attribute', simple)
 
 class XmlGenerator(object):
     def __init__(self, tu):
