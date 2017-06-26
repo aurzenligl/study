@@ -635,28 +635,36 @@ class XmlParserError(Exception):
         '''TODO rempove None defaults'''
         Exception.__init__(self, message)
         self.filename = filename
-        self.position = position
         self.input = input_
+        if isinstance(position, tuple):
+            self.lineno, self.colno = position
+        else:
+            self.lineno, self.colno = position, None
 
     @property
     def line(self):
-        return self.input.splitlines()[self.position[0] - 1]
+        return self.input.splitlines()[self.lineno - 1]
 
     @property
     def origin(self):
-        return '%s:%s:%s' % ((self.filename or 'stdin',) + self.position)
+        line = '%s:%s' % (self.filename, self.lineno)
+        if self.colno:
+            line += ':%s' % (self.colno)
+        return line
 
     @property
     def prettymsg(self):
         '''TODO rempove None defaults'''
-        if not self.position or not self.input:
+        if not self.lineno or not self.input:
             return self.message + '\n'
-        return '%s: error: %s\n%s\n%s\n' % (
+        msg = '%s: error: %s\n%s\n' % (
             self.origin,
             self.message,
-            self.line,
-            ' ' * (self.position[1] - 1) + '^'
+            self.line
         )
+        if self.colno:
+            msg += ' ' * (self.colno - 1) + '^\n'
+        return msg
 
 class XmlParser(object):
     def __init__(self, input_, filename=None):
@@ -684,7 +692,7 @@ class XmlParser(object):
 
         name = mo.attrib.get('class')
         if not name:
-            raise XmlParserError('mo definition has no name')
+            raise XmlParserError('expected "class" attribute in mo tag', self.filename, mo.sourceline, self.input)
         children = self.mo_child_list(mo)
         fields = [self.field(field) for field in mo.findall('p')]
         return Mo(name, fields, children)

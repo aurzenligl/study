@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<pdmeta>
+  <managedObject>
+    <p name="value" maxOccurs="1">
+      <simpleType base="integer"/>
+    </p>
+  </managedObject>
+</pdmeta>

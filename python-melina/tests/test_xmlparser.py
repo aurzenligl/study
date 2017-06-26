@@ -8,10 +8,24 @@ datadir = os.path.abspath(__file__ + '/../data')
 def parse(filename):
     return melina.XmlParser.from_file(datadir + '/' + filename).parse()
 
+def id_func(param):
+    if isinstance(param, str):
+        name, ext = os.path.splitext(param)
+        if ext == '.xml':
+            return name
+        else:
+            return 'msg'
+
 class TestParserErrors():
-    def test_errors(self):
-        filename = 'syntax.xml'
-        message = ':3:11: error: error parsing attribute name\n  <managed<>?)\n          ^\n'
+    @pytest.mark.parametrize(
+        'filename, message',
+        [
+            ('xml_syntax.xml', ':3:11: error: error parsing attribute name\n  <managed<>?)\n          ^\n'),
+            ('parser_mo_name.xml', ':3: error: expected "class" attribute in mo tag\n  <managedObject>\n'),
+        ],
+        ids=id_func
+    )
+    def test_errors(self, filename, message):
         with pytest.raises(melina.XmlParserError) as e:
             tu = parse('xml_errors/' + filename)
         actualmsg = e.value.prettymsg
