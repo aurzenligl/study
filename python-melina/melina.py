@@ -720,10 +720,10 @@ class XmlParser(object):
         name = self.ensured_getattr(field, 'name')
 
         '''TODO [langfeature] add max_occurs value to repeated cardinality'''
-        max_occurs = _positive_int(field.attrib.get('maxOccurs'))
-        if not max_occurs:
+        max_occurs = _positive_int(self.ensured_getattr(field, 'maxOccurs'))
+        if max_occurs is None:
             '''TODO [langfeature] field does not need to have maxOccurs attrib, in which case it's considered required'''
-            raise XmlParserError('field declaration has no cardinality ("maxOccurs" attribute)')
+            raise XmlParserError('expected positive integer in "maxOccurs"', self.filename, field.sourceline, self.input)
 
         if max_occurs == 1:
             creation = field.find('creation')
