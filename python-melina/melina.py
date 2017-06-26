@@ -32,14 +32,18 @@ String
 def _indent(text, value):
     return '\n'.join(x and (' ' * value + x) or '' for x in text.split('\n'))
 
+def _sanitize(obj, classes):
+    assert isinstance(obj, classes), 'Object %s is not an instance of expected classes: %s' % (repr(obj), classes)
+    return obj
+
 def _sanitize_list(lst, classes):
-    for elem in lst:
-        assert isinstance(elem, classes), 'List element is an instance of unexpected class'
+    for obj in lst:
+        assert isinstance(obj, classes), 'List element is an instance of unexpected class'
     return lst
 
 _re_identifier = re.compile('^[a-zA-Z_][a-zA-Z0-9_]*$')
 def _sanitize_identifier(name):
-    assert _re_identifier.match(name)
+    assert _re_identifier.match(name), 'String does not represent a valid identifier'
     return name
 
 class TranslationUnit(object):
@@ -79,9 +83,9 @@ class MoChild(object):
 
 class Field(object):
     def __init__(self, name, type_, cardinality):
-        self.name = name
-        self.type = type_
-        self.cardinality = cardinality
+        self.name = _sanitize_identifier(name)
+        self.type = _sanitize(type_, (Struct, Enum, Scalar))
+        self.cardinality = _sanitize(cardinality, Cardinality)
 
     def __repr__(self):
         return '<Field %s>' % self.name
@@ -91,6 +95,21 @@ class Field(object):
             return '%s %s %s\n' % (self.cardinality, self.type, self.name)
         else:
             return '%s %s' % (self.cardinality, self.type)
+
+class Cardinality(object):
+    def __init__(self, kind):
+        self.kind = _sanitize(kind, CardinalityKind)
+
+    def __repr__(self):
+        return '<Cardinality %s>' % self.kind.name.lower()
+
+    def __str__(self):
+        return self.kind.name.lower()
+
+class CardinalityKind(enum.Enum):
+    REQUIRED = 0
+    OPTIONAL = 1
+    REPEATED = 2
 
 class Struct(object):
     def __init__(self, name, fields):
@@ -454,12 +473,12 @@ class MetaParser(object):
     def field(self):
         ts = self.ts
 
-        cardinality = 'required'
+        cardinality = Cardinality(CardinalityKind.REQUIRED)
         if ts.cur.pair == (MetaTokenKind.KEYW, 'repeated'):
-            cardinality = 'repeated'
+            cardinality = Cardinality(CardinalityKind.REPEATED)
             ts.get()
         elif ts.cur.pair == (MetaTokenKind.KEYW, 'optional'):
-            cardinality = 'optional'
+            cardinality = Cardinality(CardinalityKind.OPTIONAL)
             ts.get()
 
         if not (ts.cur.kind == MetaTokenKind.KEYW and ts.cur.value in ('struct', 'enum', 'int', 'string')):
@@ -602,8 +621,8 @@ class MetaGenerator(object):
 
     def field(self, field):
         out = ''
-        if field.cardinality != 'required':
-            out += field.cardinality + ' '
+        if field.cardinality.kind != CardinalityKind.REQUIRED:
+            out += field.cardinality.kind.name.lower() + ' '
         if isinstance(field.type, Struct):
             out += self.struct(field.type)
         elif isinstance(field.type, Enum):
@@ -750,15 +769,15 @@ class XmlParser(object):
             if creation is not None:
                 prio = self.ensured_getattr(creation, 'priority')
                 if prio == 'optional':
-                    cardinality = 'optional'
+                    cardinality = Cardinality(CardinalityKind.OPTIONAL)
                 elif prio == 'mandatory':
-                    cardinality = 'required'
+                    cardinality = Cardinality(CardinalityKind.REQUIRED)
                 else:
                     self.error('expected "optional" or "mandatory" cardinality', creation)
             else:
-                cardinality = 'required'
+                cardinality = Cardinality(CardinalityKind.REQUIRED)
         else:
-            cardinality = 'repeated'
+            cardinality = Cardinality(CardinalityKind.REPEATED)
 
         complex_ = field.find('complexType')
         simple = field.find('simpleType')
@@ -865,14 +884,14 @@ class XmlGenerator(object):
             self.field(parent, field)
 
     def field(self, parent, field):
-        if field.cardinality != 'repeated':
+        if field.cardinality.kind != CardinalityKind.REPEATED:
             max_occurs = '1'
         else:
             max_occurs = '999999'
         pelem = ET.SubElement(parent, 'p', name=field.name)
         pelem.set('maxOccurs', max_occurs)
 
-        if field.cardinality == 'optional':
+        if field.cardinality.kind == CardinalityKind.OPTIONAL:
             ET.SubElement(pelem, 'creation', {'priority': 'optional'})
 
         if isinstance(field.type, Struct):
