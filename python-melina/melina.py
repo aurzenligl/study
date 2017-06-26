@@ -46,6 +46,11 @@ def _sanitize_identifier(name):
     assert _re_identifier.match(name), 'String does not represent a valid identifier'
     return name
 
+_re_enumerator_identifier = re.compile('^[a-zA-Z0-9_]+$')
+def _sanitize_enumerator_identifier(name):
+    assert _re_enumerator_identifier.match(name), 'String does not represent a valid identifier'
+    return name
+
 class TranslationUnit(object):
     def __init__(self, mos):
         self.mos = _sanitize_list(mos, Mo)
@@ -141,7 +146,7 @@ class Enum(object):
 
 class Enumerator(object):
     def __init__(self, name, value):
-        self.name = _sanitize_identifier(name)
+        self.name = _sanitize_enumerator_identifier(name)
         self.value = _sanitize(value, (int, long))
 
     def __repr__(self):
