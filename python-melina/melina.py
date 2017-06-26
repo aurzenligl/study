@@ -750,7 +750,7 @@ class XmlParser(object):
             else:
                 type_ = self.scalar(simple)
         else:
-            raise XmlParserError('field definition not found')
+            raise XmlParserError('expected "simpleType" or "complexType" tag under "p" tag', self.filename, field.sourceline, self.input)
 
         return Field(name, type_, cardinality)
 

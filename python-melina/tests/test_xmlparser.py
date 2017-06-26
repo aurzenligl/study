@@ -28,6 +28,7 @@ class TestParserErrors():
             ('parser_field_max_occurs_positive.xml', ':4: error: expected positive integer in "maxOccurs"\n    <p name="member" maxOccurs="0"/>\n'),
             ('parser_field_priority.xml', ':5: error: expected "priority" attribute in creation tag\n      <creation/>\n'),
             ('parser_field_priority_unknown.xml', ':5: error: expected "optional" or "mandatory" cardinality\n      <creation priority="unknown"/>\n'),
+            ('parser_field_type.xml', ':4: error: expected "simpleType" or "complexType" tag under "p" tag\n    <p name="member" maxOccurs="1"/>\n'),
         ],
         ids=id_func
     )
