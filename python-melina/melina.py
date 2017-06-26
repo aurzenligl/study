@@ -766,12 +766,10 @@ class XmlParser(object):
     def enumerator_list(self, simple):
         enumerators = []
         for enumer in simple.findall('enumeration'):
-            name = enumer.attrib.get('text')
-            if name is None:
-                raise XmlParserError('enumerator name not found')
-            value = _int(enumer.attrib.get('value'))
+            name = self.ensured_getattr(enumer, 'text')
+            value = _int(self.ensured_getattr(enumer, 'value'))
             if value is None:
-                raise XmlParserError('enumerator value not found')
+                raise XmlParserError('expected integer enumerator value', self.filename, enumer.sourceline, self.input)
             enumerators.append(Enumerator(name, value))
         return enumerators
 

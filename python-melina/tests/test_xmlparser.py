@@ -29,6 +29,9 @@ class TestParserErrors():
             ('parser_field_priority.xml', ':5: error: expected "priority" attribute in creation tag\n      <creation/>\n'),
             ('parser_field_priority_unknown.xml', ':5: error: expected "optional" or "mandatory" cardinality\n      <creation priority="unknown"/>\n'),
             ('parser_field_type.xml', ':4: error: expected "simpleType" or "complexType" tag under "p" tag\n    <p name="member" maxOccurs="1"/>\n'),
+            ('parser_field_enum_text.xml', ':6: error: expected "text" attribute in enumeration tag\n        <enumeration/>\n'),
+            ('parser_field_enum_value.xml', ':6: error: expected "value" attribute in enumeration tag\n        <enumeration text="Disabled"/>\n'),
+            ('parser_field_enum_value_int.xml', ':6: error: expected integer enumerator value\n        <enumeration value="nonint" text="Disabled"/>\n'),
         ],
         ids=id_func
     )

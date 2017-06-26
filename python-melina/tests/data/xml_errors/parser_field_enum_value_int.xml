@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<pdmeta>
+  <managedObject class="NAME">
+    <p name="member" maxOccurs="1">
+      <simpleType base="integer">
+        <enumeration value="nonint" text="Disabled"/>
+      </simpleType>
+    </p>
+  </managedObject>
+</pdmeta>
