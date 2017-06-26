@@ -56,7 +56,7 @@ mo MACHINE_L -> SENSOR, WHEEL, ARM
         int b;
     };
 
-    int x;
+    bool x;
     int y;
 };
 '''

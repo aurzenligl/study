@@ -28,6 +28,6 @@ mo MACHINE_L -> SENSOR, WHEEL, ARM
         int b;
     };
 
-    int x;  // comment about something
+    bool x;  // comment about something
     int y;  // another comment
 };

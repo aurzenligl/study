@@ -163,6 +163,9 @@ class Scalar(object):
     def __str__(self):
         return '%s' % self.__class__.__name__.lower()
 
+class Bool(Scalar):
+    pass
+
 class Int(Scalar):
     pass
 
@@ -302,7 +305,7 @@ class MetaTokenizer(object):
         r'(?P<space>\s+)',
     )))
 
-    _keywords = ('mo', 'struct', 'enum', 'repeated', 'optional', 'int', 'float', 'string')
+    _keywords = ('mo', 'struct', 'enum', 'repeated', 'optional', 'bool', 'int', 'float', 'string')
 
     _operators = {
         '->': MetaTokenKind.ARROW,
@@ -486,7 +489,7 @@ class MetaParser(object):
             cardinality = Cardinality(CardinalityKind.OPTIONAL)
             ts.get()
 
-        if not (ts.cur.kind == MetaTokenKind.KEYW and ts.cur.value in ('struct', 'enum', 'int', 'string')):
+        if not (ts.cur.kind == MetaTokenKind.KEYW and ts.cur.value in ('struct', 'enum', 'bool', 'int', 'string')):
             raise MetaParserError('expected field definition', self.filename, ts.cur.span)
 
         if ts.cur.pair == (MetaTokenKind.KEYW, 'struct'):
@@ -578,7 +581,9 @@ class MetaParser(object):
     def scalar(self):
         ts = self.ts
 
-        if ts.cur.pair == (MetaTokenKind.KEYW, 'int'):
+        if ts.cur.pair == (MetaTokenKind.KEYW, 'bool'):
+            type_ = Bool()
+        elif ts.cur.pair == (MetaTokenKind.KEYW, 'int'):
             type_ = Int()
         elif ts.cur.pair == (MetaTokenKind.KEYW, 'string'):
             type_ = String()
@@ -819,11 +824,12 @@ class XmlParser(object):
 
     def scalar(self, simple):
         '''TODO [langfeature] add decimal scalar base (fixed-point values)'''
-        '''TODO [langfeature] add boolean scalar base'''
 
         base = self.ensured_getattr(simple, 'base')
 
-        if base == 'integer':
+        if base == 'boolean':
+            return Bool()
+        elif base == 'integer':
             editing = simple.find('editing')
             if editing is not None:
                 '''TODO [langfeature] add integer range/step'''
@@ -861,7 +867,7 @@ class XmlParser(object):
             else:
                 return String()
         else:
-            self.error('expected "integer" or "string" in "base" attribute', simple)
+            self.error('expected "boolean", "integer" or "string" in "base" attribute', simple)
 
 class XmlGenerator(object):
     def __init__(self, tu):
@@ -917,8 +923,10 @@ class XmlGenerator(object):
             eelem.set('text', enumer.name)
 
     def scalar(self, parent, type_):
-        if isinstance(type_, Int):
-            selem = ET.SubElement(parent, 'simpleType', base='integer')
+        if isinstance(type_, Bool):
+            ET.SubElement(parent, 'simpleType', base='boolean')
+        elif isinstance(type_, Int):
+            ET.SubElement(parent, 'simpleType', base='integer')
         elif isinstance(type_, String):
             selem = ET.SubElement(parent, 'simpleType', base='string')
             ET.SubElement(selem, 'minLength', value='0')

@@ -32,7 +32,7 @@ class TestParserErrors():
             ('parser_field_enum_value.xml', ':6: error: expected "value" attribute in "enumeration" tag\n        <enumeration text="Disabled"/>\n'),
             ('parser_field_enum_value_int.xml', ':6: error: expected integer enumerator value\n        <enumeration value="nonint" text="Disabled"/>\n'),
             ('parser_scalar_base.xml', ':5: error: expected "base" attribute in "simpleType" tag\n      <simpleType/>\n'),
-            ('parser_scalar_base_unknown.xml', ':5: error: expected "integer" or "string" in "base" attribute\n      <simpleType base="unknown"/>\n'),
+            ('parser_scalar_base_unknown.xml', ':5: error: expected "boolean", "integer" or "string" in "base" attribute\n      <simpleType base="unknown"/>\n'),
             ('parser_scalar_int_minincl.xml', ':7: error: expected "minIncl" attribute in "range" tag\n          <range maxIncl="9500"/>\n'),
             ('parser_scalar_int_minincl_float.xml', ':7: error: expected float in "minIncl"\n          <range minIncl="nonfloat" maxIncl="9500"/>\n'),
             ('parser_scalar_int_maxincl.xml', ':7: error: expected "maxIncl" attribute in "range" tag\n          <range minIncl="0"/>\n'),
@@ -76,7 +76,7 @@ mo MACHINE_L: SENSOR WHEEL ARM
             required int y
         required int a
         required int b
-    required int x
+    required bool x
     required int y
 '''
 

@@ -71,7 +71,7 @@ class TestGenerator():
       </complexType>
     </p>
     <p name="x" maxOccurs="1">
-      <simpleType base="integer"/>
+      <simpleType base="boolean"/>
     </p>
     <p name="y" maxOccurs="1">
       <simpleType base="integer"/>

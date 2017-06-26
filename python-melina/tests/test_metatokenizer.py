@@ -20,6 +20,9 @@ def tok2tuple(tok):
         tok.value
     )
 
+def toks2assert(toks):
+    print '\n'.join([' ' * 12 + str(t) for t in toks])
+
 class TestMetaTokenizer():
     def test_configure(self):
         toks = tokens('configure.meta', tuples=True)
@@ -230,15 +233,15 @@ class TestMetaTokenizer():
             ('28:14-28:14', 'SEMI', None),
             ('29:5-29:5', 'RCB', None),
             ('29:6-29:6', 'SEMI', None),
-            ('31:5-31:7', 'KEYW', 'int'),
-            ('31:9-31:9', 'NAME', 'x'),
-            ('31:10-31:10', 'SEMI', None),
+            ('31:5-31:8', 'KEYW', 'bool'),
+            ('31:10-31:10', 'NAME', 'x'),
+            ('31:11-31:11', 'SEMI', None),
             ('32:5-32:7', 'KEYW', 'int'),
             ('32:9-32:9', 'NAME', 'y'),
             ('32:10-32:10', 'SEMI', None),
             ('33:1-33:1', 'RCB', None),
             ('33:2-33:2', 'SEMI', None),
-            (None, 'END', None)
+            (None, 'END', None),
         ]
 
     def hardskip_test_performance(self):

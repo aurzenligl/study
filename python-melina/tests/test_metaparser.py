@@ -74,7 +74,7 @@ mo MACHINE_L: SENSOR WHEEL ARM
             required int y
         required int a
         required int b
-    required int x
+    required bool x
     required int y
 '''
 
