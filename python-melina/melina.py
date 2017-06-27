@@ -667,7 +667,10 @@ class MetaGenerator(object):
         return '\n'.join(self.mo(mo) for mo in self.tu.mos)
 
     def mo(self, mo):
-        out = 'mo %s' % mo.name
+        out = ''
+        if mo.doc:
+            out += '/**\n * %s\n */\n' % mo.doc
+        out += 'mo %s' % mo.name
         if mo.children:
             out += ' -> ' + ', '.join((child.name for child in mo.children))
         out += '\n{\n' + _indent(self.fields(mo.fields), 4) + '};\n'
@@ -686,6 +689,8 @@ class MetaGenerator(object):
 
     def field(self, field):
         out = ''
+        if field.doc and isinstance(field.type, (Struct, Enum)):
+            out += '/**\n * %s\n */\n' % field.doc
         if field.cardinality.kind != CardinalityKind.REQUIRED:
             out += field.cardinality.kind.name.lower() + ' '
         if isinstance(field.type, Struct):
@@ -694,11 +699,14 @@ class MetaGenerator(object):
             out += self.enum(field.type)
         else:
             out += self.scalar(field.type, field.name)
+            if field.doc:
+                out += '  /// %s' % field.doc
+        out += '\n'
         return out
 
     def struct(self, struct_):
         out = 'struct %s\n{\n' % struct_.name
-        out += _indent(self.fields(struct_.fields), 4) + '};\n'
+        out += _indent(self.fields(struct_.fields), 4) + '};'
         return out
 
     def enum(self, enum_):
@@ -706,11 +714,11 @@ class MetaGenerator(object):
         out += _indent(',\n'.join(('%s = %s' % (er.name, er.value) for er in enum_.enumerators)), 4)
         if enum_.enumerators:
             out += '\n'
-        out += '};\n'
+        out += '};'
         return out
 
     def scalar(self, type_, name):
-        return '%s %s;\n' % (type_, name)
+        return '%s %s;' % (type_, name)
 
 def _int(text):
     try:

@@ -61,7 +61,7 @@ mo MACHINE_L: SENSOR WHEEL ARM  // This is an example managed object: The Machin
         required enum AdminStatus
             Locked = 0
             Unlocked = 1
-        required enum AvailStatus
+        required enum AvailStatus  // Enum can be documented too.
             Online = 0
             Offline = 1
     optional struct Core

@@ -14,6 +14,9 @@ class TestGenerator():
         tu = parse('example.meta')
         meta = generate(tu)
         assert meta == '''\
+/**
+ * This is an example managed object: The Machine.
+ */
 mo MACHINE_L -> SENSOR, WHEEL, ARM
 {
     struct StateBox
@@ -31,6 +34,9 @@ mo MACHINE_L -> SENSOR, WHEEL, ARM
             Unlocked = 1
         };
 
+        /**
+         * Enum can be documented too.
+         */
         enum AvailStatus
         {
             Online = 0,
@@ -48,6 +54,9 @@ mo MACHINE_L -> SENSOR, WHEEL, ARM
             000 = 4
         };
 
+        /**
+         * This is the heart of the machine.
+         */
         repeated struct Numbers
         {
             int x;
@@ -58,8 +67,8 @@ mo MACHINE_L -> SENSOR, WHEEL, ARM
         int b;
     };
 
-    bool x;
-    int y;
+    bool x;  /// comment about something
+    int y;  /// another comment
 };
 '''
 
@@ -99,6 +108,9 @@ mo CONFIGURE_MECHANISM_TASK -> RESULT
         };
     };
 
+    /**
+     * Gamma can be explained here. There is no added/removed as Gamma Software deployment/hardware decide how many gammas exist in given execution.
+     */
     struct gammaDelta
     {
         repeated struct modified
