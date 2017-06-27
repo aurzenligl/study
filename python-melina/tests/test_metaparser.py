@@ -53,7 +53,7 @@ class TestParser():
     def test_example(self):
         tu = parse('example.meta')
         assert str(tu) == '''\
-mo MACHINE_L: SENSOR WHEEL ARM
+mo MACHINE_L: SENSOR WHEEL ARM  // This is an example managed object: The Machine.
     required struct StateBox
         repeated enum FaultStatus
             Empty = 0

@@ -68,19 +68,23 @@ class TranslationUnit(object):
         return ''.join((str(mo) for mo in self.mos))
 
 class Mo(object):
-    def __init__(self, name, fields, children):
+    def __init__(self, name, fields, children, doc):
         self.name = _sanitize_identifier(name)
         self.fields = _sanitize_list(fields, Field)
         self.children = _sanitize_list(children, MoChild)
+        self.doc = _sanitize(doc, (type(None), str))
 
     def __repr__(self):
         return '<Mo %s>' % self.name
 
     def __str__(self):
-        return (
+        text = (
             'mo %s' % self.name + ':' + ''.join((' ' + x.name for x in self.children)) + '\n' +
             _indent(''.join((str(field) for field in self.fields)), 4)
         )
+        if self.doc:
+            return _add_to_1st_line(text, self.doc)
+        return text
 
 class MoChild(object):
     def __init__(self, name):
@@ -369,7 +373,7 @@ class MetaTokenizer(object):
 def _isupperdoc(tok):
     pos = tok.span.start_linecol[1] - 1
     leftwards = tok.span.start_line[:pos]
-    return leftwards.isspace()
+    return not leftwards or leftwards.isspace()
 
 def _isrightdoc(tok, symtok):
     return tok.span.end_linecol[0] == symtok.span.end_linecol[0]
@@ -482,6 +486,10 @@ class MetaParser(object):
         return TranslationUnit(mos)
 
     def mo(self):
+        doc = None
+        if self.cached_comment and _isupperdoc(self.cached_comment):
+            doc = _docstring(self.cached_comment)
+
         if self.cur.pair != (MetaTokenKind.KEYW, 'mo'):
             raise MetaParserError('expected keyword "mo"', self.filename, self.cur.span)
 
@@ -508,7 +516,7 @@ class MetaParser(object):
         if self.get().kind != MetaTokenKind.SEMI:
             raise MetaParserError('expected semicolon after mo definition', self.filename, prev.span)
 
-        return Mo(name, fields, children)
+        return Mo(name, fields, children, doc)
 
     def mo_child_list(self):
         if self.get().kind != MetaTokenKind.NAME:
@@ -794,7 +802,7 @@ class XmlParser(object):
         name = self.ensured_getattr(mo, 'class')
         children = self.mo_child_list(mo)
         fields = [self.field(field) for field in mo.findall('p')]
-        return Mo(name, fields, children)
+        return Mo(name, fields, children, None)
 
     def mo_child_list(self, mo):
         '''TODO [langfeature] add maxOccurs="1" to mo children'''

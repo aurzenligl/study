@@ -1,3 +1,6 @@
+/**
+ * This is an example managed object: The Machine.
+ */
 mo MACHINE_L -> SENSOR, WHEEL, ARM
 {
     struct StateBox
