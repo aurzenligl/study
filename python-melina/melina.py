@@ -808,9 +808,10 @@ class XmlParser(object):
         '''TODO [langfeature] add hidden/create/update/delete flags to mo'''
 
         name = self.ensured_getattr(mo, 'class')
+        doc = mo.get('fullName')
         children = self.mo_child_list(mo)
         fields = [self.field(field) for field in mo.findall('p')]
-        return Mo(name, fields, children, None)
+        return Mo(name, fields, children, doc)
 
     def mo_child_list(self, mo):
         '''TODO [langfeature] add maxOccurs="1" to mo children'''
@@ -828,6 +829,7 @@ class XmlParser(object):
         '''TODO [langfeature] field name has to begin with small letter (xml)'''
         '''TODO [langfeature] enum/struct name has to begin with capital letter (meta)'''
         name = self.ensured_getattr(field, 'name')
+        doc = field.get('fullName')
 
         '''TODO [langfeature] add max_occurs value to repeated cardinality'''
         max_occurs = field.get('maxOccurs')
@@ -864,7 +866,7 @@ class XmlParser(object):
         else:
             self.error('expected "simpleType" or "complexType" tag under "p" tag', field)
 
-        return Field(name, type_, cardinality, None)
+        return Field(name, type_, cardinality, doc)
 
     def struct(self, complex_, name):
         fields = [self.field(field) for field in complex_.findall('p')]

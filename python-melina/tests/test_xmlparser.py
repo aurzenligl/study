@@ -83,32 +83,32 @@ mo MACHINE_L: SENSOR WHEEL ARM
     def test_configure(self):
         tu = parse('configure.xml')
         assert str(tu) == '''\
-mo CONFIGURE_MECHANISM_TASK: RESULT
-    required struct alphaDelta
-        repeated struct modified
-            required string dn
-            required int param
-    required struct betaDelta
-        repeated struct added
-            required string devDn
-            required int id
-            required int param
-        repeated struct modified
-            required string dn
-            required int param
-        repeated struct removed
-            required string dn
-    required struct gammaDelta
-        repeated struct modified
-            required string dn
-            optional struct config
-                optional int param
-                optional struct gammaConfig
-                    required enum attitude
+mo CONFIGURE_MECHANISM_TASK: RESULT  // Configure mechanism task
+    required struct alphaDelta  // Alpha configuration
+        repeated struct modified  // Modified field
+            required string dn  // The dn param
+            required int param  // The param
+    required struct betaDelta  // Beta configuration
+        repeated struct added  // Added field
+            required string devDn  // The dn param
+            required int id  // The id
+            required int param  // The param
+        repeated struct modified  // Modified field
+            required string dn  // The dn param
+            required int param  // The param
+        repeated struct removed  // Removed field
+            required string dn  // The dn param
+    required struct gammaDelta  // Gamma configuration
+        repeated struct modified  // Modified field
+            required string dn  // The dn param
+            optional struct config  // The config
+                optional int param  // The param
+                optional struct gammaConfig  // The gamma config
+                    required enum attitude  // The attitude
                         Disabled = 0
                         Enabled = 1
-                repeated struct gammaGimmickConfig
-                    required string dn
-                    required int rate
-                    required int size
+                repeated struct gammaGimmickConfig  // The gamma gimmick config
+                    required string dn  // The dn param
+                    required int rate  // The rate param
+                    required int size  // The size param
 '''
