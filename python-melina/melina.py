@@ -224,7 +224,7 @@ class MetaTokenKind(enum.Enum):
     END = 11
 
 class MetaToken(object):
-    __slots__ = ('kind', 'value', 'span')
+    __slots__ = ('kind', 'value', 'span', 'string')
 
     _repr_vals = {
         MetaTokenKind.LCB: '{',
@@ -237,10 +237,11 @@ class MetaToken(object):
 
     _repr_direct = (MetaTokenKind.KEYW, MetaTokenKind.NAME, MetaTokenKind.NUMBER, MetaTokenKind.NUMNAME, MetaTokenKind.COMMENT)
 
-    def __init__(self, kind, value = None, span = None):
+    def __init__(self, kind, value = None, span = None, string = None):
         self.kind = kind
         self.value = value
         self.span = span
+        self.string = (string is not None) and string or value
 
     @property
     def pair(self):
@@ -300,7 +301,7 @@ class MetaTokenizer(object):
 
     _sre = re.compile('|'.join((
         r'(?P<name>[a-zA-Z_][a-zA-Z0-9_]*)',
-        r'(?P<number>[0-9]+(?![a-zA-Z_]))',
+        r'(?P<number>[0-9]+(?![a-zA-Z0-9_]))',
         r'(?P<numname>[0-9]+[a-zA-Z_][a-zA-Z0-9_]*)',
         r'(?P<operator>(->)|[{};,=])',
         r'(?P<comment>(//.*\n|/\*(\*(?!/)|[^*])*\*/))',
@@ -333,7 +334,7 @@ class MetaTokenizer(object):
                 elif group == 'numname':
                     return MetaToken(MetaTokenKind.NUMNAME, string, span=span)
                 elif group == 'number':
-                    return MetaToken(MetaTokenKind.NUMBER, int(string), span=span)
+                    return MetaToken(MetaTokenKind.NUMBER, int(string), span=span, string=string)
                 elif group == 'operator':
                     return MetaToken(self._operators[string], span=span)
                 elif group == 'comment':
@@ -563,10 +564,10 @@ class MetaParser(object):
         value = 0
 
         while True:
-            if ts.get().kind not in (MetaTokenKind.NAME, MetaTokenKind.NUMNAME):
+            if ts.get().kind not in (MetaTokenKind.NAME, MetaTokenKind.NUMBER, MetaTokenKind.NUMNAME):
                 break
 
-            name = ts.cur.value
+            name = ts.cur.string
 
             if ts.get().kind == MetaTokenKind.ASSIGN:
                 if ts.get().kind != MetaTokenKind.NUMBER:
