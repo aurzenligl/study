@@ -18,7 +18,8 @@ mo MACHINE_L -> SENSOR, WHEEL, ARM
         };
 
         /**
-         * This is the heart of the machine.
+         * This is the heart
+         * of the machine.
          */
         repeated struct Numbers
         {
@@ -30,6 +31,6 @@ mo MACHINE_L -> SENSOR, WHEEL, ARM
         int b;
     };
 
-    bool x;  // comment about something
-    int y;  // another comment
+    bool x;  /// comment about something
+    int y;  /// another comment
 };

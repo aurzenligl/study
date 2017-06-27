@@ -71,7 +71,7 @@ mo MACHINE_L: SENSOR WHEEL ARM
             T2 = 2
             42Val = 3
             000 = 4
-        repeated struct Numbers
+        repeated struct Numbers  // This is the heart of the machine.
             required int x
             required int y
         required int a
@@ -98,7 +98,7 @@ mo CONFIGURE_MECHANISM_TASK: RESULT
             required int param
         repeated struct removed
             required string dn
-    required struct gammaDelta
+    required struct gammaDelta  // Gamma can be explained here. There is no added/removed as Gamma Software deployment/hardware decide how many gammas exist in given execution.
         repeated struct modified
             required string dn
             optional struct config

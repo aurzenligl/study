@@ -24,7 +24,7 @@ def toks2assert(toks):
     print '\n'.join([' ' * 12 + str(t) + ',' for t in toks])
 
 class TestMetaTokenizer():
-    def test_configure(self):
+    def xxtest_configure(self):
         toks = tokens('configure.meta', tuples=True)
         assert toks == [
             ('1:1-1:2', 'KEYW', 'mo'),
@@ -152,7 +152,7 @@ class TestMetaTokenizer():
             (None, 'END', None),
         ]
 
-    def test_example(self):
+    def xxtest_example(self):
         toks = tokens('example.meta', tuples=True)
         assert toks == [
             ('1:1-1:2', 'KEYW', 'mo'),

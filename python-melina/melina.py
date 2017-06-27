@@ -51,6 +51,12 @@ def _sanitize_enumerator_identifier(name):
     assert _re_enumerator_identifier.match(name), 'String does not represent a valid identifier'
     return name
 
+def _add_to_1st_line(text, doc):
+    lines = text.splitlines()
+    lines[0] += '  // ' + doc
+    out = ''.join((line + '\n' for line in lines))
+    return out
+
 class TranslationUnit(object):
     def __init__(self, mos):
         self.mos = _sanitize_list(mos, Mo)
@@ -87,10 +93,11 @@ class MoChild(object):
         return self.name
 
 class Field(object):
-    def __init__(self, name, type_, cardinality):
+    def __init__(self, name, type_, cardinality, doc):
         self.name = _sanitize_identifier(name)
         self.type = _sanitize(type_, (Struct, Enum, Scalar))
         self.cardinality = _sanitize(cardinality, Cardinality)
+        self.doc = _sanitize(doc, (type(None), str))
 
     def __repr__(self):
         return '<Field %s>' % self.name
@@ -99,7 +106,10 @@ class Field(object):
         if isinstance(self.type, Scalar):
             return '%s %s %s\n' % (self.cardinality, self.type, self.name)
         else:
-            return '%s %s' % (self.cardinality, self.type)
+            text = '%s %s' % (self.cardinality, self.type)
+            if self.doc:
+                return _add_to_1st_line(text, self.doc)
+            return text
 
 class Cardinality(object):
     def __init__(self, kind):
@@ -338,8 +348,7 @@ class MetaTokenizer(object):
                 elif group == 'operator':
                     return MetaToken(self._operators[string], span=span)
                 elif group == 'comment':
-                    self.comments.append(MetaToken(MetaTokenKind.COMMENT, string, span=span))
-                    continue
+                    return MetaToken(MetaTokenKind.COMMENT, string, span=span)
                 elif group == 'space':
                     continue
                 assert False, "o-oh, we shouldn't end up here"
@@ -356,6 +365,22 @@ class MetaTokenizer(object):
         if match:
             self.pos = match.end()
             return match.group(), match.lastgroup
+
+def _isupperdoc(tok):
+    pos = tok.span.start_linecol[1] - 1
+    leftwards = tok.span.start_line[:pos]
+    return leftwards.isspace()
+
+def _docstring(tok):
+    if tok.value[:3] == '/**':
+        lines = [line.strip() for line in tok.value[3:-2].splitlines()]
+        lines = [line for line in lines if line]
+        if all((line[0] == '*' for line in lines)):
+            lines = [line[1:].strip() for line in lines]
+            lines = [line for line in lines if line]
+            return ' '.join(lines)
+    elif tok.value[:3] == '///':
+        return tok.value[3:].strip()
 
 class MetaParser(object):
     '''
@@ -421,188 +446,198 @@ class MetaParser(object):
     def __init__(self, input, filename=None):
         self.ts = MetaTokenizer(input, filename)
         self.filename = filename
+        self.prev = self.ts.cur
 
     @classmethod
     def from_file(cls, filename):
         return cls(open(filename).read(), filename)
 
-    def parse(self):
-        ts = self.ts
+    @property
+    def cur(self):
+        return self.ts.cur
 
+    def get(self):
+        while True:
+            self.prev = self.cur
+            tok = self.ts.get()
+            if tok.kind != MetaTokenKind.COMMENT:
+                return tok
+
+    def parse(self):
         mos = []
         while True:
-            if ts.get().kind == MetaTokenKind.END:
+            if self.get().kind == MetaTokenKind.END:
                 break
             mos.append(self.mo())
 
         return TranslationUnit(mos)
 
     def mo(self):
-        ts = self.ts
-        if ts.cur.pair != (MetaTokenKind.KEYW, 'mo'):
-            raise MetaParserError('expected keyword "mo"', self.filename, ts.cur.span)
+        if self.cur.pair != (MetaTokenKind.KEYW, 'mo'):
+            raise MetaParserError('expected keyword "mo"', self.filename, self.cur.span)
 
-        if ts.get().kind != MetaTokenKind.NAME:
-            raise MetaParserError('expected mo name', self.filename, ts.cur.span)
+        if self.get().kind != MetaTokenKind.NAME:
+            raise MetaParserError('expected mo name', self.filename, self.cur.span)
 
-        name = ts.cur.value
+        name = self.cur.value
         children = []
         fields = []
 
-        if ts.get().kind == MetaTokenKind.ARROW:
+        if self.get().kind == MetaTokenKind.ARROW:
             children = self.mo_child_list()
 
-        if ts.cur.kind != MetaTokenKind.LCB:
-            raise MetaParserError('expected mo definition', self.filename, ts.cur.span)
+        if self.cur.kind != MetaTokenKind.LCB:
+            raise MetaParserError('expected mo definition', self.filename, self.cur.span)
 
+        self.get()
         while True:
-            if ts.get().kind == MetaTokenKind.RCB:
+            if self.cur.kind == MetaTokenKind.RCB:
                 break
             fields.append(self.field())
 
-        prev = ts.cur
-        if ts.get().kind != MetaTokenKind.SEMI:
+        prev = self.cur
+        if self.get().kind != MetaTokenKind.SEMI:
             raise MetaParserError('expected semicolon after mo definition', self.filename, prev.span)
 
         return Mo(name, fields, children)
 
     def mo_child_list(self):
-        ts = self.ts
-
-        if ts.get().kind != MetaTokenKind.NAME:
-            raise MetaParserError('expected mo child name', self.filename, ts.cur.span)
-        children = [MoChild(ts.cur.value)]
+        if self.get().kind != MetaTokenKind.NAME:
+            raise MetaParserError('expected mo child name', self.filename, self.cur.span)
+        children = [MoChild(self.cur.value)]
 
         while True:
-            if ts.get().kind != MetaTokenKind.COMMA:
+            if self.get().kind != MetaTokenKind.COMMA:
                 break
 
-            if ts.get().kind != MetaTokenKind.NAME:
-                raise MetaParserError('expected mo child name', self.filename, ts.cur.span)
-            children.append(MoChild(ts.cur.value))
+            if self.get().kind != MetaTokenKind.NAME:
+                raise MetaParserError('expected mo child name', self.filename, self.cur.span)
+            children.append(MoChild(self.cur.value))
 
         return children
 
     def field(self):
-        ts = self.ts
+        doc = None
+        if self.prev.kind == MetaTokenKind.COMMENT:
+            if _isupperdoc(self.prev):
+                doc = _docstring(self.prev)
 
         cardinality = Cardinality(CardinalityKind.REQUIRED)
-        if ts.cur.pair == (MetaTokenKind.KEYW, 'repeated'):
+        if self.cur.pair == (MetaTokenKind.KEYW, 'repeated'):
             cardinality = Cardinality(CardinalityKind.REPEATED)
-            ts.get()
-        elif ts.cur.pair == (MetaTokenKind.KEYW, 'optional'):
+            self.get()
+        elif self.cur.pair == (MetaTokenKind.KEYW, 'optional'):
             cardinality = Cardinality(CardinalityKind.OPTIONAL)
-            ts.get()
+            self.get()
 
-        if not (ts.cur.kind == MetaTokenKind.KEYW and ts.cur.value in ('struct', 'enum', 'bool', 'int', 'string')):
-            raise MetaParserError('expected field definition', self.filename, ts.cur.span)
+        if not (self.cur.kind == MetaTokenKind.KEYW and self.cur.value in ('struct', 'enum', 'bool', 'int', 'string')):
+            raise MetaParserError('expected field definition', self.filename, self.cur.span)
 
-        if ts.cur.pair == (MetaTokenKind.KEYW, 'struct'):
+        if self.cur.pair == (MetaTokenKind.KEYW, 'struct'):
             type_ = self.struct()
             name = type_.name
-        elif ts.cur.pair == (MetaTokenKind.KEYW, 'enum'):
+        elif self.cur.pair == (MetaTokenKind.KEYW, 'enum'):
             type_ = self.enum()
             name = type_.name
         else:
             type_, name = self.scalar()
 
-        return Field(name, type_, cardinality)
+        return Field(name, type_, cardinality, doc)
 
     def struct(self):
-        ts = self.ts
+        assert self.cur.pair == (MetaTokenKind.KEYW, 'struct')
 
-        assert ts.cur.pair == (MetaTokenKind.KEYW, 'struct')
+        if self.get().kind != MetaTokenKind.NAME:
+            raise MetaParserError('expected struct name', self.filename, self.cur.span)
 
-        if ts.get().kind != MetaTokenKind.NAME:
-            raise MetaParserError('expected struct name', self.filename, ts.cur.span)
-
-        name = ts.cur.value
+        name = self.cur.value
         fields = []
 
-        if ts.get().kind != MetaTokenKind.LCB:
-            raise MetaParserError('expected struct definition', self.filename, ts.cur.span)
+        if self.get().kind != MetaTokenKind.LCB:
+            raise MetaParserError('expected struct definition', self.filename, self.cur.span)
 
+        self.get()
         while True:
-            if ts.get().kind == MetaTokenKind.RCB:
+            if self.cur.kind == MetaTokenKind.RCB:
                 break
             fields.append(self.field())
 
-        prev = ts.cur
-        if ts.get().kind != MetaTokenKind.SEMI:
+        prev = self.cur
+        if self.get().kind != MetaTokenKind.SEMI:
             raise MetaParserError('expected semicolon after struct definition', self.filename, prev.span)
+
+        self.get()
 
         return Struct(name, fields)
 
     def enum(self):
-        ts = self.ts
+        assert self.cur.pair == (MetaTokenKind.KEYW, 'enum')
 
-        assert ts.cur.pair == (MetaTokenKind.KEYW, 'enum')
+        if self.get().kind != MetaTokenKind.NAME:
+            raise MetaParserError('expected enum name', self.filename, self.cur.span)
 
-        if ts.get().kind != MetaTokenKind.NAME:
-            raise MetaParserError('expected enum name', self.filename, ts.cur.span)
+        name = self.cur.value
 
-        name = ts.cur.value
-
-        if ts.get().kind != MetaTokenKind.LCB:
-            raise MetaParserError('expected enum definition', self.filename, ts.cur.span)
+        if self.get().kind != MetaTokenKind.LCB:
+            raise MetaParserError('expected enum definition', self.filename, self.cur.span)
 
         enumerators = self.enumerator_list()
 
-        if ts.cur.kind != MetaTokenKind.RCB:
-            raise MetaParserError('expected brace closing enum definition', self.filename, ts.cur.span)
+        if self.cur.kind != MetaTokenKind.RCB:
+            raise MetaParserError('expected brace closing enum definition', self.filename, self.cur.span)
 
-        prev = ts.cur
-        if ts.get().kind != MetaTokenKind.SEMI:
+        prev = self.cur
+        if self.get().kind != MetaTokenKind.SEMI:
             raise MetaParserError('expected semicolon after enum definition', self.filename, prev.span)
+
+        self.get()
 
         return Enum(name, enumerators)
 
     def enumerator_list(self):
-        ts = self.ts
-
         enumerators = []
         value = 0
 
         while True:
-            if ts.get().kind not in (MetaTokenKind.NAME, MetaTokenKind.NUMBER, MetaTokenKind.NUMNAME):
+            if self.get().kind not in (MetaTokenKind.NAME, MetaTokenKind.NUMBER, MetaTokenKind.NUMNAME):
                 break
 
-            name = ts.cur.string
+            name = self.cur.string
 
-            if ts.get().kind == MetaTokenKind.ASSIGN:
-                if ts.get().kind != MetaTokenKind.NUMBER:
-                    raise MetaParserError('expected enumerator value', self.filename, ts.cur.span)
-                value = ts.cur.value
-                ts.get()
+            if self.get().kind == MetaTokenKind.ASSIGN:
+                if self.get().kind != MetaTokenKind.NUMBER:
+                    raise MetaParserError('expected enumerator value', self.filename, self.cur.span)
+                value = self.cur.value
+                self.get()
 
             enumerators.append(Enumerator(name, value))
             value += 1
 
-            if ts.cur.kind != MetaTokenKind.COMMA:
+            if self.cur.kind != MetaTokenKind.COMMA:
                 break
 
         return enumerators
 
     def scalar(self):
-        ts = self.ts
-
-        if ts.cur.pair == (MetaTokenKind.KEYW, 'bool'):
+        if self.cur.pair == (MetaTokenKind.KEYW, 'bool'):
             type_ = Bool()
-        elif ts.cur.pair == (MetaTokenKind.KEYW, 'int'):
+        elif self.cur.pair == (MetaTokenKind.KEYW, 'int'):
             type_ = Int()
-        elif ts.cur.pair == (MetaTokenKind.KEYW, 'string'):
+        elif self.cur.pair == (MetaTokenKind.KEYW, 'string'):
             type_ = String()
         else:
             assert False, "o-oh, we shouldn't end up here"
 
-        if ts.get().kind != MetaTokenKind.NAME:
-            raise MetaParserError('expected scalar name', self.filename, ts.cur.span)
+        if self.get().kind != MetaTokenKind.NAME:
+            raise MetaParserError('expected scalar name', self.filename, self.cur.span)
 
-        name = ts.cur.value
+        name = self.cur.value
 
-        prev = ts.cur
-        if ts.get().kind != MetaTokenKind.SEMI:
+        prev = self.cur
+        if self.get().kind != MetaTokenKind.SEMI:
             raise MetaParserError('expected semicolon closing field definition', self.filename, prev.span)
+
+        self.get()
 
         return type_, name
 
@@ -806,7 +841,7 @@ class XmlParser(object):
         else:
             self.error('expected "simpleType" or "complexType" tag under "p" tag', field)
 
-        return Field(name, type_, cardinality)
+        return Field(name, type_, cardinality, None)
 
     def struct(self, complex_, name):
         fields = [self.field(field) for field in complex_.findall('p')]
