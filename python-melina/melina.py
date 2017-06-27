@@ -453,7 +453,7 @@ class MetaParser(object):
     def __init__(self, input, filename=None):
         self.ts = MetaTokenizer(input, filename)
         self.filename = filename
-        self.prev = self.ts.cur
+        self.cached_comment = None
 
     @classmethod
     def from_file(cls, filename):
@@ -464,11 +464,13 @@ class MetaParser(object):
         return self.ts.cur
 
     def get(self):
+        self.cached_comment = None
         while True:
-            self.prev = self.cur
             tok = self.ts.get()
-            if tok.kind != MetaTokenKind.COMMENT:
-                return tok
+            if tok.kind == MetaTokenKind.COMMENT:
+                self.cached_comment = tok
+                continue
+            return tok
 
     def parse(self):
         mos = []
@@ -525,9 +527,8 @@ class MetaParser(object):
 
     def field(self):
         doc = None
-        if self.prev.kind == MetaTokenKind.COMMENT:
-            if _isupperdoc(self.prev):
-                doc = _docstring(self.prev)
+        if self.cached_comment and _isupperdoc(self.cached_comment):
+            doc = _docstring(self.cached_comment)
 
         cardinality = Cardinality(CardinalityKind.REQUIRED)
         if self.cur.pair == (MetaTokenKind.KEYW, 'repeated'):
@@ -551,9 +552,8 @@ class MetaParser(object):
 
         prev = self.cur
         self.get()
-        if self.prev.kind == MetaTokenKind.COMMENT:
-            if _isrightdoc(self.prev, prev):
-                doc = _mergedoc(doc, _docstring(self.prev))
+        if self.cached_comment and _isrightdoc(self.cached_comment, prev):
+            doc = _mergedoc(doc, _docstring(self.cached_comment))
 
         return Field(name, type_, cardinality, doc)
 
