@@ -955,6 +955,8 @@ class XmlGenerator(object):
 
     def mo(self, parent, mo):
         moelem = ET.SubElement(parent, 'managedObject', {'class': mo.name})
+        if mo.doc:
+            moelem.set('fullName', mo.doc)
         for child in mo.children:
             ET.SubElement(moelem, 'childManagedObject', {'class': child.name})
         self.fields(moelem, mo.fields)
@@ -969,6 +971,8 @@ class XmlGenerator(object):
         else:
             max_occurs = '999999'
         pelem = ET.SubElement(parent, 'p', name=field.name)
+        if field.doc:
+            pelem.set('fullName', field.doc)
         pelem.set('maxOccurs', max_occurs)
 
         if field.cardinality.kind == CardinalityKind.OPTIONAL:
