@@ -44,7 +44,8 @@ mo MACHINE_L -> SENSOR, WHEEL, ARM
         {
             T1 = 1,
             T2 = 2,
-            42Val = 3
+            42Val = 3,
+            000 = 4
         };
 
         repeated struct Numbers
