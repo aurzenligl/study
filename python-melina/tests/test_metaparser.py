@@ -76,8 +76,8 @@ mo MACHINE_L: SENSOR WHEEL ARM
             required int y
         required int a
         required int b
-    required bool x
-    required int y
+    required bool x  // comment about something
+    required int y  // another comment
 '''
 
     def test_configure(self):

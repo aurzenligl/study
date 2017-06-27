@@ -104,12 +104,12 @@ class Field(object):
 
     def __str__(self):
         if isinstance(self.type, Scalar):
-            return '%s %s %s\n' % (self.cardinality, self.type, self.name)
+            text = '%s %s %s\n' % (self.cardinality, self.type, self.name)
         else:
             text = '%s %s' % (self.cardinality, self.type)
-            if self.doc:
-                return _add_to_1st_line(text, self.doc)
-            return text
+        if self.doc:
+            return _add_to_1st_line(text, self.doc)
+        return text
 
 class Cardinality(object):
     def __init__(self, kind):
@@ -371,9 +371,12 @@ def _isupperdoc(tok):
     leftwards = tok.span.start_line[:pos]
     return leftwards.isspace()
 
+def _isrightdoc(tok, symtok):
+    return tok.span.end_linecol[0] == symtok.span.end_linecol[0]
+
 def _docstring(tok):
     if tok.value[:3] == '/**':
-        lines = [line.strip() for line in tok.value[3:-2].splitlines()]
+        lines = [line.strip() for line in tok.value[2:-2].splitlines()]
         lines = [line for line in lines if line]
         if all((line[0] == '*' for line in lines)):
             lines = [line[1:].strip() for line in lines]
@@ -381,6 +384,10 @@ def _docstring(tok):
             return ' '.join(lines)
     elif tok.value[:3] == '///':
         return tok.value[3:].strip()
+
+def _mergedoc(ldoc, rdoc):
+    if ldoc is not None or rdoc is not None:
+        return (ldoc or '') + (rdoc or '')
 
 class MetaParser(object):
     '''
@@ -542,6 +549,12 @@ class MetaParser(object):
         else:
             type_, name = self.scalar()
 
+        prev = self.cur
+        self.get()
+        if self.prev.kind == MetaTokenKind.COMMENT:
+            if _isrightdoc(self.prev, prev):
+                doc = _mergedoc(doc, _docstring(self.prev))
+
         return Field(name, type_, cardinality, doc)
 
     def struct(self):
@@ -566,8 +579,6 @@ class MetaParser(object):
         if self.get().kind != MetaTokenKind.SEMI:
             raise MetaParserError('expected semicolon after struct definition', self.filename, prev.span)
 
-        self.get()
-
         return Struct(name, fields)
 
     def enum(self):
@@ -589,8 +600,6 @@ class MetaParser(object):
         prev = self.cur
         if self.get().kind != MetaTokenKind.SEMI:
             raise MetaParserError('expected semicolon after enum definition', self.filename, prev.span)
-
-        self.get()
 
         return Enum(name, enumerators)
 
@@ -636,8 +645,6 @@ class MetaParser(object):
         prev = self.cur
         if self.get().kind != MetaTokenKind.SEMI:
             raise MetaParserError('expected semicolon closing field definition', self.filename, prev.span)
-
-        self.get()
 
         return type_, name
 

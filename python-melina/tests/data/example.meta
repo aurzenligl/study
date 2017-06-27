@@ -27,10 +27,12 @@ mo MACHINE_L -> SENSOR, WHEEL, ARM
             int y;
         };
 
+        // this comment is invisible
         int a;
-        int b;
+        int b; /* this one is invisible too */
     };
 
-    bool x;  /// comment about something
+    /** comment about something */
+    bool x;
     int y;  /// another comment
 };
