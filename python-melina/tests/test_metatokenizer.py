@@ -1,5 +1,5 @@
 import os
-import timeit
+import pytest
 import melina
 
 datadir = os.path.abspath(__file__ + '/../data')
@@ -24,7 +24,8 @@ def toks2assert(toks):
     print '\n'.join([' ' * 12 + str(t) + ',' for t in toks])
 
 class TestMetaTokenizer():
-    def xxtest_configure(self):
+    @pytest.mark.skip
+    def test_configure(self):
         toks = tokens('configure.meta', tuples=True)
         assert toks == [
             ('1:1-1:2', 'KEYW', 'mo'),
@@ -152,7 +153,8 @@ class TestMetaTokenizer():
             (None, 'END', None),
         ]
 
-    def xxtest_example(self):
+    @pytest.mark.skip
+    def test_example(self):
         toks = tokens('example.meta', tuples=True)
         assert toks == [
             ('1:1-1:2', 'KEYW', 'mo'),
@@ -253,6 +255,7 @@ class TestMetaTokenizer():
         ]
 
     def hardskip_test_performance(self):
+        import timeit
         print timeit.timeit("tokens('longexample.meta')", "from %s import tokens" % __name__, number=1)
 
 if __name__ == '__main__':

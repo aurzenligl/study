@@ -1,5 +1,4 @@
 import os
-import timeit
 import pytest
 import melina
 
@@ -114,4 +113,5 @@ mo CONFIGURE_MECHANISM_TASK: RESULT
 '''
 
     def hardskip_test_performance(self):
+        import timeit
         print timeit.timeit("parse('longexample.meta')", "from %s import parse" % __name__, number=1)
