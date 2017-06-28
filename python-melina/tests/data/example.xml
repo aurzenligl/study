@@ -42,7 +42,13 @@
               <simpleType base="integer"/>
             </p>
             <p name="y" maxOccurs="1">
-              <simpleType base="integer"/>
+              <simpleType base="string"/>
+            </p>
+            <p name="yy" maxOccurs="1">
+              <simpleType base="string">
+                <minLength value="2"/>
+                <maxLength value="15"/>
+              </simpleType>
             </p>
           </complexType>
         </p>

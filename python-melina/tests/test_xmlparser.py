@@ -73,7 +73,8 @@ mo MACHINE_L: SENSOR WHEEL ARM
             T2 = 2
         repeated struct Numbers
             required int x
-            required int y
+            required string y
+            required string(2..15) yy
         required int a
         required int b
     required bool x

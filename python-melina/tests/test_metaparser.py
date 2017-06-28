@@ -72,7 +72,8 @@ mo MACHINE_L: SENSOR WHEEL ARM  // This is an example managed object: The Machin
             000 = 4
         repeated struct Numbers  // This is the heart of the machine.
             required int x
-            required int y
+            required string y
+            required string(2..15) yy
         required int a
         required int b
     repeated(42) bool x  // comment about something

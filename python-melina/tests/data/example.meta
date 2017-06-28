@@ -27,7 +27,8 @@ mo MACHINE_L -> SENSOR, WHEEL, ARM
         repeated struct Numbers
         {
             int x;
-            int y;
+            string y;
+            string(2..15) yy;
         };
 
         // this comment is invisible

@@ -120,8 +120,9 @@ class Cardinality(object):
         self.kind = _sanitize(kind, CardinalityKind)
         self.max_count = _sanitize(max_count, (type(None), int, long))
 
-        assert (max_count is None) or (kind == CardinalityKind.REPEATED)
-        assert (max_count is None) or (max_count > 1)
+        if max_count is not None:
+            assert kind == CardinalityKind.REPEATED
+            assert max_count > 1
 
     def __repr__(self):
         return '<Cardinality %s>' % self.kind.name.lower()
@@ -191,7 +192,23 @@ class Int(Scalar):
     pass
 
 class String(Scalar):
-    pass
+    def __init__(self, minlen, maxlen):
+        self.minlen = _sanitize(minlen, (type(None), int, long))
+        self.maxlen = _sanitize(maxlen, (type(None), int, long))
+
+        if minlen is not None or maxlen is not None:
+            assert 0 <= minlen
+            assert 0 <= maxlen
+            assert minlen <= maxlen
+        else:
+            assert minlen is None
+            assert maxlen is None
+
+    def __str__(self):
+        out = 'string'
+        if self.minlen:
+            out += '(%s..%s)' % (self.minlen, self.maxlen)
+        return out
 
 def _line(text, pos):
     return text.count('\n', 0, pos) + 1
@@ -243,8 +260,9 @@ class MetaTokenKind(enum.Enum):
     COMMA = 9     # ,
     ASSIGN = 10   # =
     ARROW = 11    # ->
-    COMMENT = 12  # '//\n', '/**/' <ignored, stored>
-    END = 13
+    TWODOT = 12   # ..
+    COMMENT = 13  # '//\n', '/**/' <ignored, stored>
+    END = 14
 
 class MetaToken(object):
     __slots__ = ('kind', 'value', 'span', 'string')
@@ -258,6 +276,7 @@ class MetaToken(object):
         MetaTokenKind.COMMA: ',',
         MetaTokenKind.ASSIGN: '=',
         MetaTokenKind.ARROW: '->',
+        MetaTokenKind.TWODOT: '..',
     }
 
     _repr_direct = (MetaTokenKind.KEYW, MetaTokenKind.NAME, MetaTokenKind.NUMBER, MetaTokenKind.NUMNAME, MetaTokenKind.COMMENT)
@@ -328,7 +347,7 @@ class MetaTokenizer(object):
         r'(?P<name>[a-zA-Z_][a-zA-Z0-9_]*)',
         r'(?P<number>[0-9]+(?![a-zA-Z0-9_]))',
         r'(?P<numname>[0-9]+[a-zA-Z_][a-zA-Z0-9_]*)',
-        r'(?P<operator>(->)|[{}();,=])',
+        r'(?P<operator>(->)|(\.\.)|[{}();,=])',
         r'(?P<comment>(//.*\n|/\*(\*(?!/)|[^*])*\*/))',
         r'(?P<space>\s+)',
     )))
@@ -337,6 +356,7 @@ class MetaTokenizer(object):
 
     _operators = {
         '->': MetaTokenKind.ARROW,
+        '..': MetaTokenKind.TWODOT,
         '{': MetaTokenKind.LCB,
         '}': MetaTokenKind.RCB,
         '(': MetaTokenKind.LP,
@@ -662,14 +682,29 @@ class MetaParser(object):
     def scalar(self):
         if self.cur.pair == (MetaTokenKind.KEYW, 'bool'):
             type_ = Bool()
+            self.get()
         elif self.cur.pair == (MetaTokenKind.KEYW, 'int'):
             type_ = Int()
+            self.get()
         elif self.cur.pair == (MetaTokenKind.KEYW, 'string'):
-            type_ = String()
+            minlen, maxlen = None, None
+            if self.get().kind == MetaTokenKind.LP:
+                if self.get().kind != MetaTokenKind.NUMBER:
+                    raise MetaParserError('expected minimum string length', self.filename, self.cur.span)
+                minlen = self.cur.value
+                if self.get().kind != MetaTokenKind.TWODOT:
+                    raise MetaParserError('expected double dot operator', self.filename, self.cur.span)
+                if self.get().kind != MetaTokenKind.NUMBER:
+                    raise MetaParserError('expected maximum string length', self.filename, self.cur.span)
+                maxlen = self.cur.value
+                if self.get().kind != MetaTokenKind.RP:
+                    raise MetaParserError('expected closing paren after maximum string length', self.filename, self.cur.span)
+                self.get()
+            type_ = String(minlen, maxlen)
         else:
             assert False, "o-oh, we shouldn't end up here"
 
-        if self.get().kind != MetaTokenKind.NAME:
+        if self.cur.kind != MetaTokenKind.NAME:
             raise MetaParserError('expected scalar name', self.filename, self.cur.span)
 
         name = self.cur.value
@@ -949,20 +984,17 @@ class XmlParser(object):
             else:
                 return Int()
         elif base == 'string':
+            minlen, maxlen = None, None
             min_ = simple.find('minLength')
             max_ = simple.find('maxLength')
             if min_ is not None and max_ is not None:
-                min_val = _nonnegative_int(self.ensured_getattr(min_, 'value'))
-                if min_val is None:
+                minlen = _nonnegative_int(self.ensured_getattr(min_, 'value'))
+                if minlen is None:
                     self.error('expected non-negative integer in "value" attribute', min_)
-                max_val = _nonnegative_int(self.ensured_getattr(max_, 'value'))
-                if max_val is None:
+                maxlen = _nonnegative_int(self.ensured_getattr(max_, 'value'))
+                if maxlen is None:
                     self.error('expected non-negative integer in "value" attribute', max_)
-                '''TODO [langfeature] add min/max string lengths'''
-
-                return String()
-            else:
-                return String()
+            return String(minlen, maxlen)
         else:
             self.error('expected "boolean", "integer" or "string" in "base" attribute', simple)
 
@@ -1034,8 +1066,9 @@ class XmlGenerator(object):
             ET.SubElement(parent, 'simpleType', base='integer')
         elif isinstance(type_, String):
             selem = ET.SubElement(parent, 'simpleType', base='string')
-            ET.SubElement(selem, 'minLength', value='0')
-            ET.SubElement(selem, 'maxLength', value='2147483647')
+            if type_.minlen:
+                ET.SubElement(selem, 'minLength', value=str(type_.minlen))
+                ET.SubElement(selem, 'maxLength', value=str(type_.maxlen))
         else:
             assert False, "o-oh, we shouldn't end up here"
 
