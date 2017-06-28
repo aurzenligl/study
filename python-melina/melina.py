@@ -116,14 +116,21 @@ class Field(object):
         return text
 
 class Cardinality(object):
-    def __init__(self, kind):
+    def __init__(self, kind, max_count = None):
         self.kind = _sanitize(kind, CardinalityKind)
+        self.max_count = _sanitize(max_count, (type(None), int, long))
+
+        assert (max_count is None) or (kind == CardinalityKind.REPEATED)
+        assert (max_count is None) or (max_count > 1)
 
     def __repr__(self):
         return '<Cardinality %s>' % self.kind.name.lower()
 
     def __str__(self):
-        return self.kind.name.lower()
+        if self.kind == CardinalityKind.REPEATED and self.max_count:
+            return 'repeated(%s)' % self.max_count
+        else:
+            return self.kind.name.lower()
 
 class CardinalityKind(enum.Enum):
     REQUIRED = 0
@@ -230,12 +237,14 @@ class MetaTokenKind(enum.Enum):
     NUMNAME = 3   # [_a-zA-Z0-9]+
     LCB = 4       # {
     RCB = 5       # }
-    SEMI = 6      # ;
-    COMMA = 7     # ,
-    ASSIGN = 8    # =
-    ARROW = 9     # ->
-    COMMENT = 10  # '//\n', '/**/' <ignored, stored>
-    END = 11
+    LP = 6        # (
+    RP = 7        # )
+    SEMI = 8      # ;
+    COMMA = 9     # ,
+    ASSIGN = 10   # =
+    ARROW = 11    # ->
+    COMMENT = 12  # '//\n', '/**/' <ignored, stored>
+    END = 13
 
 class MetaToken(object):
     __slots__ = ('kind', 'value', 'span', 'string')
@@ -243,6 +252,8 @@ class MetaToken(object):
     _repr_vals = {
         MetaTokenKind.LCB: '{',
         MetaTokenKind.RCB: '}',
+        MetaTokenKind.LP: '(',
+        MetaTokenKind.RP: ')',
         MetaTokenKind.SEMI: ';',
         MetaTokenKind.COMMA: ',',
         MetaTokenKind.ASSIGN: '=',
@@ -317,7 +328,7 @@ class MetaTokenizer(object):
         r'(?P<name>[a-zA-Z_][a-zA-Z0-9_]*)',
         r'(?P<number>[0-9]+(?![a-zA-Z0-9_]))',
         r'(?P<numname>[0-9]+[a-zA-Z_][a-zA-Z0-9_]*)',
-        r'(?P<operator>(->)|[{};,=])',
+        r'(?P<operator>(->)|[{}();,=])',
         r'(?P<comment>(//.*\n|/\*(\*(?!/)|[^*])*\*/))',
         r'(?P<space>\s+)',
     )))
@@ -328,6 +339,8 @@ class MetaTokenizer(object):
         '->': MetaTokenKind.ARROW,
         '{': MetaTokenKind.LCB,
         '}': MetaTokenKind.RCB,
+        '(': MetaTokenKind.LP,
+        ')': MetaTokenKind.RP,
         ';': MetaTokenKind.SEMI,
         ',': MetaTokenKind.COMMA,
         '=': MetaTokenKind.ASSIGN,
@@ -534,21 +547,31 @@ class MetaParser(object):
         return children
 
     def field(self):
+        # doc
         doc = None
         if self.cached_comment and _isupperdoc(self.cached_comment):
             doc = _docstring(self.cached_comment)
 
+        # cardinality
         cardinality = Cardinality(CardinalityKind.REQUIRED)
         if self.cur.pair == (MetaTokenKind.KEYW, 'repeated'):
-            cardinality = Cardinality(CardinalityKind.REPEATED)
-            self.get()
+            max_count = None
+            if self.get().kind == MetaTokenKind.LP:
+                if self.get().kind != MetaTokenKind.NUMBER:
+                    raise MetaParserError('expected max count in parens', self.filename, self.cur.span)
+                max_count = self.cur.value
+                prev = self.cur
+                if self.get().kind != MetaTokenKind.RP:
+                    raise MetaParserError('expected closing paren after max count', self.filename, prev.span)
+                self.get()
+            cardinality = Cardinality(CardinalityKind.REPEATED, max_count)
         elif self.cur.pair == (MetaTokenKind.KEYW, 'optional'):
             cardinality = Cardinality(CardinalityKind.OPTIONAL)
             self.get()
 
+        # type
         if not (self.cur.kind == MetaTokenKind.KEYW and self.cur.value in ('struct', 'enum', 'bool', 'int', 'string')):
             raise MetaParserError('expected field definition', self.filename, self.cur.span)
-
         if self.cur.pair == (MetaTokenKind.KEYW, 'struct'):
             type_ = self.struct()
             name = type_.name
@@ -558,6 +581,7 @@ class MetaParser(object):
         else:
             type_, name = self.scalar()
 
+        # doc
         prev = self.cur
         self.get()
         if self.cached_comment and _isrightdoc(self.cached_comment, prev):
@@ -692,7 +716,10 @@ class MetaGenerator(object):
         if field.doc and isinstance(field.type, (Struct, Enum)):
             out += '/**\n * %s\n */\n' % field.doc
         if field.cardinality.kind != CardinalityKind.REQUIRED:
-            out += field.cardinality.kind.name.lower() + ' '
+            out += field.cardinality.kind.name.lower()
+            if field.cardinality.kind == CardinalityKind.REPEATED and field.cardinality.max_count:
+                out += '(%s)' % field.cardinality.max_count
+            out += ' '
         if isinstance(field.type, Struct):
             out += self.struct(field.type)
         elif isinstance(field.type, Enum):
@@ -741,6 +768,9 @@ def _float(text):
         return float(text)
     except (ValueError, TypeError):
         return
+
+class XmlConst():
+    default_repeated_max_occurs = 999999
 
 class XmlParserError(Exception):
     def __init__(self, message, filename, position, input_):
@@ -824,19 +854,15 @@ class XmlParser(object):
         return children
 
     def field(self, field):
-        '''TODO [langfeature] add fullName comment to field'''
-
         '''TODO [langfeature] field name has to begin with small letter (xml)'''
         '''TODO [langfeature] enum/struct name has to begin with capital letter (meta)'''
         name = self.ensured_getattr(field, 'name')
         doc = field.get('fullName')
 
-        '''TODO [langfeature] add max_occurs value to repeated cardinality'''
         max_occurs = field.get('maxOccurs')
         if max_occurs is not None:
             max_occurs = _positive_int(max_occurs)
             if max_occurs is None:
-                '''TODO [langfeature] field does not need to have maxOccurs attrib, in which case it's considered required'''
                 self.error('expected positive integer in "maxOccurs"', field)
 
         if max_occurs == 1 or max_occurs == None:
@@ -852,7 +878,9 @@ class XmlParser(object):
             else:
                 cardinality = Cardinality(CardinalityKind.REQUIRED)
         else:
-            cardinality = Cardinality(CardinalityKind.REPEATED)
+            if max_occurs == XmlConst.default_repeated_max_occurs:
+                max_occurs = None
+            cardinality = Cardinality(CardinalityKind.REPEATED, max_occurs)
 
         complex_ = field.find('complexType')
         simple = field.find('simpleType')
@@ -966,14 +994,18 @@ class XmlGenerator(object):
             self.field(parent, field)
 
     def field(self, parent, field):
-        if field.cardinality.kind != CardinalityKind.REPEATED:
-            max_occurs = '1'
+        if field.cardinality.kind == CardinalityKind.REPEATED:
+            if field.cardinality.max_count:
+                max_occurs = field.cardinality.max_count
+            else:
+                max_occurs = XmlConst.default_repeated_max_occurs
         else:
-            max_occurs = '999999'
+            max_occurs = 1
+
         pelem = ET.SubElement(parent, 'p', name=field.name)
         if field.doc:
             pelem.set('fullName', field.doc)
-        pelem.set('maxOccurs', max_occurs)
+        pelem.set('maxOccurs', str(max_occurs))
 
         if field.cardinality.kind == CardinalityKind.OPTIONAL:
             ET.SubElement(pelem, 'creation', {'priority': 'optional'})

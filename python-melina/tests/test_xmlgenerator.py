@@ -90,7 +90,7 @@ class TestGenerator():
     <childManagedObject class="RESULT"/>
     <p name="alphaDelta" fullName="Alpha configuration" maxOccurs="1">
       <complexType>
-        <p name="modified" fullName="Modified field" maxOccurs="999999">
+        <p name="modified" fullName="Modified field" maxOccurs="100">
           <complexType>
             <p name="dn" fullName="The dn param" maxOccurs="1">
               <simpleType base="string">
@@ -107,7 +107,7 @@ class TestGenerator():
     </p>
     <p name="betaDelta" fullName="Beta configuration" maxOccurs="1">
       <complexType>
-        <p name="added" fullName="Added field" maxOccurs="999999">
+        <p name="added" fullName="Added field" maxOccurs="100">
           <complexType>
             <p name="devDn" fullName="The dn param" maxOccurs="1">
               <simpleType base="string">
@@ -123,7 +123,7 @@ class TestGenerator():
             </p>
           </complexType>
         </p>
-        <p name="modified" fullName="Modified field" maxOccurs="999999">
+        <p name="modified" fullName="Modified field" maxOccurs="100">
           <complexType>
             <p name="dn" fullName="The dn param" maxOccurs="1">
               <simpleType base="string">
@@ -136,7 +136,7 @@ class TestGenerator():
             </p>
           </complexType>
         </p>
-        <p name="removed" fullName="Removed field" maxOccurs="999999">
+        <p name="removed" fullName="Removed field" maxOccurs="100">
           <complexType>
             <p name="dn" fullName="The dn param" maxOccurs="1">
               <simpleType base="string">
@@ -150,7 +150,7 @@ class TestGenerator():
     </p>
     <p name="gammaDelta" fullName="Gamma configuration" maxOccurs="1">
       <complexType>
-        <p name="modified" fullName="Modified field" maxOccurs="999999">
+        <p name="modified" fullName="Modified field" maxOccurs="10">
           <complexType>
             <p name="dn" fullName="The dn param" maxOccurs="1">
               <simpleType base="string">
@@ -176,7 +176,7 @@ class TestGenerator():
                     </p>
                   </complexType>
                 </p>
-                <p name="gammaGimmickConfig" fullName="The gamma gimmick config" maxOccurs="999999">
+                <p name="gammaGimmickConfig" fullName="The gamma gimmick config" maxOccurs="9999">
                   <complexType>
                     <p name="dn" fullName="The dn param" maxOccurs="1">
                       <simpleType base="string">

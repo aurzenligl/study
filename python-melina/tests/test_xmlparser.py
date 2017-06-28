@@ -85,21 +85,21 @@ mo MACHINE_L: SENSOR WHEEL ARM
         assert str(tu) == '''\
 mo CONFIGURE_MECHANISM_TASK: RESULT  // Configure mechanism task
     required struct alphaDelta  // Alpha configuration
-        repeated struct modified  // Modified field
+        repeated(100) struct modified  // Modified field
             required string dn  // The dn param
             required int param  // The param
     required struct betaDelta  // Beta configuration
-        repeated struct added  // Added field
+        repeated(100) struct added  // Added field
             required string devDn  // The dn param
             required int id  // The id
             required int param  // The param
-        repeated struct modified  // Modified field
+        repeated(100) struct modified  // Modified field
             required string dn  // The dn param
             required int param  // The param
-        repeated struct removed  // Removed field
+        repeated(100) struct removed  // Removed field
             required string dn  // The dn param
     required struct gammaDelta  // Gamma configuration
-        repeated struct modified  // Modified field
+        repeated(10) struct modified  // Modified field
             required string dn  // The dn param
             optional struct config  // The config
                 optional int param  // The param
@@ -107,7 +107,7 @@ mo CONFIGURE_MECHANISM_TASK: RESULT  // Configure mechanism task
                     required enum attitude  // The attitude
                         Disabled = 0
                         Enabled = 1
-                repeated struct gammaGimmickConfig  // The gamma gimmick config
+                repeated(9999) struct gammaGimmickConfig  // The gamma gimmick config
                     required string dn  // The dn param
                     required int rate  // The rate param
                     required int size  // The size param

@@ -36,6 +36,6 @@ mo MACHINE_L -> SENSOR, WHEEL, ARM
     };
 
     /** comment about something */
-    bool x;
+    repeated(42) bool x;
     int y;  /// another comment
 };

@@ -23,6 +23,8 @@ def tok2tuple(tok):
 def toks2assert(toks):
     print '\n'.join([' ' * 12 + str(t) + ',' for t in toks])
 
+'''TODO unskip tests, add missing (meta, xml)-parser error tests'''
+
 class TestMetaTokenizer():
     @pytest.mark.skip
     def test_configure(self):

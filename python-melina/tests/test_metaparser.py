@@ -75,7 +75,7 @@ mo MACHINE_L: SENSOR WHEEL ARM  // This is an example managed object: The Machin
             required int y
         required int a
         required int b
-    required bool x  // comment about something
+    repeated(42) bool x  // comment about something
     required int y  // another comment
 '''
 
