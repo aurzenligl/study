@@ -76,8 +76,8 @@ mo MACHINE_L: SENSOR WHEEL ARM  // This is an example managed object: The Machin
             required int(-0.0001, 0.0002, 0.0000001) xxx
             required string y
             required string(2..15) yy
-        required int a
-        required int b
+        required int a [units = kbps]
+        required int b [units = petabytes]
     repeated(42) bool x  // comment about something
     required int y  // another comment
 '''

@@ -106,7 +106,7 @@ class TestGenerator():
             </p>
             <p name="param" fullName="The param" maxOccurs="1">
               <simpleType base="integer">
-                <editing>
+                <editing units="octets">
                   <range minIncl="0" maxIncl="9500"/>
                 </editing>
               </simpleType>
@@ -211,7 +211,9 @@ class TestGenerator():
                       </simpleType>
                     </p>
                     <p name="rate" fullName="The rate param" maxOccurs="1">
-                      <simpleType base="integer"/>
+                      <simpleType base="integer">
+                        <editing units="octets"/>
+                      </simpleType>
                     </p>
                     <p name="size" fullName="The size param" maxOccurs="1">
                       <simpleType base="integer"/>

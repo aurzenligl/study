@@ -109,7 +109,10 @@ class Field(object):
 
     def __str__(self):
         if isinstance(self.type, Scalar):
-            text = '%s %s %s\n' % (self.cardinality, self.type, self.name)
+            opts = self.type.options
+            if opts:
+                opts = ' ' + opts
+            text = '%s %s %s%s\n' % (self.cardinality, self.type, self.name, opts)
         else:
             text = '%s %s' % (self.cardinality, self.type)
         if self.doc:
@@ -187,7 +190,9 @@ class Scalar(object):
         return '%s' % self.__class__.__name__.lower()
 
 class Bool(Scalar):
-    pass
+    @property
+    def options(self):
+        return ''
 
 class Int(Scalar):
 
@@ -203,11 +208,11 @@ class Int(Scalar):
         else:
             return decstr
 
-    def __init__(self, minval=None, maxval=None, step=None):
-        '''TODO remove None-s'''
+    def __init__(self, minval, maxval, step, units = None):
         self.minval = _sanitize(minval, (type(None), int, long, decimal.Decimal))
         self.maxval = _sanitize(maxval, (type(None), int, long, decimal.Decimal))
         self.step = _sanitize(step, (type(None), int, long, decimal.Decimal))
+        self.units = _sanitize(units, (type(None), str))
 
         if minval is not None or maxval is not None:
             if step is None:
@@ -231,6 +236,13 @@ class Int(Scalar):
     def stepstr(self):
         return self.dectostr(self.step)
 
+    @property
+    def options(self):
+        if self.units:
+            return '[units = %s]' % self.units
+        else:
+            return ''
+
     def __str__(self):
         if self.step is not None:
             return 'int(%s, %s, %s)' % (self.minvalstr, self.maxvalstr, self.stepstr)
@@ -251,6 +263,10 @@ class String(Scalar):
         else:
             assert minlen is None
             assert maxlen is None
+
+    @property
+    def options(self):
+        return ''
 
     def __str__(self):
         out = 'string'
@@ -303,22 +319,27 @@ class MetaTokenKind(enum.Enum):
     NUMNAME = 4   # [_a-zA-Z0-9]+
     LCB = 5       # {
     RCB = 6       # }
-    LP = 7        # (
-    RP = 8        # )
-    SEMI = 9      # ;
-    COMMA = 10    # ,
-    ASSIGN = 11   # =
-    ARROW = 12    # ->
-    TWODOT = 13   # ..
-    COMMENT = 14  # '//\n', '/**/' <ignored, stored>
-    END = 15
+    LSB = 7       # [
+    RSB = 8       # ]
+    LP = 9        # (
+    RP = 10       # )
+    SEMI = 11     # ;
+    COMMA = 12    # ,
+    ASSIGN = 13   # =
+    ARROW = 14    # ->
+    TWODOT = 15   # ..
+    COMMENT = 16  # '//\n', '/**/' <ignored, stored>
+    END = 17
 
 class MetaToken(object):
     __slots__ = ('kind', 'value', 'span', 'string')
 
+    '''TODO remove repr_vals in favor of value'''
     _repr_vals = {
         MetaTokenKind.LCB: '{',
         MetaTokenKind.RCB: '}',
+        MetaTokenKind.LSB: '[',
+        MetaTokenKind.RSB: ']',
         MetaTokenKind.LP: '(',
         MetaTokenKind.RP: ')',
         MetaTokenKind.SEMI: ';',
@@ -397,7 +418,7 @@ class MetaTokenizer(object):
         r'(?P<number>-?[0-9]+(?![a-zA-Z0-9_]|\.[^\.]))',
         r'(?P<float>-?[0-9]*\.(?!\.)[0-9]*(?![a-zA-Z0-9_]))',
         r'(?P<numname>-?[0-9]+[a-zA-Z_][a-zA-Z0-9_]*)',
-        r'(?P<operator>(->)|(\.\.)|[{}();,=])',
+        r'(?P<operator>(->)|(\.\.)|[{}\[\]();,=])',
         r'(?P<comment>(//.*\n|/\*(\*(?!/)|[^*])*\*/))',
         r'(?P<space>\s+)',
     )))
@@ -409,6 +430,8 @@ class MetaTokenizer(object):
         '..': MetaTokenKind.TWODOT,
         '{': MetaTokenKind.LCB,
         '}': MetaTokenKind.RCB,
+        '[': MetaTokenKind.LSB,
+        ']': MetaTokenKind.RSB,
         '(': MetaTokenKind.LP,
         ')': MetaTokenKind.RP,
         ';': MetaTokenKind.SEMI,
@@ -735,7 +758,9 @@ class MetaParser(object):
 
     def scalar(self):
         if self.cur.pair == (MetaTokenKind.KEYW, 'bool'):
-            type_ = Bool()
+            type_type = Bool
+            type_args = ()
+            type_possible_opts = {}
             self.get()
         elif self.cur.pair == (MetaTokenKind.KEYW, 'int'):
             minval, maxval, step = None, None, None
@@ -766,7 +791,9 @@ class MetaParser(object):
                 if self.get().kind != MetaTokenKind.RP:
                     raise MetaParserError('expected closing paren after int specification', self.filename, self.cur.span)
                 self.get()
-            type_ = Int(minval, maxval, step)
+            type_type = Int
+            type_args = (minval, maxval, step)
+            type_possible_opts = {'units': (MetaTokenKind.NAME, 'unit name')}
         elif self.cur.pair == (MetaTokenKind.KEYW, 'string'):
             minlen, maxlen = None, None
             if self.get().kind == MetaTokenKind.LP:
@@ -781,18 +808,43 @@ class MetaParser(object):
                 if self.get().kind != MetaTokenKind.RP:
                     raise MetaParserError('expected closing paren after string specification', self.filename, self.cur.span)
                 self.get()
-            type_ = String(minlen, maxlen)
+            type_type = String
+            type_args = (minlen, maxlen)
+            type_possible_opts = {}
         else:
             assert False, "o-oh, we shouldn't end up here"
 
         if self.cur.kind != MetaTokenKind.NAME:
             raise MetaParserError('expected scalar name', self.filename, self.cur.span)
-
         name = self.cur.value
 
-        prev = self.cur
-        if self.get().kind != MetaTokenKind.SEMI:
-            raise MetaParserError('expected semicolon closing field definition', self.filename, prev.span)
+        type_opts = {}
+        presemitok = self.cur
+        if self.get().kind == MetaTokenKind.LSB:
+            while True:
+                if self.get().kind != MetaTokenKind.NAME:
+                    break
+                opt_name = self.cur.value
+                opt = type_possible_opts.get(opt_name)
+                if opt is None:
+                    raise MetaParserError('unexpected option name', self.filename, self.cur.span)
+                if self.get().kind != MetaTokenKind.ASSIGN:
+                    raise MetaParserError('expected assignment operator', self.filename, self.cur.span)
+                opt_kind, opt_description = opt
+                if self.get().kind != opt_kind:
+                    raise MetaParserError('expected %s' % opt_description, self.filename, self.cur.span)
+                type_opts[opt_name] = self.cur.value
+                if self.get().kind != MetaTokenKind.COMMA:
+                    break
+            if self.cur.kind != MetaTokenKind.RSB:
+                raise MetaParserError('expected closing square bracket after options', self.filename, self.cur.span)
+            presemitok = self.cur
+            self.get()
+
+        type_ = type_type(*type_args, **type_opts)
+
+        if self.cur.kind != MetaTokenKind.SEMI:
+            raise MetaParserError('expected semicolon closing field definition', self.filename, presemitok.span)
 
         return type_, name
 
@@ -861,7 +913,10 @@ class MetaGenerator(object):
         return out
 
     def scalar(self, type_, name):
-        return '%s %s;' % (type_, name)
+        opts = type_.options
+        if opts:
+            opts = ' ' + opts
+        return '%s %s%s;' % (type_, name, opts)
 
 def _int(text):
     try:
@@ -1049,13 +1104,9 @@ class XmlParser(object):
             return Bool()
 
         elif base in ('integer', 'decimal'):
-            minval, maxval, stepval = None, None, None
+            minval, maxval, stepval, units = None, None, None, None
             editing = simple.find('editing')
             if editing is not None:
-                '''TODO [langfeature] add integer range/step'''
-                '''TODO [langfeature] is 'integer' and 'decimal' the same?'''
-                '''TODO [langfeature] add how does step and divisor differ?'''
-                '''TODO [langfeature] does internalValue always follow divisor/step?'''
                 step = None
                 divisor = editing.get('divisor')
                 if divisor is not None:
@@ -1091,10 +1142,9 @@ class XmlParser(object):
                         self.error('expected "minIncl" less than "maxIncl"', range)
                 stepval = self.mergestep(minval, maxval, step, divisor)
                 units = editing.get('units')
-                '''TODO [langfeature] add integer units'''
                 default = editing.find('default')
                 '''TODO [langfeature] add default integer value'''
-            return Int(minval, maxval, stepval)
+            return Int(minval, maxval, stepval, units)
 
         elif base == 'string':
             minlen, maxlen = None, None
@@ -1178,13 +1228,16 @@ class XmlGenerator(object):
             ET.SubElement(parent, 'simpleType', base='boolean')
         elif isinstance(type_, Int):
             selem = ET.SubElement(parent, 'simpleType', base='integer')
-            if type_.minval is not None:
+            if type_.minval is not None or type_.units is not None:
                 eelem = ET.SubElement(selem, 'editing')
-                relem = ET.SubElement(eelem, 'range')
-                relem.set('minIncl', type_.minvalstr)
-                relem.set('maxIncl', type_.maxvalstr)
-                if type_.step is not None:
-                    relem.set('step', type_.stepstr)
+                if type_.units is not None:
+                    eelem.set('units', type_.units)
+                if type_.minval is not None:
+                    relem = ET.SubElement(eelem, 'range')
+                    relem.set('minIncl', type_.minvalstr)
+                    relem.set('maxIncl', type_.maxvalstr)
+                    if type_.step is not None:
+                        relem.set('step', type_.stepstr)
         elif isinstance(type_, String):
             selem = ET.SubElement(parent, 'simpleType', base='string')
             if type_.minlen is not None:

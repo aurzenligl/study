@@ -34,8 +34,8 @@ mo MACHINE_L -> SENSOR, WHEEL, ARM
         };
 
         // this comment is invisible
-        int a;
-        int b; /* this one is invisible too */
+        int a [units = kbps];
+        int b [units = petabytes]; /* this one is invisible too */
     };
 
     /** comment about something */
