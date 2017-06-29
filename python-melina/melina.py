@@ -207,20 +207,17 @@ class Int(Scalar):
         '''TODO remove None-s'''
         self.minval = _sanitize(minval, (type(None), int, long, decimal.Decimal))
         self.maxval = _sanitize(maxval, (type(None), int, long, decimal.Decimal))
-        self.step = _sanitize(step, (type(None), decimal.Decimal))
+        self.step = _sanitize(step, (type(None), int, long, decimal.Decimal))
 
-        try:
-            if minval is not None or maxval is not None:
-                if step is None:
-                    assert isinstance(minval, (int, long))
-                    assert isinstance(maxval, (int, long))
-                else:
-                    assert isinstance(minval, decimal.Decimal)
-                    assert isinstance(maxval, decimal.Decimal)
-                    assert step != 0
-                assert minval <= maxval
-        except:
-            import pdb;pdb.set_trace()
+        if minval is not None or maxval is not None:
+            if step is None:
+                assert isinstance(minval, (int, long))
+                assert isinstance(maxval, (int, long))
+            else:
+                assert minval is not None
+                assert maxval is not None
+                assert step != 0
+            assert minval <= maxval
 
     @property
     def minvalstr(self):
