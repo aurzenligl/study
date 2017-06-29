@@ -397,7 +397,7 @@ class MetaTokenizer(object):
 
     _sre = re.compile('|'.join((
         r'(?P<name>[a-zA-Z_][a-zA-Z0-9_]*)',
-        r'(?P<number>-?[0-9]+(?![a-zA-Z0-9_]|\.[0-9]))',
+        r'(?P<number>-?[0-9]+(?![a-zA-Z0-9_]|\.[^\.]))',
         r'(?P<float>-?[0-9]*\.(?!\.)[0-9]*(?![a-zA-Z0-9_]))',
         r'(?P<numname>-?[0-9]+[a-zA-Z_][a-zA-Z0-9_]*)',
         r'(?P<operator>(->)|(\.\.)|[{}();,=])',
