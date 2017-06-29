@@ -62,7 +62,7 @@ class TestGenerator():
             </p>
             <p name="yy" maxOccurs="1">
               <simpleType base="string">
-                <minLength value="2"/>
+                <minLength value="0"/>
                 <maxLength value="15"/>
               </simpleType>
             </p>
@@ -99,7 +99,10 @@ class TestGenerator():
         <p name="modified" fullName="Modified field" maxOccurs="100">
           <complexType>
             <p name="dn" fullName="The dn param" maxOccurs="1">
-              <simpleType base="string"/>
+              <simpleType base="string">
+                <minLength value="0"/>
+                <maxLength value="32767"/>
+              </simpleType>
             </p>
             <p name="param" fullName="The param" maxOccurs="1">
               <simpleType base="integer">
@@ -117,7 +120,10 @@ class TestGenerator():
         <p name="added" fullName="Added field" maxOccurs="100">
           <complexType>
             <p name="devDn" fullName="The dn param" maxOccurs="1">
-              <simpleType base="string"/>
+              <simpleType base="string">
+                <minLength value="0"/>
+                <maxLength value="32767"/>
+              </simpleType>
             </p>
             <p name="id" fullName="The id" maxOccurs="1">
               <simpleType base="integer">
@@ -138,7 +144,10 @@ class TestGenerator():
         <p name="modified" fullName="Modified field" maxOccurs="100">
           <complexType>
             <p name="dn" fullName="The dn param" maxOccurs="1">
-              <simpleType base="string"/>
+              <simpleType base="string">
+                <minLength value="0"/>
+                <maxLength value="32767"/>
+              </simpleType>
             </p>
             <p name="param" fullName="The param" maxOccurs="1">
               <simpleType base="integer">
@@ -152,7 +161,10 @@ class TestGenerator():
         <p name="removed" fullName="Removed field" maxOccurs="100">
           <complexType>
             <p name="dn" fullName="The dn param" maxOccurs="1">
-              <simpleType base="string"/>
+              <simpleType base="string">
+                <minLength value="0"/>
+                <maxLength value="32767"/>
+              </simpleType>
             </p>
           </complexType>
         </p>
@@ -163,7 +175,10 @@ class TestGenerator():
         <p name="modified" fullName="Modified field" maxOccurs="10">
           <complexType>
             <p name="dn" fullName="The dn param" maxOccurs="1">
-              <simpleType base="string"/>
+              <simpleType base="string">
+                <minLength value="0"/>
+                <maxLength value="32767"/>
+              </simpleType>
             </p>
             <p name="config" fullName="The config" maxOccurs="1">
               <creation priority="optional"/>
@@ -190,7 +205,10 @@ class TestGenerator():
                 <p name="gammaGimmickConfig" fullName="The gamma gimmick config" maxOccurs="9999">
                   <complexType>
                     <p name="dn" fullName="The dn param" maxOccurs="1">
-                      <simpleType base="string"/>
+                      <simpleType base="string">
+                        <minLength value="0"/>
+                        <maxLength value="32767"/>
+                      </simpleType>
                     </p>
                     <p name="rate" fullName="The rate param" maxOccurs="1">
                       <simpleType base="integer"/>

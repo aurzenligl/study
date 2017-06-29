@@ -257,7 +257,7 @@ class String(Scalar):
 
     def __str__(self):
         out = 'string'
-        if self.minlen:
+        if self.minlen is not None:
             out += '(%s..%s)' % (self.minlen, self.maxlen)
         return out
 
@@ -1188,7 +1188,7 @@ class XmlGenerator(object):
                     relem.set('step', type_.stepstr)
         elif isinstance(type_, String):
             selem = ET.SubElement(parent, 'simpleType', base='string')
-            if type_.minlen:
+            if type_.minlen is not None:
                 ET.SubElement(selem, 'minLength', value=str(type_.minlen))
                 ET.SubElement(selem, 'maxLength', value=str(type_.maxlen))
         else:

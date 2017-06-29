@@ -46,7 +46,7 @@
             </p>
             <p name="yy" maxOccurs="1">
               <simpleType base="string">
-                <minLength value="2"/>
+                <minLength value="0"/>
                 <maxLength value="15"/>
               </simpleType>
             </p>

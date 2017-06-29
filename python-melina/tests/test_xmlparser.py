@@ -74,7 +74,7 @@ mo MACHINE_L: SENSOR WHEEL ARM
         repeated struct Numbers
             required int x
             required string y
-            required string(2..15) yy
+            required string(0..15) yy
         required int a
         required int b
     required bool x
@@ -87,21 +87,21 @@ mo MACHINE_L: SENSOR WHEEL ARM
 mo CONFIGURE_MECHANISM_TASK: RESULT  // Configure mechanism task
     required struct alphaDelta  // Alpha configuration
         repeated(100) struct modified  // Modified field
-            required string dn  // The dn param
+            required string(0..32767) dn  // The dn param
             required int(0..9500) param  // The param
     required struct betaDelta  // Beta configuration
         repeated(100) struct added  // Added field
-            required string devDn  // The dn param
+            required string(0..32767) devDn  // The dn param
             required int(0..65535) id  // The id
             required int(0..9500) param  // The param
         repeated(100) struct modified  // Modified field
-            required string dn  // The dn param
+            required string(0..32767) dn  // The dn param
             required int(0..9500) param  // The param
         repeated(100) struct removed  // Removed field
-            required string dn  // The dn param
+            required string(0..32767) dn  // The dn param
     required struct gammaDelta  // Gamma configuration
         repeated(10) struct modified  // Modified field
-            required string dn  // The dn param
+            required string(0..32767) dn  // The dn param
             optional struct config  // The config
                 optional int(0, 9.00, 0.00000001) param  // The param
                 optional struct gammaConfig  // The gamma config
@@ -109,7 +109,7 @@ mo CONFIGURE_MECHANISM_TASK: RESULT  // Configure mechanism task
                         Disabled = 0
                         Enabled = 1
                 repeated(9999) struct gammaGimmickConfig  // The gamma gimmick config
-                    required string dn  // The dn param
+                    required string(0..32767) dn  // The dn param
                     required int rate  // The rate param
                     required int size  // The size param
 '''
