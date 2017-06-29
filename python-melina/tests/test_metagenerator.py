@@ -60,6 +60,8 @@ mo MACHINE_L -> SENSOR, WHEEL, ARM
         repeated struct Numbers
         {
             int x;
+            int(-12..42) xx;
+            int(-0.0001, 0.0002, 0.0000001) xxx;
             string y;
             string(2..15) yy;
         };

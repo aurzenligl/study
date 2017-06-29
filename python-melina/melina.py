@@ -302,18 +302,19 @@ class MetaTokenKind(enum.Enum):
     KEYW = 0      # mo, struct, enum, repeated, optional, int, float, string
     NAME = 1      # [_a-zA-Z][_a-zA-Z0-9]*
     NUMBER = 2    # [0-9]*
-    NUMNAME = 3   # [_a-zA-Z0-9]+
-    LCB = 4       # {
-    RCB = 5       # }
-    LP = 6        # (
-    RP = 7        # )
-    SEMI = 8      # ;
-    COMMA = 9     # ,
-    ASSIGN = 10   # =
-    ARROW = 11    # ->
-    TWODOT = 12   # ..
-    COMMENT = 13  # '//\n', '/**/' <ignored, stored>
-    END = 14
+    FLOAT = 3     # [0-9]*\.[0-9]*
+    NUMNAME = 4   # [_a-zA-Z0-9]+
+    LCB = 5       # {
+    RCB = 6       # }
+    LP = 7        # (
+    RP = 8        # )
+    SEMI = 9      # ;
+    COMMA = 10    # ,
+    ASSIGN = 11   # =
+    ARROW = 12    # ->
+    TWODOT = 13   # ..
+    COMMENT = 14  # '//\n', '/**/' <ignored, stored>
+    END = 15
 
 class MetaToken(object):
     __slots__ = ('kind', 'value', 'span', 'string')
@@ -396,8 +397,9 @@ class MetaTokenizer(object):
 
     _sre = re.compile('|'.join((
         r'(?P<name>[a-zA-Z_][a-zA-Z0-9_]*)',
-        r'(?P<number>[0-9]+(?![a-zA-Z0-9_]))',
-        r'(?P<numname>[0-9]+[a-zA-Z_][a-zA-Z0-9_]*)',
+        r'(?P<number>-?[0-9]+(?![a-zA-Z0-9_]|\.[0-9]))',
+        r'(?P<float>-?[0-9]*\.(?!\.)[0-9]*(?![a-zA-Z0-9_]))',
+        r'(?P<numname>-?[0-9]+[a-zA-Z_][a-zA-Z0-9_]*)',
         r'(?P<operator>(->)|(\.\.)|[{}();,=])',
         r'(?P<comment>(//.*\n|/\*(\*(?!/)|[^*])*\*/))',
         r'(?P<space>\s+)',
@@ -433,6 +435,8 @@ class MetaTokenizer(object):
                     return MetaToken(MetaTokenKind.NUMNAME, string, span=span)
                 elif group == 'number':
                     return MetaToken(MetaTokenKind.NUMBER, int(string), span=span, string=string)
+                elif group == 'float':
+                    return MetaToken(MetaTokenKind.FLOAT, decimal.Decimal(string), span=span, string=string)
                 elif group == 'operator':
                     return MetaToken(self._operators[string], span=span)
                 elif group == 'comment':
@@ -735,8 +739,35 @@ class MetaParser(object):
             type_ = Bool()
             self.get()
         elif self.cur.pair == (MetaTokenKind.KEYW, 'int'):
-            type_ = Int()
-            self.get()
+            minval, maxval, step = None, None, None
+            if self.get().kind == MetaTokenKind.LP:
+                if self.get().kind not in (MetaTokenKind.NUMBER, MetaTokenKind.FLOAT):
+                    raise MetaParserError('expected minimum value', self.filename, self.cur.span)
+                minvaltok = self.cur
+                minval = self.cur.value
+
+                if self.get().kind not in (MetaTokenKind.TWODOT, MetaTokenKind.COMMA):
+                    raise MetaParserError('expected double dot or comma', self.filename, self.cur.span)
+                if self.cur.kind == MetaTokenKind.TWODOT:
+                    if minvaltok.kind != MetaTokenKind.NUMBER:
+                        raise MetaParserError('expected integer minimum value', self.filename, minvaltok)
+                    if self.get().kind != MetaTokenKind.NUMBER:
+                        raise MetaParserError('expected integer maximum value', self.filename, self.cur.span)
+                    maxval = self.cur.value
+                else:
+                    if self.get().kind not in (MetaTokenKind.NUMBER, MetaTokenKind.FLOAT):
+                        raise MetaParserError('expected maximum value', self.filename, self.cur.span)
+                    maxval = self.cur.value
+                    if self.get().kind != MetaTokenKind.COMMA:
+                        raise MetaParserError('expected comma', self.filename, self.cur.span)
+                    if self.get().kind not in (MetaTokenKind.NUMBER, MetaTokenKind.FLOAT):
+                        raise MetaParserError('expected step', self.filename, self.cur.span)
+                    step = self.cur.value
+
+                if self.get().kind != MetaTokenKind.RP:
+                    raise MetaParserError('expected closing paren after int specification', self.filename, self.cur.span)
+                self.get()
+            type_ = Int(minval, maxval, step)
         elif self.cur.pair == (MetaTokenKind.KEYW, 'string'):
             minlen, maxlen = None, None
             if self.get().kind == MetaTokenKind.LP:
@@ -749,7 +780,7 @@ class MetaParser(object):
                     raise MetaParserError('expected maximum string length', self.filename, self.cur.span)
                 maxlen = self.cur.value
                 if self.get().kind != MetaTokenKind.RP:
-                    raise MetaParserError('expected closing paren after maximum string length', self.filename, self.cur.span)
+                    raise MetaParserError('expected closing paren after string specification', self.filename, self.cur.span)
                 self.get()
             type_ = String(minlen, maxlen)
         else:
