@@ -95,7 +95,7 @@
                   <creation priority="optional"/>
                   <simpleType base="integer">
                     <editing>
-                      <range minIncl="0" maxIncl="9500"/>
+                      <range minIncl="0" maxIncl="9.00" step="0.00000001"/>
                     </editing>
                   </simpleType>
                 </p>

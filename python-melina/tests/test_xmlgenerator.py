@@ -102,7 +102,11 @@ class TestGenerator():
               <simpleType base="string"/>
             </p>
             <p name="param" fullName="The param" maxOccurs="1">
-              <simpleType base="integer"/>
+              <simpleType base="integer">
+                <editing>
+                  <range minIncl="0" maxIncl="9500"/>
+                </editing>
+              </simpleType>
             </p>
           </complexType>
         </p>
@@ -116,10 +120,18 @@ class TestGenerator():
               <simpleType base="string"/>
             </p>
             <p name="id" fullName="The id" maxOccurs="1">
-              <simpleType base="integer"/>
+              <simpleType base="integer">
+                <editing>
+                  <range minIncl="0" maxIncl="65535"/>
+                </editing>
+              </simpleType>
             </p>
             <p name="param" fullName="The param" maxOccurs="1">
-              <simpleType base="integer"/>
+              <simpleType base="integer">
+                <editing>
+                  <range minIncl="0" maxIncl="9500"/>
+                </editing>
+              </simpleType>
             </p>
           </complexType>
         </p>
@@ -129,7 +141,11 @@ class TestGenerator():
               <simpleType base="string"/>
             </p>
             <p name="param" fullName="The param" maxOccurs="1">
-              <simpleType base="integer"/>
+              <simpleType base="integer">
+                <editing>
+                  <range minIncl="0" maxIncl="9500"/>
+                </editing>
+              </simpleType>
             </p>
           </complexType>
         </p>
@@ -154,7 +170,11 @@ class TestGenerator():
               <complexType>
                 <p name="param" fullName="The param" maxOccurs="1">
                   <creation priority="optional"/>
-                  <simpleType base="integer"/>
+                  <simpleType base="integer">
+                    <editing>
+                      <range minIncl="0" maxIncl="9.00" step="0.00000001"/>
+                    </editing>
+                  </simpleType>
                 </p>
                 <p name="gammaConfig" fullName="The gamma config" maxOccurs="1">
                   <creation priority="optional"/>

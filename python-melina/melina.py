@@ -8,6 +8,7 @@ import enum
 import re
 import io
 import lxml.etree as ET
+import decimal
 
 '''
 Mo
@@ -189,7 +190,51 @@ class Bool(Scalar):
     pass
 
 class Int(Scalar):
-    pass
+
+    @staticmethod
+    def dectostr(dec):
+        decstr = str(dec)
+        if 'E' in decstr:
+            exp = int(str(dec).split('E')[1])
+            if exp < 0:
+                return '%%.%sf' % abs(exp) % dec
+            else:
+                return '%f' % dec
+        else:
+            return decstr
+
+    def __init__(self, minval=None, maxval=None, step=None):
+        '''TODO remove None-s'''
+        self.minval = _sanitize(minval, (type(None), decimal.Decimal))
+        self.maxval = _sanitize(maxval, (type(None), decimal.Decimal))
+        self.step = _sanitize(step, (type(None), decimal.Decimal))
+
+        if minval is not None or maxval is not None or step is not None:
+            assert minval is not None
+            assert maxval is not None
+            assert minval <= maxval
+        if step is not None:
+            assert step
+
+    @property
+    def minvalstr(self):
+        return self.dectostr(self.minval)
+
+    @property
+    def maxvalstr(self):
+        return self.dectostr(self.maxval)
+
+    @property
+    def stepstr(self):
+        return self.dectostr(self.step)
+
+    def __str__(self):
+        if self.step is not None:
+            return 'int(%s, %s, %s)' % (self.minvalstr, self.maxvalstr, self.stepstr)
+        elif self.minval is not None:
+            return 'int(%s..%s)' % (self.minvalstr, self.maxvalstr)
+        else:
+            return 'int'
 
 class String(Scalar):
     def __init__(self, minlen, maxlen):
@@ -798,10 +843,10 @@ def _nonnegative_int(text):
     if x is not None and x >= 0:
         return x
 
-def _float(text):
+def _decimal(text):
     try:
-        return float(text)
-    except (ValueError, TypeError):
+        return decimal.Decimal(text)
+    except decimal.InvalidOperation:
         return
 
 class XmlConst():
@@ -867,6 +912,14 @@ class XmlParser(object):
         if not value:
             self.error('expected "%s" attribute in "%s" tag' % (name, elem.tag), elem)
         return value
+
+    def mergestep(self, minval, maxval, step, divisor):
+        if minval is None or maxval is None:
+            return
+        if step is not None:
+            return step
+        if divisor is not None:
+            return 1 / decimal.Decimal(divisor)
 
     def mo(self, mo):
         '''TODO [langfeature] add fullName comment to mo'''
@@ -958,31 +1011,49 @@ class XmlParser(object):
 
         if base == 'boolean':
             return Bool()
+
         elif base in ('integer', 'decimal'):
+            minval, maxval, stepval = None, None, None
             editing = simple.find('editing')
             if editing is not None:
                 '''TODO [langfeature] add integer range/step'''
                 '''TODO [langfeature] is 'integer' and 'decimal' the same?'''
                 '''TODO [langfeature] add how does step and divisor differ?'''
                 '''TODO [langfeature] does internalValue always follow divisor/step?'''
+                step = None
                 range = editing.find('range')
                 if range is not None:
-                    min_val = _float(self.ensured_getattr(range, 'minIncl'))
-                    if min_val is None:
+                    minval = _decimal(self.ensured_getattr(range, 'minIncl'))
+                    if minval is None:
                         self.error('expected float in "minIncl"', range)
-                    max_val = _float(self.ensured_getattr(range, 'maxIncl'))
-                    if max_val is None:
+                    maxval = _decimal(self.ensured_getattr(range, 'maxIncl'))
+                    if maxval is None:
                         self.error('expected float in "maxIncl"', range)
-
+                    if minval is not None and maxval is None:
+                        self.error('expected "maxIncl"', range)
+                    if maxval is not None and minval is None:
+                        self.error('expected "minIncl"', range)
+                    if minval is not None and not minval <= maxval:
+                        self.error('expected "minIncl" less than "maxIncl"', range)
+                    step = range.get('step')
+                    if step is not None:
+                        step = _decimal(step)
+                        if step is None:
+                            self.error('expected float in "step"', range)
+                        if step == 0:
+                            self.error('expected nonzero float in "step"', range)
+                divisor = editing.get('divisor')
+                if divisor is not None:
+                    divisor = _positive_int(divisor)
+                    if divisor is None:
+                        self.error('expected positive integer in "divisor"', range)
+                stepval = self.mergestep(minval, maxval, step, divisor)
                 units = editing.get('units')
                 '''TODO [langfeature] add integer units'''
-
                 default = editing.find('default')
                 '''TODO [langfeature] add default integer value'''
+            return Int(minval, maxval, stepval)
 
-                return Int()
-            else:
-                return Int()
         elif base == 'string':
             minlen, maxlen = None, None
             min_ = simple.find('minLength')
@@ -995,6 +1066,7 @@ class XmlParser(object):
                 if maxlen is None:
                     self.error('expected non-negative integer in "value" attribute', max_)
             return String(minlen, maxlen)
+
         else:
             self.error('expected "boolean", "integer" or "string" in "base" attribute', simple)
 
@@ -1063,7 +1135,14 @@ class XmlGenerator(object):
         if isinstance(type_, Bool):
             ET.SubElement(parent, 'simpleType', base='boolean')
         elif isinstance(type_, Int):
-            ET.SubElement(parent, 'simpleType', base='integer')
+            selem = ET.SubElement(parent, 'simpleType', base='integer')
+            if type_.minval is not None:
+                eelem = ET.SubElement(selem, 'editing')
+                relem = ET.SubElement(eelem, 'range')
+                relem.set('minIncl', type_.minvalstr)
+                relem.set('maxIncl', type_.maxvalstr)
+                if type_.step is not None:
+                    relem.set('step', type_.stepstr)
         elif isinstance(type_, String):
             selem = ET.SubElement(parent, 'simpleType', base='string')
             if type_.minlen:

@@ -88,22 +88,22 @@ mo CONFIGURE_MECHANISM_TASK: RESULT  // Configure mechanism task
     required struct alphaDelta  // Alpha configuration
         repeated(100) struct modified  // Modified field
             required string dn  // The dn param
-            required int param  // The param
+            required int(0..9500) param  // The param
     required struct betaDelta  // Beta configuration
         repeated(100) struct added  // Added field
             required string devDn  // The dn param
-            required int id  // The id
-            required int param  // The param
+            required int(0..65535) id  // The id
+            required int(0..9500) param  // The param
         repeated(100) struct modified  // Modified field
             required string dn  // The dn param
-            required int param  // The param
+            required int(0..9500) param  // The param
         repeated(100) struct removed  // Removed field
             required string dn  // The dn param
     required struct gammaDelta  // Gamma configuration
         repeated(10) struct modified  // Modified field
             required string dn  // The dn param
             optional struct config  // The config
-                optional int param  // The param
+                optional int(0, 9.00, 0.00000001) param  // The param
                 optional struct gammaConfig  // The gamma config
                     required enum attitude  // The attitude
                         Disabled = 0
