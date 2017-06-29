@@ -635,6 +635,8 @@ class MetaParser(object):
                 if self.get().kind != MetaTokenKind.NUMBER:
                     raise MetaParserError('expected max count in parens', self.filename, self.cur.span)
                 max_count = self.cur.value
+                if max_count <= 1:
+                    raise MetaParserError('expected max count larger than 1', self.filename, self.cur.span)
                 prev = self.cur
                 if self.get().kind != MetaTokenKind.RP:
                     raise MetaParserError('expected closing paren after max count', self.filename, prev.span)
