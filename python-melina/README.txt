@@ -19,6 +19,9 @@ tu -> xml: [spec/parser/generator] solve langfeature todos
 [mo flags]
 hidden="false" create="true" update="true" delete="true"
 
+[header]
+/// pdmeta: 2.2, domain: asf, product: okas, release: aoka, version: 1022.3, revision: $Revision$
+
 [reciprocity tests]
 check if all meta/xml inputs parse/generate the same way to/from meta/xml
 
