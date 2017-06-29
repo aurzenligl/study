@@ -205,16 +205,22 @@ class Int(Scalar):
 
     def __init__(self, minval=None, maxval=None, step=None):
         '''TODO remove None-s'''
-        self.minval = _sanitize(minval, (type(None), decimal.Decimal))
-        self.maxval = _sanitize(maxval, (type(None), decimal.Decimal))
+        self.minval = _sanitize(minval, (type(None), int, long, decimal.Decimal))
+        self.maxval = _sanitize(maxval, (type(None), int, long, decimal.Decimal))
         self.step = _sanitize(step, (type(None), decimal.Decimal))
 
-        if minval is not None or maxval is not None or step is not None:
-            assert minval is not None
-            assert maxval is not None
-            assert minval <= maxval
-        if step is not None:
-            assert step
+        try:
+            if minval is not None or maxval is not None:
+                if step is None:
+                    assert isinstance(minval, (int, long))
+                    assert isinstance(maxval, (int, long))
+                else:
+                    assert isinstance(minval, decimal.Decimal)
+                    assert isinstance(maxval, decimal.Decimal)
+                    assert step != 0
+                assert minval <= maxval
+        except:
+            import pdb;pdb.set_trace()
 
     @property
     def minvalstr(self):
@@ -1021,20 +1027,13 @@ class XmlParser(object):
                 '''TODO [langfeature] add how does step and divisor differ?'''
                 '''TODO [langfeature] does internalValue always follow divisor/step?'''
                 step = None
+                divisor = editing.get('divisor')
+                if divisor is not None:
+                    divisor = _positive_int(divisor)
+                    if divisor is None:
+                        self.error('expected positive integer in "divisor"', range)
                 range = editing.find('range')
                 if range is not None:
-                    minval = _decimal(self.ensured_getattr(range, 'minIncl'))
-                    if minval is None:
-                        self.error('expected float in "minIncl"', range)
-                    maxval = _decimal(self.ensured_getattr(range, 'maxIncl'))
-                    if maxval is None:
-                        self.error('expected float in "maxIncl"', range)
-                    if minval is not None and maxval is None:
-                        self.error('expected "maxIncl"', range)
-                    if maxval is not None and minval is None:
-                        self.error('expected "minIncl"', range)
-                    if minval is not None and not minval <= maxval:
-                        self.error('expected "minIncl" less than "maxIncl"', range)
                     step = range.get('step')
                     if step is not None:
                         step = _decimal(step)
@@ -1042,11 +1041,24 @@ class XmlParser(object):
                             self.error('expected float in "step"', range)
                         if step == 0:
                             self.error('expected nonzero float in "step"', range)
-                divisor = editing.get('divisor')
-                if divisor is not None:
-                    divisor = _positive_int(divisor)
-                    if divisor is None:
-                        self.error('expected positive integer in "divisor"', range)
+                    if divisor is None and step is None:
+                        convert = _int
+                        expectation = 'int'
+                    else:
+                        convert = _decimal
+                        expectation = 'float'
+                    minval = convert(self.ensured_getattr(range, 'minIncl'))
+                    if minval is None:
+                        self.error('expected %s in "minIncl"' % expectation, range)
+                    maxval = convert(self.ensured_getattr(range, 'maxIncl'))
+                    if maxval is None:
+                        self.error('expected %s in "maxIncl"' % expectation, range)
+                    if minval is not None and maxval is None:
+                        self.error('expected "maxIncl"', range)
+                    if maxval is not None and minval is None:
+                        self.error('expected "minIncl"', range)
+                    if minval is not None and not minval <= maxval:
+                        self.error('expected "minIncl" less than "maxIncl"', range)
                 stepval = self.mergestep(minval, maxval, step, divisor)
                 units = editing.get('units')
                 '''TODO [langfeature] add integer units'''
