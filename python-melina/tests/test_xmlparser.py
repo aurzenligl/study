@@ -87,11 +87,11 @@ mo MACHINE_L: SENSOR WHEEL ARM
 mo CONFIGURE_MECHANISM_TASK: RESULT  // Configure mechanism task
     required struct alphaDelta  // Alpha configuration
         repeated(100) struct modified  // Modified field
-            required string(0..32767) dn  // The dn param
+            required string(0..32767) dn [default = ""]  // The dn param
             required int(0..9500) param [units = "octets"]  // The param
     required struct betaDelta  // Beta configuration
         repeated(100) struct added  // Added field
-            required string(0..32767) devDn  // The dn param
+            required string(0..32767) devDn [default = "foo-bar"]  // The dn param
             required int(0..65535) id [units = ""]  // The id
             required int(0..9500) param  // The param
         repeated(100) struct modified  // Modified field

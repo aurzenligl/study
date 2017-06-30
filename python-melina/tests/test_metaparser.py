@@ -88,11 +88,11 @@ mo MACHINE_L: SENSOR WHEEL ARM  // This is an example managed object: The Machin
 mo CONFIGURE_MECHANISM_TASK: RESULT
     required struct alphaDelta
         repeated struct modified
-            required string dn
+            required string dn [default = ""]
             required int param
     required struct betaDelta
         repeated struct added
-            required string devDn
+            required string devDn [default = "foo-bar"]
             required int id
             required int param
         repeated struct modified

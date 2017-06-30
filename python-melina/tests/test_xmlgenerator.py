@@ -102,6 +102,7 @@ class TestGenerator():
               <simpleType base="string">
                 <minLength value="0"/>
                 <maxLength value="32767"/>
+                <default value=""/>
               </simpleType>
             </p>
             <p name="param" fullName="The param" maxOccurs="1">
@@ -123,6 +124,7 @@ class TestGenerator():
               <simpleType base="string">
                 <minLength value="0"/>
                 <maxLength value="32767"/>
+                <default value="foo-bar"/>
               </simpleType>
             </p>
             <p name="id" fullName="The id" maxOccurs="1">

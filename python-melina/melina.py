@@ -252,21 +252,27 @@ class Int(Scalar):
             return 'int'
 
 class String(Scalar):
-    def __init__(self, minlen, maxlen):
+    def __init__(self, minlen, maxlen, default = None):
         self.minlen = _sanitize(minlen, (type(None), int, long))
         self.maxlen = _sanitize(maxlen, (type(None), int, long))
+        self.default = _sanitize(default, (type(None), str))
 
         if minlen is not None or maxlen is not None:
             assert 0 <= minlen
             assert 0 <= maxlen
             assert minlen <= maxlen
+            if default is not None:
+                assert minlen <= len(default) <= maxlen
         else:
             assert minlen is None
             assert maxlen is None
 
     @property
     def options(self):
-        return ''
+        if self.default is not None:
+            return '[default = "%s"]' % self.default
+        else:
+            return ''
 
     def __str__(self):
         out = 'string'
@@ -817,7 +823,7 @@ class MetaParser(object):
                 self.get()
             type_type = String
             type_args = (minlen, maxlen)
-            type_possible_opts = {}
+            type_possible_opts = {'default': (MetaTokenKind.STRING, 'default value')}
         else:
             assert False, "o-oh, we shouldn't end up here"
 
@@ -1154,17 +1160,33 @@ class XmlParser(object):
             return Int(minval, maxval, stepval, units)
 
         elif base == 'string':
-            minlen, maxlen = None, None
-            min_ = simple.find('minLength')
-            max_ = simple.find('maxLength')
-            if min_ is not None and max_ is not None:
-                minlen = _nonnegative_int(self.ensured_getattr(min_, 'value'))
-                if minlen is None:
-                    self.error('expected non-negative integer in "value" attribute', min_)
-                maxlen = _nonnegative_int(self.ensured_getattr(max_, 'value'))
-                if maxlen is None:
-                    self.error('expected non-negative integer in "value" attribute', max_)
-            return String(minlen, maxlen)
+            def get_minmax(self, simple):
+                def get_value(self, tag):
+                    value = _nonnegative_int(self.ensured_getattr(tag, 'value'))
+                    if value is None:
+                        self.error('expected non-negative integer in "value" attribute', tag)
+                    return value
+
+                mintag = simple.find('minLength')
+                maxtag = simple.find('maxLength')
+                if maxtag is None:
+                    return (None, None)
+                min_ = (mintag is not None) and get_value(self, mintag) or 0
+                max_ = get_value(self, maxtag)
+                return (min_, max_)
+
+            def get_default(self, simple):
+                tag = simple.find('default')
+                if tag is None:
+                    return
+                default = tag.get('value')
+                if default is None:
+                    self.error('expected string in "value" attribute', tag)
+                return default
+
+            minlen, maxlen = get_minmax(self, simple)
+            default = get_default(self, simple)
+            return String(minlen, maxlen, default)
 
         else:
             self.error('expected "boolean", "integer" or "string" in "base" attribute', simple)
@@ -1250,6 +1272,8 @@ class XmlGenerator(object):
             if type_.minlen is not None:
                 ET.SubElement(selem, 'minLength', value=str(type_.minlen))
                 ET.SubElement(selem, 'maxLength', value=str(type_.maxlen))
+                if type_.default is not None:
+                    ET.SubElement(selem, 'default', value=type_.default)
         else:
             assert False, "o-oh, we shouldn't end up here"
 

@@ -85,7 +85,7 @@ mo CONFIGURE_MECHANISM_TASK -> RESULT
     {
         repeated struct modified
         {
-            string dn;
+            string dn [default = ""];
             int param;
         };
     };
@@ -94,7 +94,7 @@ mo CONFIGURE_MECHANISM_TASK -> RESULT
     {
         repeated struct added
         {
-            string devDn;
+            string devDn [default = "foo-bar"];
             int id;
             int param;
         };
