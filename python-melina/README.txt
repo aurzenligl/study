@@ -7,9 +7,6 @@ tu -> meta,
 xml -> tu,
 tu -> xml: [spec/parser/generator] solve langfeature todos
 
-[int units]
-<editing units="bananas">
-
 [default value]
 <default value="0"/>
 

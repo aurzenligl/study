@@ -88,11 +88,11 @@ mo CONFIGURE_MECHANISM_TASK: RESULT  // Configure mechanism task
     required struct alphaDelta  // Alpha configuration
         repeated(100) struct modified  // Modified field
             required string(0..32767) dn  // The dn param
-            required int(0..9500) param [units = octets]  // The param
+            required int(0..9500) param [units = "octets"]  // The param
     required struct betaDelta  // Beta configuration
         repeated(100) struct added  // Added field
             required string(0..32767) devDn  // The dn param
-            required int(0..65535) id  // The id
+            required int(0..65535) id [units = ""]  // The id
             required int(0..9500) param  // The param
         repeated(100) struct modified  // Modified field
             required string(0..32767) dn  // The dn param
@@ -110,6 +110,6 @@ mo CONFIGURE_MECHANISM_TASK: RESULT  // Configure mechanism task
                         Enabled = 1
                 repeated(9999) struct gammaGimmickConfig  // The gamma gimmick config
                     required string(0..32767) dn  // The dn param
-                    required int rate [units = octets]  // The rate param
+                    required int rate [units = "octets"]  // The rate param
                     required int size  // The size param
 '''

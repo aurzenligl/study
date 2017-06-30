@@ -66,8 +66,8 @@ mo MACHINE_L -> SENSOR, WHEEL, ARM
             string(2..15) yy;
         };
 
-        int a [units = kbps];
-        int b [units = petabytes];
+        int a [units = ""];
+        int b [units = "petabytes"];
     };
 
     repeated(42) bool x;  /// comment about something

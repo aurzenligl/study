@@ -238,8 +238,8 @@ class Int(Scalar):
 
     @property
     def options(self):
-        if self.units:
-            return '[units = %s]' % self.units
+        if self.units is not None:
+            return '[units = "%s"]' % self.units
         else:
             return ''
 
@@ -314,22 +314,23 @@ class MetaSpan(object):
 class MetaTokenKind(enum.Enum):
     KEYW = 0      # mo, struct, enum, repeated, optional, int, float, string
     NAME = 1      # [_a-zA-Z][_a-zA-Z0-9]*
-    NUMBER = 2    # [0-9]*
-    FLOAT = 3     # [0-9]*\.[0-9]*
-    NUMNAME = 4   # [_a-zA-Z0-9]+
-    LCB = 5       # {
-    RCB = 6       # }
-    LSB = 7       # [
-    RSB = 8       # ]
-    LP = 9        # (
-    RP = 10       # )
-    SEMI = 11     # ;
-    COMMA = 12    # ,
-    ASSIGN = 13   # =
-    ARROW = 14    # ->
-    TWODOT = 15   # ..
-    COMMENT = 16  # '//\n', '/**/' <ignored, stored>
-    END = 17
+    STRING = 2    # ".*"
+    NUMBER = 3    # [0-9]*
+    FLOAT = 4     # [0-9]*\.[0-9]*
+    NUMNAME = 5   # [_a-zA-Z0-9]+
+    LCB = 6       # {
+    RCB = 7       # }
+    LSB = 8       # [
+    RSB = 9       # ]
+    LP = 10       # (
+    RP = 11       # )
+    SEMI = 12     # ;
+    COMMA = 13    # ,
+    ASSIGN = 14   # =
+    ARROW = 15    # ->
+    TWODOT = 16   # ..
+    COMMENT = 17  # '//\n', '/**/' <ignored, stored>
+    END = 18
 
 class MetaToken(object):
     __slots__ = ('kind', 'value', 'span', 'string')
@@ -415,6 +416,7 @@ class MetaTokenizer(object):
 
     _sre = re.compile('|'.join((
         r'(?P<name>[a-zA-Z_][a-zA-Z0-9_]*)',
+        r'(?P<string>"[^"]*")',
         r'(?P<number>-?[0-9]+(?![a-zA-Z0-9_]|\.[^\.]))',
         r'(?P<float>-?[0-9]*\.(?!\.)[0-9]*(?![a-zA-Z0-9_]))',
         r'(?P<numname>-?[0-9]+[a-zA-Z_][a-zA-Z0-9_]*)',
@@ -451,6 +453,8 @@ class MetaTokenizer(object):
                         return MetaToken(MetaTokenKind.KEYW, string, span=span)
                     else:
                         return MetaToken(MetaTokenKind.NAME, string, span=span)
+                elif group == 'string':
+                    return MetaToken(MetaTokenKind.STRING, string[1:-1], span=span)
                 elif group == 'numname':
                     return MetaToken(MetaTokenKind.NUMNAME, string, span=span)
                 elif group == 'number':
@@ -793,7 +797,7 @@ class MetaParser(object):
                 self.get()
             type_type = Int
             type_args = (minval, maxval, step)
-            type_possible_opts = {'units': (MetaTokenKind.NAME, 'unit name')}
+            type_possible_opts = {'units': (MetaTokenKind.STRING, 'unit name')}
         elif self.cur.pair == (MetaTokenKind.KEYW, 'string'):
             minlen, maxlen = None, None
             if self.get().kind == MetaTokenKind.LP:

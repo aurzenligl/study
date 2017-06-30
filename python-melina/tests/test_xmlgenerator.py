@@ -127,7 +127,7 @@ class TestGenerator():
             </p>
             <p name="id" fullName="The id" maxOccurs="1">
               <simpleType base="integer">
-                <editing>
+                <editing units="">
                   <range minIncl="0" maxIncl="65535"/>
                 </editing>
               </simpleType>
