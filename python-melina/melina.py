@@ -483,12 +483,15 @@ class MetaTokenizer(object):
             return match.group(), match.lastgroup
 
 def _isupperdoc(tok):
-    pos = tok.span.start_linecol[1] - 1
-    leftwards = tok.span.start_line[:pos]
-    return not leftwards or leftwards.isspace()
+    newline = tok.span.input.rfind('\n', 0, tok.span.start)
+    linestart = (newline != -1) and (newline + 1) or 0
+    line = tok.span.input[linestart:tok.span.start]
+    return not line or line.isspace()
 
-def _isrightdoc(tok, symtok):
-    return tok.span.end_linecol[0] == symtok.span.end_linecol[0]
+def _isrightdoc(doctok, symtok):
+    newline = doctok.span.input.rfind('\n', 0, doctok.span.end)
+    linestart = (newline != -1) and (newline + 1) or 0
+    return linestart <= symtok.span.end
 
 def _docstring(tok):
     if tok.value[:3] == '/**':

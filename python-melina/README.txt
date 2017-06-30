@@ -1,9 +1,6 @@
 meta recursive-descent parser
 ----------------------------------------------------------------------
 
-[profiling]
-parsing 32k-LOC meta takes 20 seconds
-
 [default value]
 <default value="0"/>
 
