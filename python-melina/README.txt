@@ -1,11 +1,8 @@
 meta recursive-descent parser
 ----------------------------------------------------------------------
 
-tu,
-meta -> tu,
-tu -> meta,
-xml -> tu,
-tu -> xml: [spec/parser/generator] solve langfeature todos
+[profiling]
+parsing 32k-LOC meta takes 20 seconds
 
 [default value]
 <default value="0"/>
