@@ -196,18 +196,6 @@ class Bool(Scalar):
 
 class Int(Scalar):
 
-    @staticmethod
-    def dectostr(dec):
-        decstr = str(dec)
-        if 'E' in decstr:
-            exp = int(str(dec).split('E')[1])
-            if exp < 0:
-                return '%%.%sf' % abs(exp) % dec
-            else:
-                return '%f' % dec
-        else:
-            return decstr
-
     def __init__(self, minval, maxval, step, default = None, units = None):
         self.minval = _sanitize(minval, (type(None), int, long, decimal.Decimal))
         self.maxval = _sanitize(maxval, (type(None), int, long, decimal.Decimal))
@@ -228,6 +216,18 @@ class Int(Scalar):
         if default is not None:
             if step is None:
                 assert isinstance(default, (int, long))
+
+    @staticmethod
+    def dectostr(dec):
+        decstr = str(dec)
+        if 'E' in decstr:
+            exp = int(str(dec).split('E')[1])
+            if exp < 0:
+                return '%%.%sf' % abs(exp) % dec
+            else:
+                return '%f' % dec
+        else:
+            return decstr
 
     @property
     def minvalstr(self):
