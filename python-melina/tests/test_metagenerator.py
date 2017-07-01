@@ -37,7 +37,7 @@ mo MACHINE_L -> SENSOR, WHEEL, ARM
         /**
          * Enum can be documented too.
          */
-        enum AvailStatus
+        enum AvailStatus [default = 1]
         {
             Online = 0,
             Offline = 1

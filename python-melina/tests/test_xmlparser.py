@@ -64,7 +64,7 @@ mo MACHINE_L: SENSOR WHEEL ARM
         required enum AdminStatus
             Locked = 0
             Unlocked = 1
-        required enum AvailStatus
+        required enum AvailStatus [default = 1]
             On_line = 0
             Offline = 1
     optional struct Core
@@ -108,7 +108,7 @@ mo CONFIGURE_MECHANISM_TASK: RESULT  // Configure mechanism task
             optional struct config  // The config
                 optional int(0, 9.00, 0.00000001) param  // The param
                 optional struct gammaConfig  // The gamma config
-                    required enum attitude  // The attitude
+                    required enum attitude [default = 0]  // The attitude
                         Disabled = 0
                         Enabled = 1
                 repeated(9999) struct gammaGimmickConfig  // The gamma gimmick config

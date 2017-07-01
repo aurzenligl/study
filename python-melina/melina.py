@@ -157,16 +157,20 @@ class Struct(object):
         )
 
 class Enum(object):
-    def __init__(self, name, enumerators):
+    def __init__(self, name, enumerators, default = None):
         self.name = _sanitize_identifier(name)
         self.enumerators = _sanitize_list(enumerators, Enumerator)
+        self.default = _sanitize(default, (type(None), int, long))
+
+        if default is not None:
+            assert default in ((x.value for x in enumerators))
 
     def __repr__(self):
         return '<Enum %s>' % self.name
 
     def __str__(self):
         return (
-            'enum %s\n' % self.name +
+            'enum %s%s\n' % (self.name, ' [default = %s]' % self.default if self.default is not None else '') +
             _indent(''.join((str(enumer) for enumer in self.enumerators)), 4)
         )
 
@@ -761,7 +765,23 @@ class MetaParser(object):
 
         name = self.cur.value
 
-        if self.get().kind != MetaTokenKind.LCB:
+        default = None
+        if self.get().kind == MetaTokenKind.LSB:
+            if self.get().kind != MetaTokenKind.NAME:
+                raise MetaParserError('expected option name', self.filename, self.cur.span)
+            if self.cur.value != 'default':
+                raise MetaParserError('unexpected option name', self.filename, self.cur.span)
+            if self.get().kind != MetaTokenKind.ASSIGN:
+                raise MetaParserError('expected assignment operator', self.filename, self.cur.span)
+            if self.get().kind != MetaTokenKind.NUMBER:
+                raise MetaParserError('expected integer default value', self.filename, self.cur.span)
+            default = self.cur.value
+            deftok = self.cur
+            if self.get().kind != MetaTokenKind.RSB:
+                raise MetaParserError('expected closing square bracket after options', self.filename, self.cur.span)
+            self.get()
+
+        if self.cur.kind != MetaTokenKind.LCB:
             raise MetaParserError('expected enum definition', self.filename, self.cur.span)
 
         enumerators = self.enumerator_list()
@@ -773,7 +793,11 @@ class MetaParser(object):
         if self.get().kind != MetaTokenKind.SEMI:
             raise MetaParserError('expected semicolon after enum definition', self.filename, prev.span)
 
-        return Enum(name, enumerators)
+        if default is not None:
+            if default not in ((x.value for x in enumerators)):
+                raise MetaParserError('expected default value corresponding to enumerator', self.filename, deftok.span)
+
+        return Enum(name, enumerators, default)
 
     def enumerator_list(self):
         enumerators = []
@@ -961,7 +985,10 @@ class MetaGenerator(object):
         return out
 
     def enum(self, enum_):
-        out = 'enum %s\n{\n' % enum_.name
+        out = 'enum %s' % enum_.name
+        if enum_.default is not None:
+            out += ' [default = %s]' % enum_.default
+        out += '\n{\n'
         out += _indent(',\n'.join(('%s = %s' % (er.name, er.value) for er in enum_.enumerators)), 4)
         if enum_.enumerators:
             out += '\n'
@@ -1065,6 +1092,16 @@ class XmlParser(object):
             self.error('expected "%s" attribute in "%s" tag' % (name, elem.tag), elem)
         return value
 
+    '''TODO use this instead of ensured_getattr or local get'''
+    def get(self, tag, attr, sanitizer = None, typename = 'string'):
+        value = self.ensured_getattr(tag, attr)
+        if sanitizer:
+            value = sanitizer(value)
+        if value is None:
+            self.error('expected %s in "%s" attribute' % (typename, attr), tag)
+        return value
+
+    '''TODO move to scalar'''
     def mergestep(self, minval, maxval, step, divisor):
         if minval is None or maxval is None:
             return
@@ -1142,8 +1179,15 @@ class XmlParser(object):
 
     def enum(self, simple, name):
         enumerators = self.enumerator_list(simple)
-        '''TODO [langfeature] add default enum value'''
-        return Enum(name, enumerators)
+
+        default = None
+        deftag = simple.find('default')
+        if deftag is not None:
+            default = self.get(deftag, 'value', _int, 'int')
+            if default not in ((x.value for x in enumerators)):
+                self.error('expected default value corresponding to enumerator', deftag)
+
+        return Enum(name, enumerators, default)
 
     def enumerator_list(self, simple):
         enumerators = []
@@ -1157,8 +1201,6 @@ class XmlParser(object):
         return enumerators
 
     def scalar(self, simple):
-        '''TODO [langfeature] add decimal scalar base (fixed-point values)'''
-
         def get(self, tag, attr, sanitizer = None, typename = 'string'):
             value = self.ensured_getattr(tag, attr)
             if sanitizer:
@@ -1320,6 +1362,8 @@ class XmlGenerator(object):
         for enumer in enum_.enumerators:
             eelem = ET.SubElement(selem, 'enumeration', value=str(enumer.value))
             eelem.set('text', enumer.name)
+        if enum_.default is not None:
+            ET.SubElement(selem, 'default', value=str(enum_.default))
 
     def scalar(self, parent, type_):
         if isinstance(type_, Bool):

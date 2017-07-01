@@ -39,6 +39,7 @@ class TestGenerator():
           <simpleType base="integer">
             <enumeration value="0" text="On_line"/>
             <enumeration value="1" text="Offline"/>
+            <default value="1"/>
           </simpleType>
         </p>
       </complexType>
@@ -223,6 +224,7 @@ class TestGenerator():
                       <simpleType base="integer">
                         <enumeration value="0" text="Disabled"/>
                         <enumeration value="1" text="Enabled"/>
+                        <default value="0"/>
                       </simpleType>
                     </p>
                   </complexType>

@@ -7,7 +7,7 @@ mo MACHINE_L -> SENSOR, WHEEL, ARM
     {
         repeated enum FaultStatus { Empty, Disconnected, RoofFlewOff };
         enum AdminStatus { Locked, Unlocked };
-        enum AvailStatus { Online, Offline };  /// Enum can be documented too.
+        enum AvailStatus [default = 1] { Online, Offline };  /// Enum can be documented too.
     };
 
     optional struct Core
