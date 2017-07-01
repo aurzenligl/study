@@ -1039,7 +1039,7 @@ class XmlParser(object):
 
     def ensured_getattr(self, elem, name):
         value = elem.get(name)
-        if not value:
+        if value is None:
             self.error('expected "%s" attribute in "%s" tag' % (name, elem.tag), elem)
         return value
 
