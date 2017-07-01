@@ -623,11 +623,11 @@ class MetaParser(object):
         return self.ts.cur
 
     def get(self):
-        self.cached_comment = None
+        self.cached_comment = []
         while True:
             tok = self.ts.get()
             if tok.kind == MetaTokenKind.COMMENT:
-                self.cached_comment = tok
+                self.cached_comment.append(tok)
                 continue
             return tok
 
@@ -642,8 +642,8 @@ class MetaParser(object):
 
     def mo(self):
         doc = None
-        if self.cached_comment and _isupperdoc(self.cached_comment):
-            doc = _docstring(self.cached_comment)
+        if self.cached_comment and _isupperdoc(self.cached_comment[-1]):
+            doc = _docstring(self.cached_comment[-1])
 
         if self.cur.pair != (MetaTokenKind.KEYW, 'mo'):
             raise MetaParserError('expected keyword "mo"', self.filename, self.cur.span)
@@ -691,8 +691,8 @@ class MetaParser(object):
     def field(self):
         # doc
         doc = None
-        if self.cached_comment and _isupperdoc(self.cached_comment):
-            doc = _docstring(self.cached_comment)
+        if self.cached_comment and _isupperdoc(self.cached_comment[-1]):
+            doc = _docstring(self.cached_comment[-1])
 
         # cardinality
         cardinality = Cardinality(CardinalityKind.REQUIRED)
@@ -728,8 +728,8 @@ class MetaParser(object):
         # doc
         prev = self.cur
         self.get()
-        if self.cached_comment and _isrightdoc(self.cached_comment, prev):
-            doc = _mergedoc(doc, _docstring(self.cached_comment))
+        if self.cached_comment and _isrightdoc(self.cached_comment[0], prev):
+            doc = _mergedoc(doc, _docstring(self.cached_comment[0]))
 
         return Field(name, type_, cardinality, doc)
 
