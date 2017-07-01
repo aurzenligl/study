@@ -16,7 +16,7 @@ class TestGenerator():
         assert xml == '''\
 <?xml version="1.0" encoding="utf-8"?>
 <pdmeta>
-  <managedObject class="MACHINE_L" fullName="Mo documentation">
+  <managedObject class="MACHINE_L" fullName="Mo documentation" hidden="false" create="true" update="false" delete="true">
     <childManagedObject class="SENSOR" maxOccurs="1"/>
     <childManagedObject class="WHEEL" maxOccurs="12"/>
     <childManagedObject class="ARM"/>
@@ -116,7 +116,7 @@ class TestGenerator():
         assert xml == '''\
 <?xml version="1.0" encoding="utf-8"?>
 <pdmeta>
-  <managedObject class="CONFIGURE_MECHANISM_TASK" fullName="Configure mechanism task">
+  <managedObject class="CONFIGURE_MECHANISM_TASK" fullName="Configure mechanism task" hidden="false" create="true" update="true" delete="true">
     <childManagedObject class="RESULT" maxOccurs="1"/>
     <p name="alphaDelta" fullName="Alpha configuration" maxOccurs="1">
       <complexType>

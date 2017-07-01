@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <pdmeta>
-  <managedObject class="MACHINE_L" fullName="Mo documentation">
+  <managedObject class="MACHINE_L" fullName="Mo documentation" hidden="false" create="true" update="false" delete="true">
     <childManagedObject class="SENSOR" maxOccurs="1"/>
     <childManagedObject class="WHEEL" maxOccurs="12"/>
     <childManagedObject class="ARM"/>

@@ -55,7 +55,7 @@ class TestParser():
     def test_example(self):
         tu = parse('example.xml')
         assert str(tu) == '''\
-mo MACHINE_L: SENSOR(1) WHEEL(12) ARM  // Mo documentation
+mo(cd) MACHINE_L: SENSOR(1) WHEEL(12) ARM  // Mo documentation
     required struct StateBox
         repeated enum FaultStatus
             Empty = 0

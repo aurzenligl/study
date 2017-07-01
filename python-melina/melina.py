@@ -33,11 +33,18 @@ String
 def _indent(text, value):
     return '\n'.join(x and (' ' * value + x) or '' for x in text.split('\n'))
 
-def _sanitize(obj, classes):
+'''TODO use everywhere instead of type(None)'''
+def _sanitize(obj, classes, maybe = False):
+    if maybe:
+        if obj == None:
+            return
     assert isinstance(obj, classes), 'Object %s is not an instance of expected classes: %s' % (repr(obj), classes)
     return obj
 
-def _sanitize_list(lst, classes):
+def _sanitize_list(lst, classes, maybe = False):
+    if maybe:
+        if lst == None:
+            return
     for obj in lst:
         assert isinstance(obj, classes), 'List element is an instance of unexpected class'
     return lst
@@ -69,18 +76,27 @@ class TranslationUnit(object):
         return ''.join((str(mo) for mo in self.mos))
 
 class Mo(object):
-    def __init__(self, name, fields, children, doc):
+    default_flags = [False, True, True, True]
+
+    def __init__(self, name, fields, children, doc, flags):
         self.name = _sanitize_identifier(name)
         self.fields = _sanitize_list(fields, Field)
         self.children = _sanitize_list(children, MoChild)
         self.doc = _sanitize(doc, (type(None), str))
+        self.flags = _sanitize_list(flags, bool, maybe=True)
+
+        if flags is not None:
+            assert len(flags) == 4
 
     def __repr__(self):
         return '<Mo %s>' % self.name
 
     def __str__(self):
-        text = (
-            'mo %s' % self.name + ':' + ''.join((' ' + str(x) for x in self.children)) + '\n' +
+        text = 'mo'
+        if self.flags:
+            text += '(%s)' % ''.join((char for flag, char in zip(self.flags, 'hcud') if flag))
+        text += (
+            ' %s' % self.name + ':' + ''.join((' ' + str(x) for x in self.children)) + '\n' +
             _indent(''.join((str(field) for field in self.fields)), 4)
         )
         if self.doc:
@@ -655,7 +671,16 @@ class MetaParser(object):
         if self.cur.pair != (MetaTokenKind.KEYW, 'mo'):
             raise MetaParserError('expected keyword "mo"', self.filename, self.cur.span)
 
-        if self.get().kind != MetaTokenKind.NAME:
+        flags = None
+        if self.get().kind == MetaTokenKind.LP:
+            if self.get().kind != MetaTokenKind.NAME or not all((x in 'hcud' for x in self.cur.value)):
+                raise MetaParserError('expected hidden("h"), create("c"), update("u"), delete("d") flags', self.filename, self.cur.span)
+            flags = [char in self.cur.value for char in 'hcud']
+            if self.get().kind != MetaTokenKind.RP:
+                raise MetaParserError('expected closing paren after flags specification', self.filename, self.cur.span)
+            self.get()
+
+        if self.cur.kind != MetaTokenKind.NAME:
             raise MetaParserError('expected mo name', self.filename, self.cur.span)
 
         name = self.cur.value
@@ -678,7 +703,7 @@ class MetaParser(object):
         if self.get().kind != MetaTokenKind.SEMI:
             raise MetaParserError('expected semicolon after mo definition', self.filename, prev.span)
 
-        return Mo(name, fields, children, doc)
+        return Mo(name, fields, children, doc, flags)
 
     def mo_child_list(self):
         def child(self):
@@ -959,7 +984,10 @@ class MetaGenerator(object):
         out = ''
         if mo.doc:
             out += '/**\n * %s\n */\n' % mo.doc
-        out += 'mo %s' % mo.name
+        out += 'mo'
+        if mo.flags:
+            out += '(%s)' % ''.join((char for flag, char in zip(mo.flags, 'hcud') if flag))
+        out += ' %s' % mo.name
         if mo.children:
             out += ' -> ' + ', '.join((str(child) for child in mo.children))
         out += '\n{\n' + _indent(self.fields(mo.fields), 4) + '};\n'
@@ -1017,6 +1045,13 @@ class MetaGenerator(object):
         if opts:
             opts = ' ' + opts
         return '%s %s%s;' % (type_, name, opts)
+
+'''TODO: use instead of "true"/"false"'''
+def _bool(text):
+    if text == 'true':
+        return True
+    elif text == 'false':
+        return False
 
 def _int(text):
     try:
@@ -1128,9 +1163,19 @@ class XmlParser(object):
 
         name = self.get(mo, 'class')
         doc = mo.get('fullName')
+        flags = [
+            self.get_maybe(mo, 'hidden', _bool, 'hidden boolean flag'),
+            self.get_maybe(mo, 'create', _bool, 'hidden create flag'),
+            self.get_maybe(mo, 'update', _bool, 'hidden update flag'),
+            self.get_maybe(mo, 'delete', _bool, 'hidden delete flag'),
+        ]
+        if not all((fl is not None for fl in flags)):
+            flags = None
+        if flags == Mo.default_flags:
+            flags = None
         children = self.mo_child_list(mo)
         fields = [self.field(field) for field in mo.findall('p')]
-        return Mo(name, fields, children, doc)
+        return Mo(name, fields, children, doc, flags)
 
     def mo_child_list(self, mo):
         '''TODO [langfeature] add maxOccurs="1" to mo children'''
@@ -1324,6 +1369,11 @@ class XmlGenerator(object):
         moelem = ET.SubElement(parent, 'managedObject', {'class': mo.name})
         if mo.doc:
             moelem.set('fullName', mo.doc)
+        flags = Mo.default_flags if mo.flags is None else mo.flags
+        moelem.set('hidden', ('false', 'true')[flags[0]])
+        moelem.set('create', ('false', 'true')[flags[1]])
+        moelem.set('update', ('false', 'true')[flags[2]])
+        moelem.set('delete', ('false', 'true')[flags[3]])
         for child in mo.children:
             celem = ET.SubElement(moelem, 'childManagedObject', {'class': child.name})
             if child.max_count is not None:

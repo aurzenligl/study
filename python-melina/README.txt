@@ -1,9 +1,6 @@
 meta recursive-descent parser
 ----------------------------------------------------------------------
 
-[mo flags]
-hidden="false" create="true" update="true" delete="true"
-
 [non-scalar fields with large/small letter]
 clear the confusion by error checks
 
