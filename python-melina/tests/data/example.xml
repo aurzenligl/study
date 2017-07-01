@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <pdmeta>
-  <managedObject class="MACHINE_L">
+  <managedObject class="MACHINE_L" fullName="Mo documentation">
     <childManagedObject class="SENSOR"/>
     <childManagedObject class="WHEEL"/>
     <childManagedObject class="ARM"/>

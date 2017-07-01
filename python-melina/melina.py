@@ -1111,7 +1111,6 @@ class XmlParser(object):
             return 1 / decimal.Decimal(divisor)
 
     def mo(self, mo):
-        '''TODO [langfeature] add fullName comment to mo'''
         '''TODO [langfeature] add hidden/create/update/delete flags to mo'''
 
         name = self.ensured_getattr(mo, 'class')
