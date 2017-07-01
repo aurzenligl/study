@@ -77,6 +77,7 @@ mo MACHINE_L: SENSOR WHEEL ARM  // This is an example managed object: The Machin
             required int(-1, 1, 0.01) xxxx [default = 0, units = "bazes"]
             required string y
             required string(2..15) yy
+            required bool z [default = true]
         required int a [units = ""]
         required int b [units = "petabytes"]
     repeated(42) bool x  // comment about something

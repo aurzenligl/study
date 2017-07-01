@@ -190,9 +190,22 @@ class Scalar(object):
         return '%s' % self.__class__.__name__.lower()
 
 class Bool(Scalar):
+    def __init__(self, default = None):
+        self.default = _sanitize(default, (type(None), bool))
+
+    @property
+    def defaultstr(self):
+        if self.default is not None:
+            return 'true' if self.default else 'false'
+        else:
+            return ''
+
     @property
     def options(self):
-        return ''
+        if self.default is not None:
+            return '[default = %s]' % self.defaultstr
+        else:
+            return ''
 
 class Int(Scalar):
 
@@ -788,9 +801,17 @@ class MetaParser(object):
 
     def scalar(self):
         if self.cur.pair == (MetaTokenKind.KEYW, 'bool'):
+            def sanitize(self, value):
+                if value == 'true':
+                    return True
+                elif value == 'false':
+                    return False
+                else:
+                    raise MetaParserError('expected %s' % opt_description, self.filename, self.cur.span)
+
             type_type = Bool
             type_args = ()
-            type_possible_opts = {}
+            type_possible_opts = {'default': ((MetaTokenKind.NAME,), 'boolean value', sanitize)}
             self.get()
         elif self.cur.pair == (MetaTokenKind.KEYW, 'int'):
             minval, maxval, step = None, None, None
@@ -824,9 +845,9 @@ class MetaParser(object):
             type_type = Int
             type_args = (minval, maxval, step)
             type_possible_opts = {
-                'units': ((MetaTokenKind.STRING,), 'unit name'),
-                'default': ((MetaTokenKind.NUMBER,), 'integer default value')
-                    if step is None else ((MetaTokenKind.NUMBER, MetaTokenKind.FLOAT), 'float default value')
+                'units': ((MetaTokenKind.STRING,), 'unit name', None),
+                'default': ((MetaTokenKind.NUMBER,), 'integer default value', None)
+                    if step is None else ((MetaTokenKind.NUMBER, MetaTokenKind.FLOAT), 'float default value', None)
             }
         elif self.cur.pair == (MetaTokenKind.KEYW, 'string'):
             minlen, maxlen = None, None
@@ -844,7 +865,7 @@ class MetaParser(object):
                 self.get()
             type_type = String
             type_args = (minlen, maxlen)
-            type_possible_opts = {'default': ((MetaTokenKind.STRING,), 'default value')}
+            type_possible_opts = {'default': ((MetaTokenKind.STRING,), 'default value', None)}
         else:
             assert False, "o-oh, we shouldn't end up here"
 
@@ -864,10 +885,11 @@ class MetaParser(object):
                     raise MetaParserError('unexpected option name', self.filename, self.cur.span)
                 if self.get().kind != MetaTokenKind.ASSIGN:
                     raise MetaParserError('expected assignment operator', self.filename, self.cur.span)
-                opt_kind, opt_description = opt
+                opt_kind, opt_description, opt_sanitizer = opt
                 if self.get().kind not in opt_kind:
                     raise MetaParserError('expected %s' % opt_description, self.filename, self.cur.span)
-                type_opts[opt_name] = self.cur.value
+                value = opt_sanitizer(self, self.cur.value) if opt_sanitizer else self.cur.value
+                type_opts[opt_name] = value
                 if self.get().kind != MetaTokenKind.COMMA:
                     break
             if self.cur.kind != MetaTokenKind.RSB:
@@ -1158,7 +1180,19 @@ class XmlParser(object):
         base = self.ensured_getattr(simple, 'base')
 
         if base == 'boolean':
-            return Bool()
+            def get_default(self, simple):
+                tag = simple.find('default')
+                if tag is None:
+                    return
+                value = get(self, tag, 'value')
+                if value == 'true':
+                    return True
+                elif value == 'false':
+                    return False
+                else:
+                    self.error('expected "true" or "false" in "value" attribute', tag)
+
+            return Bool(get_default(self, simple))
 
         elif base in ('integer', 'decimal'):
             def get_minmaxstep(self, editing):
@@ -1217,7 +1251,7 @@ class XmlParser(object):
                 tag = simple.find('default')
                 if tag is None:
                     return
-                return get_maybe(self, tag, 'value')
+                return get(self, tag, 'value')
 
             minlen, maxlen = get_minmax(self, simple)
             default = get_default(self, simple)
@@ -1289,7 +1323,9 @@ class XmlGenerator(object):
 
     def scalar(self, parent, type_):
         if isinstance(type_, Bool):
-            ET.SubElement(parent, 'simpleType', base='boolean')
+            selem = ET.SubElement(parent, 'simpleType', base='boolean')
+            if type_.default is not None:
+                ET.SubElement(selem, 'default', value=type_.defaultstr)
         elif isinstance(type_, Int):
             selem = ET.SubElement(parent, 'simpleType', base='integer')
             if type_.minval is not None or type_.units is not None:

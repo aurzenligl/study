@@ -65,6 +65,7 @@ mo MACHINE_L -> SENSOR, WHEEL, ARM
             int(-1, 1, 0.01) xxxx [default = 0, units = "bazes"];
             string y;
             string(2..15) yy;
+            bool z [default = true];
         };
 
         int a [units = ""];

@@ -84,6 +84,11 @@ class TestGenerator():
                 <maxLength value="15"/>
               </simpleType>
             </p>
+            <p name="z" maxOccurs="1">
+              <simpleType base="boolean">
+                <default value="true"/>
+              </simpleType>
+            </p>
           </complexType>
         </p>
         <p name="a" maxOccurs="1">

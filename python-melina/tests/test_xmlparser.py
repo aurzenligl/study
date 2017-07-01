@@ -77,6 +77,7 @@ mo MACHINE_L: SENSOR WHEEL ARM
             required int(-212.23, 12.20001111, 0.00000002) xxx [default = -57.91]
             required string y
             required string(0..15) yy
+            required bool z [default = true]
         required int a
         required int b
     required bool x
