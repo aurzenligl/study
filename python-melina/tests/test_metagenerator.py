@@ -59,9 +59,10 @@ mo MACHINE_L -> SENSOR, WHEEL, ARM
          */
         repeated struct Numbers
         {
-            int x;
-            int(-12..42) xx;
-            int(-0.0001, 0.0002, 0.0000001) xxx;
+            int x [default = 0];
+            int(-12..42) xx [default = -4];
+            int(-0.0001, 0.0002, 0.0000001) xxx [default = -0.00007];
+            int(-1, 1, 0.01) xxxx [default = 0, units = "bazes"];
             string y;
             string(2..15) yy;
         };

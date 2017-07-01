@@ -55,7 +55,25 @@ class TestGenerator():
         <p name="Numbers" maxOccurs="999999">
           <complexType>
             <p name="x" maxOccurs="1">
-              <simpleType base="integer"/>
+              <simpleType base="integer">
+                <default value="0"/>
+              </simpleType>
+            </p>
+            <p name="xx" maxOccurs="1">
+              <simpleType base="integer">
+                <editing>
+                  <range minIncl="-212" maxIncl="12"/>
+                </editing>
+                <default value="5"/>
+              </simpleType>
+            </p>
+            <p name="xxx" maxOccurs="1">
+              <simpleType base="integer">
+                <editing>
+                  <range minIncl="-212.23" maxIncl="12.20001111" step="0.00000002"/>
+                </editing>
+                <default value="-57.91"/>
+              </simpleType>
             </p>
             <p name="y" maxOccurs="1">
               <simpleType base="string"/>

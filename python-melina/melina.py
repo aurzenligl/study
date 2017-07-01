@@ -208,10 +208,11 @@ class Int(Scalar):
         else:
             return decstr
 
-    def __init__(self, minval, maxval, step, units = None):
+    def __init__(self, minval, maxval, step, default = None, units = None):
         self.minval = _sanitize(minval, (type(None), int, long, decimal.Decimal))
         self.maxval = _sanitize(maxval, (type(None), int, long, decimal.Decimal))
         self.step = _sanitize(step, (type(None), int, long, decimal.Decimal))
+        self.default = _sanitize(default, (type(None), int, long, decimal.Decimal))
         self.units = _sanitize(units, (type(None), str))
 
         if minval is not None or maxval is not None:
@@ -223,6 +224,10 @@ class Int(Scalar):
                 assert maxval is not None
                 assert step != 0
             assert minval <= maxval
+
+        if default is not None:
+            if step is None:
+                assert isinstance(default, (int, long))
 
     @property
     def minvalstr(self):
@@ -237,9 +242,21 @@ class Int(Scalar):
         return self.dectostr(self.step)
 
     @property
+    def defaultstr(self):
+        if self.default is not None:
+            return self.dectostr(self.default)
+        else:
+            return ''
+
+    @property
     def options(self):
+        opts = []
+        if self.default is not None:
+            opts.append('default = %s' % self.defaultstr)
         if self.units is not None:
-            return '[units = "%s"]' % self.units
+            opts.append('units = "%s"' % self.units)
+        if opts:
+            return '[%s]' % ', '.join(opts)
         else:
             return ''
 
@@ -806,7 +823,11 @@ class MetaParser(object):
                 self.get()
             type_type = Int
             type_args = (minval, maxval, step)
-            type_possible_opts = {'units': (MetaTokenKind.STRING, 'unit name')}
+            type_possible_opts = {
+                'units': ((MetaTokenKind.STRING,), 'unit name'),
+                'default': ((MetaTokenKind.NUMBER,), 'integer default value')
+                    if step is None else ((MetaTokenKind.NUMBER, MetaTokenKind.FLOAT), 'float default value')
+            }
         elif self.cur.pair == (MetaTokenKind.KEYW, 'string'):
             minlen, maxlen = None, None
             if self.get().kind == MetaTokenKind.LP:
@@ -823,7 +844,7 @@ class MetaParser(object):
                 self.get()
             type_type = String
             type_args = (minlen, maxlen)
-            type_possible_opts = {'default': (MetaTokenKind.STRING, 'default value')}
+            type_possible_opts = {'default': ((MetaTokenKind.STRING,), 'default value')}
         else:
             assert False, "o-oh, we shouldn't end up here"
 
@@ -844,7 +865,7 @@ class MetaParser(object):
                 if self.get().kind != MetaTokenKind.ASSIGN:
                     raise MetaParserError('expected assignment operator', self.filename, self.cur.span)
                 opt_kind, opt_description = opt
-                if self.get().kind != opt_kind:
+                if self.get().kind not in opt_kind:
                     raise MetaParserError('expected %s' % opt_description, self.filename, self.cur.span)
                 type_opts[opt_name] = self.cur.value
                 if self.get().kind != MetaTokenKind.COMMA:
@@ -952,6 +973,11 @@ def _decimal(text):
         return decimal.Decimal(text)
     except decimal.InvalidOperation:
         return
+
+def _nonzero_decimal(text):
+    x = _decimal(text)
+    if x is not None and x != 0:
+        return x
 
 class XmlConst():
     default_repeated_max_occurs = 999999
@@ -1111,61 +1137,73 @@ class XmlParser(object):
     def scalar(self, simple):
         '''TODO [langfeature] add decimal scalar base (fixed-point values)'''
 
+        def get(self, tag, attr, sanitizer = None, typename = 'string'):
+            value = self.ensured_getattr(tag, attr)
+            if sanitizer:
+                value = sanitizer(value)
+            if value is None:
+                self.error('expected %s in "%s" attribute' % (typename, attr), tag)
+            return value
+
+        def get_maybe(self, tag, attr, sanitizer = None, typename = 'string'):
+            value = tag.get(attr)
+            if value is None:
+                return
+            if sanitizer:
+                value = sanitizer(value)
+            if value is None:
+                self.error('expected %s in "%s" attribute' % (typename, attr), tag)
+            return value
+
         base = self.ensured_getattr(simple, 'base')
 
         if base == 'boolean':
             return Bool()
 
         elif base in ('integer', 'decimal'):
-            minval, maxval, stepval, units = None, None, None, None
-            editing = simple.find('editing')
-            if editing is not None:
-                step = None
-                divisor = editing.get('divisor')
-                if divisor is not None:
-                    divisor = _positive_int(divisor)
-                    if divisor is None:
-                        self.error('expected positive integer in "divisor"', range)
+            def get_minmaxstep(self, editing):
+                if editing is None:
+                    return (None, None, None)
+                divisor = get_maybe(self, editing, 'divisor', _positive_int, 'positive int')
                 range = editing.find('range')
-                if range is not None:
-                    step = range.get('step')
-                    if step is not None:
-                        step = _decimal(step)
-                        if step is None:
-                            self.error('expected float in "step"', range)
-                        if step == 0:
-                            self.error('expected nonzero float in "step"', range)
-                    if divisor is None and step is None:
-                        convert = _int
-                        expectation = 'int'
-                    else:
-                        convert = _decimal
-                        expectation = 'float'
-                    minval = convert(self.ensured_getattr(range, 'minIncl'))
-                    if minval is None:
-                        self.error('expected %s in "minIncl"' % expectation, range)
-                    maxval = convert(self.ensured_getattr(range, 'maxIncl'))
-                    if maxval is None:
-                        self.error('expected %s in "maxIncl"' % expectation, range)
-                    if minval is not None and maxval is None:
-                        self.error('expected "maxIncl"', range)
-                    if maxval is not None and minval is None:
-                        self.error('expected "minIncl"', range)
-                    if minval is not None and not minval <= maxval:
-                        self.error('expected "minIncl" less than "maxIncl"', range)
-                stepval = self.mergestep(minval, maxval, step, divisor)
-                units = editing.get('units')
-                default = editing.find('default')
-                '''TODO [langfeature] add default integer value'''
-            return Int(minval, maxval, stepval, units)
+                if range is None:
+                    return (None, None, None)
+                rawstep = get_maybe(self, range, 'step', _nonzero_decimal, 'non-zero decimal')
+                minmax_typeargs = (divisor is None and rawstep is None) and (_int, 'int') or (_decimal, 'float')
+                minval = get(self, range, 'minIncl', *minmax_typeargs)
+                maxval = get(self, range, 'maxIncl', *minmax_typeargs)
+                if minval > maxval:
+                    self.error('expected "minIncl" less than "maxIncl"', range)
+                step = self.mergestep(minval, maxval, rawstep, divisor)
+                return minval, maxval, step
+
+            def get_units(self, editing):
+                if editing is None:
+                    return
+                return editing.get('units')
+
+            def get_default(self, simple, editing, step):
+                deftag1 = simple.find('default')
+                deftag2 = editing.find('default') if editing is not None else None
+                if deftag1 is None and deftag2 is None:
+                    return
+                if deftag1 is not None and deftag2 is not None:
+                    self.error('expected single "default" tag, found two', simple)
+                tag = deftag1 if deftag1 is not None else deftag2
+                def_typeargs = (_int, 'int') if step is None else (_decimal, 'float')
+                value = get(self, tag, 'value', *def_typeargs)
+                return value
+
+            editing = simple.find('editing')
+            minval, maxval, step = get_minmaxstep(self, editing)
+            default = get_default(self, simple, editing, step)
+            units = get_units(self, editing)
+            return Int(minval, maxval, step, default, units)
 
         elif base == 'string':
             def get_minmax(self, simple):
                 def get_value(self, tag):
-                    value = _nonnegative_int(self.ensured_getattr(tag, 'value'))
-                    if value is None:
-                        self.error('expected non-negative integer in "value" attribute', tag)
-                    return value
+                    return get(self, tag, 'value', _nonnegative_int, 'non-negative integer')
 
                 mintag = simple.find('minLength')
                 maxtag = simple.find('maxLength')
@@ -1179,10 +1217,7 @@ class XmlParser(object):
                 tag = simple.find('default')
                 if tag is None:
                     return
-                default = tag.get('value')
-                if default is None:
-                    self.error('expected string in "value" attribute', tag)
-                return default
+                return get_maybe(self, tag, 'value')
 
             minlen, maxlen = get_minmax(self, simple)
             default = get_default(self, simple)
@@ -1267,6 +1302,8 @@ class XmlGenerator(object):
                     relem.set('maxIncl', type_.maxvalstr)
                     if type_.step is not None:
                         relem.set('step', type_.stepstr)
+            if type_.default is not None:
+                ET.SubElement(selem, 'default', value=type_.defaultstr)
         elif isinstance(type_, String):
             selem = ET.SubElement(parent, 'simpleType', base='string')
             if type_.minlen is not None:

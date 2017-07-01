@@ -71,9 +71,10 @@ mo MACHINE_L: SENSOR WHEEL ARM  // This is an example managed object: The Machin
             42Val = 3
             000 = 4
         repeated struct Numbers  // This is the heart of the machine.
-            required int x
-            required int(-12..42) xx
-            required int(-0.0001, 0.0002, 0.0000001) xxx
+            required int x [default = 0]
+            required int(-12..42) xx [default = -4]
+            required int(-0.0001, 0.0002, 0.0000001) xxx [default = -0.00007]
+            required int(-1, 1, 0.01) xxxx [default = 0, units = "bazes"]
             required string y
             required string(2..15) yy
         required int a [units = ""]
