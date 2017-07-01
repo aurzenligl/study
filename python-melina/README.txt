@@ -1,9 +1,6 @@
 meta recursive-descent parser
 ----------------------------------------------------------------------
 
-[mo child count]
-<childManagedObject class="X" maxOccurs="1"/>
-
 [mo flags]
 hidden="false" create="true" update="true" delete="true"
 
