@@ -55,7 +55,7 @@ class TestParser():
     def test_example(self):
         tu = parse('example.xml')
         assert str(tu) == '''\
-mo MACHINE_L: SENSOR WHEEL ARM  // Mo documentation
+mo MACHINE_L: SENSOR(1) WHEEL(12) ARM  // Mo documentation
     required struct StateBox
         repeated enum FaultStatus
             Empty = 0
@@ -87,7 +87,7 @@ mo MACHINE_L: SENSOR WHEEL ARM  // Mo documentation
     def test_configure(self):
         tu = parse('configure.xml')
         assert str(tu) == '''\
-mo CONFIGURE_MECHANISM_TASK: RESULT  // Configure mechanism task
+mo CONFIGURE_MECHANISM_TASK: RESULT(1)  // Configure mechanism task
     required struct alphaDelta  // Alpha configuration
         repeated(100) struct modified  // Modified field
             required string(0..32767) dn [default = ""]  // The dn param

@@ -17,7 +17,7 @@ class TestGenerator():
 /**
  * This is an example managed object: The Machine.
  */
-mo MACHINE_L -> SENSOR, WHEEL, ARM
+mo MACHINE_L -> SENSOR(1), WHEEL(12), ARM
 {
     struct StateBox
     {

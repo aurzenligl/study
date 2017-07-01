@@ -17,8 +17,8 @@ class TestGenerator():
 <?xml version="1.0" encoding="utf-8"?>
 <pdmeta>
   <managedObject class="MACHINE_L" fullName="Mo documentation">
-    <childManagedObject class="SENSOR"/>
-    <childManagedObject class="WHEEL"/>
+    <childManagedObject class="SENSOR" maxOccurs="1"/>
+    <childManagedObject class="WHEEL" maxOccurs="12"/>
     <childManagedObject class="ARM"/>
     <p name="StateBox" maxOccurs="1">
       <complexType>
@@ -117,7 +117,7 @@ class TestGenerator():
 <?xml version="1.0" encoding="utf-8"?>
 <pdmeta>
   <managedObject class="CONFIGURE_MECHANISM_TASK" fullName="Configure mechanism task">
-    <childManagedObject class="RESULT"/>
+    <childManagedObject class="RESULT" maxOccurs="1"/>
     <p name="alphaDelta" fullName="Alpha configuration" maxOccurs="1">
       <complexType>
         <p name="modified" fullName="Modified field" maxOccurs="100">

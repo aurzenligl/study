@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <pdmeta>
   <managedObject class="MACHINE_L" fullName="Mo documentation">
-    <childManagedObject class="SENSOR"/>
-    <childManagedObject class="WHEEL"/>
+    <childManagedObject class="SENSOR" maxOccurs="1"/>
+    <childManagedObject class="WHEEL" maxOccurs="12"/>
     <childManagedObject class="ARM"/>
     <p name="StateBox" maxOccurs="1">
       <complexType>

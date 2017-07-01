@@ -80,7 +80,7 @@ class Mo(object):
 
     def __str__(self):
         text = (
-            'mo %s' % self.name + ':' + ''.join((' ' + x.name for x in self.children)) + '\n' +
+            'mo %s' % self.name + ':' + ''.join((' ' + str(x) for x in self.children)) + '\n' +
             _indent(''.join((str(field) for field in self.fields)), 4)
         )
         if self.doc:
@@ -88,14 +88,21 @@ class Mo(object):
         return text
 
 class MoChild(object):
-    def __init__(self, name):
+    def __init__(self, name, max_count):
         self.name = _sanitize_identifier(name)
+        self.max_count = _sanitize(max_count, (type(None), int, long))
+
+        if max_count is not None:
+            assert max_count >= 1
 
     def __repr__(self):
         return '<MoChild %s>' % self.name
 
     def __str__(self):
-        return self.name
+        if self.max_count is not None:
+            return '%s(%s)' % (self.name, self.max_count)
+        else:
+            return self.name
 
 class Field(object):
     def __init__(self, name, type_, cardinality, doc):
@@ -674,17 +681,27 @@ class MetaParser(object):
         return Mo(name, fields, children, doc)
 
     def mo_child_list(self):
-        if self.get().kind != MetaTokenKind.NAME:
-            raise MetaParserError('expected mo child name', self.filename, self.cur.span)
-        children = [MoChild(self.cur.value)]
-
-        while True:
-            if self.get().kind != MetaTokenKind.COMMA:
-                break
-
+        def child(self):
             if self.get().kind != MetaTokenKind.NAME:
                 raise MetaParserError('expected mo child name', self.filename, self.cur.span)
-            children.append(MoChild(self.cur.value))
+            name = self.cur.value
+            max_count = None
+            if self.get().kind == MetaTokenKind.LP:
+                if self.get().kind != MetaTokenKind.NUMBER:
+                    raise MetaParserError('expected mo child max count', self.filename, self.cur.span)
+                max_count = self.cur.value
+                if max_count < 1:
+                    raise MetaParserError('expected positive integer', self.filename, self.cur.span)
+                if self.get().kind != MetaTokenKind.RP:
+                    raise MetaParserError('expected closing paren after max count specification', self.filename, self.cur.span)
+                self.get()
+            return MoChild(name, max_count)
+
+        children = [child(self)]
+        while True:
+            if self.cur.kind != MetaTokenKind.COMMA:
+                break
+            children.append(child(self))
 
         return children
 
@@ -944,7 +961,7 @@ class MetaGenerator(object):
             out += '/**\n * %s\n */\n' % mo.doc
         out += 'mo %s' % mo.name
         if mo.children:
-            out += ' -> ' + ', '.join((child.name for child in mo.children))
+            out += ' -> ' + ', '.join((str(child) for child in mo.children))
         out += '\n{\n' + _indent(self.fields(mo.fields), 4) + '};\n'
         return out
 
@@ -1101,6 +1118,17 @@ class XmlParser(object):
             self.error('expected %s in "%s" attribute' % (typename, attr), tag)
         return value
 
+    '''TODO use this instead of ensured_getattr or local get_maybe'''
+    def get_maybe(self, tag, attr, sanitizer = None, typename = 'string'):
+        value = tag.get(attr)
+        if value is None:
+            return
+        if sanitizer:
+            value = sanitizer(value)
+        if value is None:
+            self.error('expected %s in "%s" attribute' % (typename, attr), tag)
+        return value
+
     '''TODO move to scalar'''
     def mergestep(self, minval, maxval, step, divisor):
         if minval is None or maxval is None:
@@ -1126,7 +1154,8 @@ class XmlParser(object):
         for child in mo.findall('childManagedObject'):
             '''TODO [langfeature] maxOccurs in children'''
             name = self.ensured_getattr(child, 'class')
-            children.append(MoChild(name))
+            max_count = self.get_maybe(child, 'maxOccurs', _nonnegative_int, 'non-negative integer')
+            children.append(MoChild(name, max_count))
         return children
 
     def field(self, field):
@@ -1321,7 +1350,9 @@ class XmlGenerator(object):
         if mo.doc:
             moelem.set('fullName', mo.doc)
         for child in mo.children:
-            ET.SubElement(moelem, 'childManagedObject', {'class': child.name})
+            celem = ET.SubElement(moelem, 'childManagedObject', {'class': child.name})
+            if child.max_count is not None:
+                celem.set('maxOccurs', str(child.max_count))
         self.fields(moelem, mo.fields)
 
     def fields(self, parent, fields):
