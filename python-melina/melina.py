@@ -1103,45 +1103,30 @@ class XmlParser(object):
     def error(self, msg, elem):
         raise XmlParserError(msg, self.filename, elem.sourceline, self.input)
 
-    def ensured_getattr(self, elem, name):
-        value = elem.get(name)
-        if value is None:
-            self.error('expected "%s" attribute in "%s" tag' % (name, elem.tag), elem)
-        return value
-
-    '''TODO use this instead of ensured_getattr or local get'''
     def get(self, tag, attr, sanitizer = None, typename = 'string'):
-        value = self.ensured_getattr(tag, attr)
+        value = tag.get(attr)
+        if value is None:
+            self.error('expected "%s" attribute in "%s" tag' % (attr, tag.tag), tag)
         if sanitizer:
             value = sanitizer(value)
-        if value is None:
-            self.error('expected %s in "%s" attribute' % (typename, attr), tag)
+            if value is None:
+                self.error('expected %s in "%s" attribute' % (typename, attr), tag)
         return value
 
-    '''TODO use this instead of ensured_getattr or local get_maybe'''
     def get_maybe(self, tag, attr, sanitizer = None, typename = 'string'):
         value = tag.get(attr)
         if value is None:
             return
         if sanitizer:
             value = sanitizer(value)
-        if value is None:
-            self.error('expected %s in "%s" attribute' % (typename, attr), tag)
+            if value is None:
+                self.error('expected %s in "%s" attribute' % (typename, attr), tag)
         return value
-
-    '''TODO move to scalar'''
-    def mergestep(self, minval, maxval, step, divisor):
-        if minval is None or maxval is None:
-            return
-        if step is not None:
-            return step
-        if divisor is not None:
-            return 1 / decimal.Decimal(divisor)
 
     def mo(self, mo):
         '''TODO [langfeature] add hidden/create/update/delete flags to mo'''
 
-        name = self.ensured_getattr(mo, 'class')
+        name = self.get(mo, 'class')
         doc = mo.get('fullName')
         children = self.mo_child_list(mo)
         fields = [self.field(field) for field in mo.findall('p')]
@@ -1153,7 +1138,7 @@ class XmlParser(object):
         children = []
         for child in mo.findall('childManagedObject'):
             '''TODO [langfeature] maxOccurs in children'''
-            name = self.ensured_getattr(child, 'class')
+            name = self.get(child, 'class')
             max_count = self.get_maybe(child, 'maxOccurs', _nonnegative_int, 'non-negative integer')
             children.append(MoChild(name, max_count))
         return children
@@ -1161,7 +1146,7 @@ class XmlParser(object):
     def field(self, field):
         '''TODO [langfeature] field name has to begin with small letter (xml)'''
         '''TODO [langfeature] enum/struct name has to begin with capital letter (meta)'''
-        name = self.ensured_getattr(field, 'name')
+        name = self.get(field, 'name')
         doc = field.get('fullName')
 
         max_occurs = field.get('maxOccurs')
@@ -1173,7 +1158,7 @@ class XmlParser(object):
         if max_occurs == 1 or max_occurs == None:
             creation = field.find('creation')
             if creation is not None:
-                prio = self.ensured_getattr(creation, 'priority')
+                prio = self.get(creation, 'priority')
                 if prio == 'optional':
                     cardinality = Cardinality(CardinalityKind.OPTIONAL)
                 elif prio == 'mandatory':
@@ -1220,41 +1205,23 @@ class XmlParser(object):
     def enumerator_list(self, simple):
         enumerators = []
         for enumer in simple.findall('enumeration'):
-            name = self.ensured_getattr(enumer, 'text')
+            name = self.get(enumer, 'text')
             name = name.replace('-', '_')
-            value = _int(self.ensured_getattr(enumer, 'value'))
+            value = _int(self.get(enumer, 'value'))
             if value is None:
                 self.error('expected integer enumerator value', enumer)
             enumerators.append(Enumerator(name, value))
         return enumerators
 
     def scalar(self, simple):
-        def get(self, tag, attr, sanitizer = None, typename = 'string'):
-            value = self.ensured_getattr(tag, attr)
-            if sanitizer:
-                value = sanitizer(value)
-            if value is None:
-                self.error('expected %s in "%s" attribute' % (typename, attr), tag)
-            return value
-
-        def get_maybe(self, tag, attr, sanitizer = None, typename = 'string'):
-            value = tag.get(attr)
-            if value is None:
-                return
-            if sanitizer:
-                value = sanitizer(value)
-            if value is None:
-                self.error('expected %s in "%s" attribute' % (typename, attr), tag)
-            return value
-
-        base = self.ensured_getattr(simple, 'base')
+        base = self.get(simple, 'base')
 
         if base == 'boolean':
             def get_default(self, simple):
                 tag = simple.find('default')
                 if tag is None:
                     return
-                value = get(self, tag, 'value')
+                value = self.get(tag, 'value')
                 if value == 'true':
                     return True
                 elif value == 'false':
@@ -1266,19 +1233,27 @@ class XmlParser(object):
 
         elif base in ('integer', 'decimal'):
             def get_minmaxstep(self, editing):
+                def mergestep(minval, maxval, step, divisor):
+                    if minval is None or maxval is None:
+                        return
+                    if step is not None:
+                        return step
+                    if divisor is not None:
+                        return 1 / decimal.Decimal(divisor)
+
                 if editing is None:
                     return (None, None, None)
-                divisor = get_maybe(self, editing, 'divisor', _positive_int, 'positive int')
+                divisor = self.get_maybe(editing, 'divisor', _positive_int, 'positive int')
                 range = editing.find('range')
                 if range is None:
                     return (None, None, None)
-                rawstep = get_maybe(self, range, 'step', _nonzero_decimal, 'non-zero decimal')
+                rawstep = self.get_maybe(range, 'step', _nonzero_decimal, 'non-zero decimal')
                 minmax_typeargs = (divisor is None and rawstep is None) and (_int, 'int') or (_decimal, 'float')
-                minval = get(self, range, 'minIncl', *minmax_typeargs)
-                maxval = get(self, range, 'maxIncl', *minmax_typeargs)
+                minval = self.get(range, 'minIncl', *minmax_typeargs)
+                maxval = self.get(range, 'maxIncl', *minmax_typeargs)
                 if minval > maxval:
                     self.error('expected "minIncl" less than "maxIncl"', range)
-                step = self.mergestep(minval, maxval, rawstep, divisor)
+                step = mergestep(minval, maxval, rawstep, divisor)
                 return minval, maxval, step
 
             def get_units(self, editing):
@@ -1295,7 +1270,7 @@ class XmlParser(object):
                     self.error('expected single "default" tag, found two', simple)
                 tag = deftag1 if deftag1 is not None else deftag2
                 def_typeargs = (_int, 'int') if step is None else (_decimal, 'float')
-                value = get(self, tag, 'value', *def_typeargs)
+                value = self.get(tag, 'value', *def_typeargs)
                 return value
 
             editing = simple.find('editing')
@@ -1307,7 +1282,7 @@ class XmlParser(object):
         elif base == 'string':
             def get_minmax(self, simple):
                 def get_value(self, tag):
-                    return get(self, tag, 'value', _nonnegative_int, 'non-negative integer')
+                    return self.get(tag, 'value', _nonnegative_int, 'non-negative integer')
 
                 mintag = simple.find('minLength')
                 maxtag = simple.find('maxLength')
@@ -1321,7 +1296,7 @@ class XmlParser(object):
                 tag = simple.find('default')
                 if tag is None:
                     return
-                return get(self, tag, 'value')
+                return self.get(tag, 'value')
 
             minlen, maxlen = get_minmax(self, simple)
             default = get_default(self, simple)
