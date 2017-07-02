@@ -33,7 +33,6 @@ String
 def _indent(text, value):
     return '\n'.join(x and (' ' * value + x) or '' for x in text.split('\n'))
 
-'''TODO use everywhere instead of type(None)'''
 def _sanitize(obj, classes, maybe = False):
     if maybe:
         if obj == None:
@@ -82,7 +81,7 @@ class Mo(object):
         self.name = _sanitize_identifier(name)
         self.fields = _sanitize_list(fields, Field)
         self.children = _sanitize_list(children, MoChild)
-        self.doc = _sanitize(doc, (type(None), str))
+        self.doc = _sanitize(doc, str, maybe=True)
         self.flags = _sanitize_list(flags, bool, maybe=True)
 
         if flags is not None:
@@ -106,7 +105,7 @@ class Mo(object):
 class MoChild(object):
     def __init__(self, name, max_count):
         self.name = _sanitize_identifier(name)
-        self.max_count = _sanitize(max_count, (type(None), int, long))
+        self.max_count = _sanitize(max_count, (int, long), maybe=True)
 
         if max_count is not None:
             assert max_count >= 1
@@ -125,7 +124,7 @@ class Field(object):
         self.name = _sanitize_identifier(name)
         self.type = _sanitize(type_, (Struct, Enum, Scalar))
         self.cardinality = _sanitize(cardinality, Cardinality)
-        self.doc = _sanitize(doc, (type(None), str))
+        self.doc = _sanitize(doc, str, maybe=True)
 
     def __repr__(self):
         return '<Field %s>' % self.name
@@ -145,7 +144,7 @@ class Field(object):
 class Cardinality(object):
     def __init__(self, kind, max_count = None):
         self.kind = _sanitize(kind, CardinalityKind)
-        self.max_count = _sanitize(max_count, (type(None), int, long))
+        self.max_count = _sanitize(max_count, (int, long), maybe=True)
 
         if max_count is not None:
             assert kind == CardinalityKind.REPEATED
@@ -183,7 +182,7 @@ class Enum(object):
     def __init__(self, name, enumerators, default = None):
         self.name = _sanitize_identifier(name)
         self.enumerators = _sanitize_list(enumerators, Enumerator)
-        self.default = _sanitize(default, (type(None), int, long))
+        self.default = _sanitize(default, (int, long), maybe=True)
 
         if default is not None:
             assert default in ((x.value for x in enumerators))
@@ -218,7 +217,7 @@ class Scalar(object):
 
 class Bool(Scalar):
     def __init__(self, default = None):
-        self.default = _sanitize(default, (type(None), bool))
+        self.default = _sanitize(default, bool, maybe=True)
 
     @property
     def defaultstr(self):
@@ -237,11 +236,11 @@ class Bool(Scalar):
 class Int(Scalar):
 
     def __init__(self, minval, maxval, step, default = None, units = None):
-        self.minval = _sanitize(minval, (type(None), int, long, decimal.Decimal))
-        self.maxval = _sanitize(maxval, (type(None), int, long, decimal.Decimal))
-        self.step = _sanitize(step, (type(None), int, long, decimal.Decimal))
-        self.default = _sanitize(default, (type(None), int, long, decimal.Decimal))
-        self.units = _sanitize(units, (type(None), str))
+        self.minval = _sanitize(minval, (int, long, decimal.Decimal), maybe=True)
+        self.maxval = _sanitize(maxval, (int, long, decimal.Decimal), maybe=True)
+        self.step = _sanitize(step, (int, long, decimal.Decimal), maybe=True)
+        self.default = _sanitize(default, (int, long, decimal.Decimal), maybe=True)
+        self.units = _sanitize(units, str, maybe=True)
 
         if minval is not None or maxval is not None:
             if step is None:
@@ -310,9 +309,9 @@ class Int(Scalar):
 
 class String(Scalar):
     def __init__(self, minlen, maxlen, default = None):
-        self.minlen = _sanitize(minlen, (type(None), int, long))
-        self.maxlen = _sanitize(maxlen, (type(None), int, long))
-        self.default = _sanitize(default, (type(None), str))
+        self.minlen = _sanitize(minlen, (int, long), maybe=True)
+        self.maxlen = _sanitize(maxlen, (int, long), maybe=True)
+        self.default = _sanitize(default, str, maybe=True)
 
         if minlen is not None or maxlen is not None:
             assert 0 <= minlen
