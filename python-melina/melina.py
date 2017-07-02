@@ -397,8 +397,7 @@ class MetaTokenKind(enum.Enum):
 class MetaToken(object):
     __slots__ = ('kind', 'value', 'span', 'string')
 
-    '''TODO remove repr_vals in favor of value'''
-    _repr_vals = {
+    kind2oper = {
         MetaTokenKind.LCB: '{',
         MetaTokenKind.RCB: '}',
         MetaTokenKind.LSB: '[',
@@ -412,7 +411,13 @@ class MetaToken(object):
         MetaTokenKind.TWODOT: '..',
     }
 
-    _repr_direct = (MetaTokenKind.KEYW, MetaTokenKind.NAME, MetaTokenKind.NUMBER, MetaTokenKind.NUMNAME, MetaTokenKind.COMMENT)
+    direct_kinds = (
+        MetaTokenKind.KEYW,
+        MetaTokenKind.NAME,
+        MetaTokenKind.NUMBER,
+        MetaTokenKind.NUMNAME,
+        MetaTokenKind.COMMENT
+    )
 
     def __init__(self, kind, value = None, span = None, string = None):
         self.kind = kind
@@ -430,9 +435,9 @@ class MetaToken(object):
         else:
             repr = "<MetaToken %s" % self.kind.name
 
-        if self.kind in self._repr_direct:
+        if self.kind in self.direct_kinds:
             return repr + " %s>" % self.value
-        reprval = self._repr_vals.get(self.kind)
+        reprval = self.kind2oper.get(self.kind)
         if reprval:
             return repr + " %s>" % reprval
         return repr + ">"
@@ -488,20 +493,7 @@ class MetaTokenizer(object):
     )))
 
     _keywords = ('mo', 'struct', 'enum', 'repeated', 'optional', 'bool', 'int', 'float', 'string')
-
-    _operators = {
-        '->': MetaTokenKind.ARROW,
-        '..': MetaTokenKind.TWODOT,
-        '{': MetaTokenKind.LCB,
-        '}': MetaTokenKind.RCB,
-        '[': MetaTokenKind.LSB,
-        ']': MetaTokenKind.RSB,
-        '(': MetaTokenKind.LP,
-        ')': MetaTokenKind.RP,
-        ';': MetaTokenKind.SEMI,
-        ',': MetaTokenKind.COMMA,
-        '=': MetaTokenKind.ASSIGN,
-    }
+    _operators = {oper: kind for kind, oper in MetaToken.kind2oper.items()}
 
     def _get(self):
         while True:
