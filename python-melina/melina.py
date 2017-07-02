@@ -1107,7 +1107,6 @@ class XmlParserError(Exception):
 
 class XmlParser(object):
     def __init__(self, input_, filename=None):
-        '''TODO handle xml parser errors in driver'''
         '''TODO [langfeature] pdmeta version=int.int,
            header domain='str' product='str' release='str' version='str' revision='str' '''
         self.filename = filename
