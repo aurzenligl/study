@@ -1037,7 +1037,6 @@ class MetaGenerator(object):
             opts = ' ' + opts
         return '%s %s%s;' % (type_, name, opts)
 
-'''TODO: use instead of "true"/"false"'''
 def _bool(text):
     if text == 'true':
         return True
@@ -1251,13 +1250,7 @@ class XmlParser(object):
                 tag = simple.find('default')
                 if tag is None:
                     return
-                value = self.get(tag, 'value')
-                if value == 'true':
-                    return True
-                elif value == 'false':
-                    return False
-                else:
-                    self.error('expected "true" or "false" in "value" attribute', tag)
+                value = self.get(tag, 'value', _bool, '"true" or "false"')
 
             return Bool(get_default(self, simple))
 
