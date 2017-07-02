@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<pdmeta>
+<pdmeta version="">
+  <header domain="" product="" release="" version="" revision=""/>
   <managedObject class="NAME">
     <p name="member" maxOccurs="1">
       <creation priority="unknown"/>

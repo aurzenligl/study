@@ -14,6 +14,8 @@ class TestGenerator():
         tu = parse('example.meta')
         meta = generate(tu)
         assert meta == '''\
+/// pdmeta: "1.7", domain: "foo", product: "bar", release: "AX-19.2", version: "1.5.3.0.beta", revision: "1982713"
+
 /**
  * This is an example managed object: The Machine.
  */
@@ -81,6 +83,8 @@ mo(cd) MACHINE_L -> SENSOR(1), WHEEL(12), ARM
         tu = parse('configure.meta')
         meta = generate(tu)
         assert meta == '''\
+/// pdmeta: "", domain: "", product: "", release: "", version: "", revision: ""
+
 mo CONFIGURE_MECHANISM_TASK -> RESULT
 {
     struct alphaDelta

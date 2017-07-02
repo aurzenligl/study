@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<pdmeta>
+<pdmeta version="">
+  <header domain="" product="" release="" version="" revision=""/>
   <managedObject class="SHORT" fullName="The short mo" hidden="false" create="true" update="true" delete="true">
     <p name="value" fullName="The value" maxOccurs="1">
       <simpleType base="integer"/>

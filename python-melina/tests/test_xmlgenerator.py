@@ -15,7 +15,8 @@ class TestGenerator():
         xml = generate(tu)
         assert xml == '''\
 <?xml version="1.0" encoding="utf-8"?>
-<pdmeta>
+<pdmeta version="1.5.3.0.beta">
+  <header domain="foo" product="bar" release="AX-19.2" version="1.5.3.0.beta" revision="1982713"/>
   <managedObject class="MACHINE_L" fullName="Mo documentation" hidden="false" create="true" update="false" delete="true">
     <childManagedObject class="SENSOR" maxOccurs="1"/>
     <childManagedObject class="WHEEL" maxOccurs="12"/>
@@ -115,7 +116,8 @@ class TestGenerator():
         xml = generate(tu)
         assert xml == '''\
 <?xml version="1.0" encoding="utf-8"?>
-<pdmeta>
+<pdmeta version="">
+  <header domain="" product="" release="" version="" revision=""/>
   <managedObject class="CONFIGURE_MECHANISM_TASK" fullName="Configure mechanism task" hidden="false" create="true" update="true" delete="true">
     <childManagedObject class="RESULT" maxOccurs="1"/>
     <p name="alphaDelta" fullName="Alpha configuration" maxOccurs="1">

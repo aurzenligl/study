@@ -65,14 +65,35 @@ def _add_to_1st_line(text, doc):
     return out
 
 class TranslationUnit(object):
-    def __init__(self, mos):
+    def __init__(self, header, mos):
+        self.header = _sanitize(header, Header)
         self.mos = _sanitize_list(mos, Mo)
 
     def __repr__(self):
         return '<TranslationUnit with %s mos>' % len(self.mos)
 
     def __str__(self):
-        return ''.join((str(mo) for mo in self.mos))
+        return '%s\n%s' % (str(self.header), ''.join((str(mo) for mo in self.mos)))
+
+class Header(object):
+    attributes = ('pdmeta', 'domain', 'product', 'release', 'version', 'revision')
+
+    def __init__(self, pdmeta = '', domain = '', product = '', release = '', version = '', revision = ''):
+        self.pdmeta = _sanitize(pdmeta, str)
+        self.domain = _sanitize(domain, str)
+        self.product = _sanitize(product, str)
+        self.release = _sanitize(release, str)
+        self.version = _sanitize(version, str)
+        self.revision = _sanitize(revision, str)
+
+    def __repr__(self):
+        return '<Header>'
+
+    def __str__(self):
+        if self.pdmeta is not None:
+            return ', '.join(('%s: "%s"' % (name, getattr(self, name)) for name in self.attributes))
+        else:
+            return ''
 
 class Mo(object):
     default_flags = [False, True, True, True]
@@ -647,12 +668,40 @@ class MetaParser(object):
 
     def parse(self):
         mos = []
+
+        self.get()
+        header = self.header()
+
         while True:
-            if self.get().kind == MetaTokenKind.END:
+            if self.cur.kind == MetaTokenKind.END:
                 break
             mos.append(self.mo())
+            self.get()
 
-        return TranslationUnit(mos)
+        return TranslationUnit(header, mos)
+
+    def header(self):
+        if not self.cached_comment:
+            return Header()
+        doc = self.cached_comment.pop(0).value
+        if doc[:3] != '///':
+            return Header()
+
+        def read(text):
+            sre = re.compile('[a-z]+\s*:\s*"[^"]*"')
+            cursor = 0
+            while True:
+                match = sre.search(doc, cursor)
+                if not match:
+                    break
+                cursor = match.end()
+                name, value = match.group().split(':', 1)
+                name = name.strip()
+                value = value.strip().strip('"')
+                yield name, value
+
+        attrs = {name: value for name, value in read(doc[3:]) if name in Header.attributes}
+        return Header(**attrs)
 
     def mo(self):
         doc = None
@@ -969,7 +1018,10 @@ class MetaGenerator(object):
         open(filename, 'w').write(self.to_string())
 
     def to_string(self):
-        return '\n'.join(self.mo(mo) for mo in self.tu.mos)
+        return '%s\n%s' % (self.header(self.tu.header), '\n'.join(self.mo(mo) for mo in self.tu.mos))
+
+    def header(self, header):
+        return '/// %s\n' % header
 
     def mo(self, mo):
         out = ''
@@ -1120,10 +1172,6 @@ class XmlParser(object):
     def from_file(cls, filename=None):
         return cls(open(filename).read(), filename)
 
-    def parse(self):
-        mos = [self.mo(mo) for mo in self.et.findall('.//managedObject')]
-        return TranslationUnit(mos)
-
     def error(self, msg, elem):
         raise XmlParserError(msg, self.filename, elem.sourceline, self.input)
 
@@ -1146,6 +1194,26 @@ class XmlParser(object):
             if value is None:
                 self.error('expected %s in "%s" attribute' % (typename, attr), tag)
         return value
+
+    def parse(self):
+        pdmeta = self.et
+        if pdmeta.tag != 'pdmeta':
+            self.error('expected "pdmeta" as the root tag', pdmeta)
+        hdrtag = pdmeta.find('header')
+        if hdrtag is None:
+            self.error('expected "header" tag', pdmeta)
+        header = self.header(pdmeta, hdrtag)
+        mos = [self.mo(mo) for mo in pdmeta.findall('managedObject')]
+        return TranslationUnit(header, mos)
+
+    def header(self, pdmeta, header):
+        version = self.get(pdmeta, 'version')
+        domain = self.get(header, 'domain')
+        product = self.get(header, 'product')
+        release = self.get(header, 'release')
+        version = self.get(header, 'version')
+        revision = self.get(header, 'revision')
+        return Header(version, domain, product, release, version, revision)
 
     def mo(self, mo):
         name = self.get(mo, 'class')
@@ -1335,12 +1403,22 @@ class XmlGenerator(object):
         open(filename, 'w').write(self.to_string())
 
     def to_string(self):
-        root = ET.Element('pdmeta')
+        header = self.header(self.tu.header)
         for mo in self.tu.mos:
-            self.mo(root, mo)
+            self.mo(header, mo)
         hdr = '''<?xml version="1.0" encoding="utf-8"?>\n'''  # lxml would put single quotes...
-        body = ET.tostring(root, pretty_print=True)
+        body = ET.tostring(header, pretty_print=True)
         return hdr + body
+
+    def header(self, header):
+        pelem = ET.Element('pdmeta', version=header.version)
+        helem = ET.SubElement(pelem, 'header')
+        helem.set('domain', header.domain)
+        helem.set('product', header.product)
+        helem.set('release', header.release)
+        helem.set('version', header.version)
+        helem.set('revision', header.revision)
+        return pelem
 
     def mo(self, parent, mo):
         moelem = ET.SubElement(parent, 'managedObject', {'class': mo.name})

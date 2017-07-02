@@ -52,6 +52,7 @@ class TestParser():
     def test_example(self):
         tu = parse('example.meta')
         assert str(tu) == '''\
+pdmeta: "1.7", domain: "foo", product: "bar", release: "AX-19.2", version: "1.5.3.0.beta", revision: "1982713"
 mo(cd) MACHINE_L: SENSOR(1) WHEEL(12) ARM  // This is an example managed object: The Machine.
     required struct StateBox
         repeated enum FaultStatus
@@ -87,6 +88,7 @@ mo(cd) MACHINE_L: SENSOR(1) WHEEL(12) ARM  // This is an example managed object:
     def test_configure(self):
         tu = parse('configure.meta')
         assert str(tu) == '''\
+pdmeta: "", domain: "", product: "", release: "", version: "", revision: ""
 mo CONFIGURE_MECHANISM_TASK: RESULT
     required struct AlphaDelta
         repeated struct Modified
