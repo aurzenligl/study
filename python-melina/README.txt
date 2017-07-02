@@ -1,11 +1,8 @@
 meta recursive-descent parser
 ----------------------------------------------------------------------
 
-[non-scalar fields with large/small letter]
-clear the confusion by error checks
-
 [header]
-/// pdmeta: 2.2, domain: asf, product: okas, release: aoka, version: 1022.3, revision: $Revision$
+/// pdmeta: "2.2", domain: "asf", product: "okas", release: "aoka", version: "1022.3", revision: "$Revision$"
 
 [add demo documentation]
 present all features in one .meta file
