@@ -88,30 +88,30 @@ mo(cd) MACHINE_L: SENSOR(1) WHEEL(12) ARM  // Mo documentation
         tu = parse('configure.xml')
         assert str(tu) == '''\
 mo CONFIGURE_MECHANISM_TASK: RESULT(1)  // Configure mechanism task
-    required struct alphaDelta  // Alpha configuration
-        repeated(100) struct modified  // Modified field
+    required struct AlphaDelta  // Alpha configuration
+        repeated(100) struct Modified  // Modified field
             required string(0..32767) dn [default = ""]  // The dn param
             required int(0..9500) param [units = "octets"]  // The param
-    required struct betaDelta  // Beta configuration
-        repeated(100) struct added  // Added field
+    required struct BetaDelta  // Beta configuration
+        repeated(100) struct Added  // Added field
             required string(0..32767) devDn [default = "foo-bar"]  // The dn param
             required int(0..65535) id [units = ""]  // The id
             required int(0..9500) param  // The param
-        repeated(100) struct modified  // Modified field
+        repeated(100) struct Modified  // Modified field
             required string(0..32767) dn  // The dn param
             required int(0..9500) param  // The param
-        repeated(100) struct removed  // Removed field
+        repeated(100) struct Removed  // Removed field
             required string(0..32767) dn  // The dn param
-    required struct gammaDelta  // Gamma configuration
-        repeated(10) struct modified  // Modified field
+    required struct GammaDelta  // Gamma configuration
+        repeated(10) struct Modified  // Modified field
             required string(0..32767) dn  // The dn param
-            optional struct config  // The config
+            optional struct Config  // The config
                 optional int(0, 9.00, 0.00000001) param  // The param
-                optional struct gammaConfig  // The gamma config
-                    required enum attitude [default = 0]  // The attitude
+                optional struct GammaConfig  // The gamma config
+                    required enum Attitude [default = 0]  // The attitude
                         Disabled = 0
                         Enabled = 1
-                repeated(9999) struct gammaGimmickConfig  // The gamma gimmick config
+                repeated(9999) struct GammaGimmickConfig  // The gamma gimmick config
                     required string(0..32767) dn  // The dn param
                     required int rate [units = "octets"]  // The rate param
                     required int size  // The size param

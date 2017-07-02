@@ -1,4 +1,4 @@
 mo NAME
 {
-    repeated enum Name;
+    repeated enum name;
 };

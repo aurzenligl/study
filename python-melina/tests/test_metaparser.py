@@ -29,10 +29,10 @@ class TestParserErrors():
             ('parser_mo_child_list_2ndname.meta', ':2:1: error: expected mo child name\n{};\n^\n'),
             ('parser_field_keyw.meta', ':3:5: error: expected field definition\n    unknown x;\n    ^\n'),
             ('parser_struct_name.meta', ':3:20: error: expected struct name\n    optional struct;\n                   ^\n'),
-            ('parser_struct_lcb.meta', ':3:25: error: expected struct definition\n    optional struct Name;\n                        ^\n'),
-            ('parser_struct_semi.meta', ':3:27: error: expected semicolon after struct definition\n    optional struct Name {}\n                          ^\n'),
+            ('parser_struct_lcb.meta', ':3:25: error: expected struct definition\n    optional struct name;\n                        ^\n'),
+            ('parser_struct_semi.meta', ':3:27: error: expected semicolon after struct definition\n    optional struct name {}\n                          ^\n'),
             ('parser_enum_name.meta', ':3:19: error: expected enum name\n    repeated enum {};\n                  ^\n'),
-            ('parser_enum_lcb.meta', ':3:23: error: expected enum definition\n    repeated enum Name;\n                      ^\n'),
+            ('parser_enum_lcb.meta', ':3:23: error: expected enum definition\n    repeated enum name;\n                      ^\n'),
             ('parser_enum_rcb.meta', ':6:9: error: expected brace closing enum definition\n        B = 2\n        ^\n'),
             ('parser_enum_semi.meta', ':6:5: error: expected semicolon after enum definition\n    }\n    ^\n'),
             ('parser_enumerator_list_value.meta', ':5:13: error: expected enumerator value\n        A = novalue\n            ^\n'),
@@ -88,30 +88,30 @@ mo(cd) MACHINE_L: SENSOR(1) WHEEL(12) ARM  // This is an example managed object:
         tu = parse('configure.meta')
         assert str(tu) == '''\
 mo CONFIGURE_MECHANISM_TASK: RESULT
-    required struct alphaDelta
-        repeated struct modified
+    required struct AlphaDelta
+        repeated struct Modified
             required string dn [default = ""]
             required int param
-    required struct betaDelta
-        repeated struct added
+    required struct BetaDelta
+        repeated struct Added
             required string devDn [default = "foo-bar"]
             required int id
             required int param
-        repeated struct modified
+        repeated struct Modified
             required string dn
             required int param
-        repeated struct removed
+        repeated struct Removed
             required string dn
-    required struct gammaDelta  // Gamma can be explained here. There is no added/removed as Gamma Software deployment/hardware decide how many gammas exist in given execution.
-        repeated struct modified
+    required struct GammaDelta  // Gamma can be explained here. There is no added/removed as Gamma Software deployment/hardware decide how many gammas exist in given execution.
+        repeated struct Modified
             required string dn
-            optional struct config
+            optional struct Config
                 optional int param
-                optional struct gammaConfig
-                    required enum attitude
+                optional struct GammaConfig
+                    required enum Attitude
                         Disabled = 0
                         Enabled = 1
-                repeated struct gammaGimmickConfig
+                repeated struct GammaGimmickConfig
                     required string dn
                     required int rate
                     required int size

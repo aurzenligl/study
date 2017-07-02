@@ -1,6 +1,6 @@
 mo NAME
 {
-    repeated enum Name
+    repeated enum name
     {
         A = 1
         B = 2

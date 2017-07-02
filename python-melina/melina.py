@@ -759,11 +759,9 @@ class MetaParser(object):
         if not (self.cur.kind == MetaTokenKind.KEYW and self.cur.value in ('struct', 'enum', 'bool', 'int', 'string')):
             raise MetaParserError('expected field definition', self.filename, self.cur.span)
         if self.cur.pair == (MetaTokenKind.KEYW, 'struct'):
-            type_ = self.struct()
-            name = type_.name
+            type_, name = self.struct()
         elif self.cur.pair == (MetaTokenKind.KEYW, 'enum'):
-            type_ = self.enum()
-            name = type_.name
+            type_, name = self.enum()
         else:
             type_, name = self.scalar()
 
@@ -782,6 +780,7 @@ class MetaParser(object):
             raise MetaParserError('expected struct name', self.filename, self.cur.span)
 
         name = self.cur.value
+        typename = name[0].upper() + name[1:]
         fields = []
 
         if self.get().kind != MetaTokenKind.LCB:
@@ -797,7 +796,7 @@ class MetaParser(object):
         if self.get().kind != MetaTokenKind.SEMI:
             raise MetaParserError('expected semicolon after struct definition', self.filename, prev.span)
 
-        return Struct(name, fields)
+        return Struct(typename, fields), name
 
     def enum(self):
         assert self.cur.pair == (MetaTokenKind.KEYW, 'enum')
@@ -806,6 +805,7 @@ class MetaParser(object):
             raise MetaParserError('expected enum name', self.filename, self.cur.span)
 
         name = self.cur.value
+        typename = name[0].upper() + name[1:]
 
         default = None
         if self.get().kind == MetaTokenKind.LSB:
@@ -839,7 +839,7 @@ class MetaParser(object):
             if default not in ((x.value for x in enumerators)):
                 raise MetaParserError('expected default value corresponding to enumerator', self.filename, deftok.span)
 
-        return Enum(name, enumerators, default)
+        return Enum(typename, enumerators, default), name
 
     def enumerator_list(self):
         enumerators = []
@@ -1014,9 +1014,9 @@ class MetaGenerator(object):
                 out += '(%s)' % field.cardinality.max_count
             out += ' '
         if isinstance(field.type, Struct):
-            out += self.struct(field.type)
+            out += self.struct(field.type, field.name)
         elif isinstance(field.type, Enum):
-            out += self.enum(field.type)
+            out += self.enum(field.type, field.name)
         else:
             out += self.scalar(field.type, field.name)
             if field.doc:
@@ -1024,13 +1024,13 @@ class MetaGenerator(object):
         out += '\n'
         return out
 
-    def struct(self, struct_):
-        out = 'struct %s\n{\n' % struct_.name
+    def struct(self, struct_, name):
+        out = 'struct %s\n{\n' % name
         out += _indent(self.fields(struct_.fields), 4) + '};'
         return out
 
-    def enum(self, enum_):
-        out = 'enum %s' % enum_.name
+    def enum(self, enum_, name):
+        out = 'enum %s' % name
         if enum_.default is not None:
             out += ' [default = %s]' % enum_.default
         out += '\n{\n'
@@ -1159,8 +1159,6 @@ class XmlParser(object):
         return value
 
     def mo(self, mo):
-        '''TODO [langfeature] add hidden/create/update/delete flags to mo'''
-
         name = self.get(mo, 'class')
         doc = mo.get('fullName')
         flags = [
@@ -1178,20 +1176,16 @@ class XmlParser(object):
         return Mo(name, fields, children, doc, flags)
 
     def mo_child_list(self, mo):
-        '''TODO [langfeature] add maxOccurs="1" to mo children'''
-
         children = []
         for child in mo.findall('childManagedObject'):
-            '''TODO [langfeature] maxOccurs in children'''
             name = self.get(child, 'class')
             max_count = self.get_maybe(child, 'maxOccurs', _nonnegative_int, 'non-negative integer')
             children.append(MoChild(name, max_count))
         return children
 
     def field(self, field):
-        '''TODO [langfeature] field name has to begin with small letter (xml)'''
-        '''TODO [langfeature] enum/struct name has to begin with capital letter (meta)'''
         name = self.get(field, 'name')
+        typename = name[0].upper() + name[1:]
         doc = field.get('fullName')
 
         max_occurs = field.get('maxOccurs')
@@ -1220,10 +1214,10 @@ class XmlParser(object):
         complex_ = field.find('complexType')
         simple = field.find('simpleType')
         if complex_ is not None:
-            type_ = self.struct(complex_, name)
+            type_ = self.struct(complex_, typename)
         elif simple is not None:
             if simple.find('enumeration') is not None:
-                type_ = self.enum(simple, name)
+                type_ = self.enum(simple, typename)
             else:
                 type_ = self.scalar(simple)
         else:

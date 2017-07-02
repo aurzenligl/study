@@ -3,16 +3,16 @@
  */
 mo(cd) MACHINE_L -> SENSOR(1), WHEEL(12), ARM
 {
-    struct StateBox
+    struct stateBox
     {
-        repeated enum FaultStatus { Empty, Disconnected, RoofFlewOff };
-        enum AdminStatus { Locked, Unlocked };
-        enum AvailStatus [default = 1] { Online, Offline };  /// Enum can be documented too.
+        repeated enum faultStatus { Empty, Disconnected, RoofFlewOff };
+        enum adminStatus { Locked, Unlocked };
+        enum availStatus [default = 1] { Online, Offline };  /// Enum can be documented too.
     };
 
-    optional struct Core
+    optional struct core
     {
-        repeated enum Types
+        repeated enum types
         {
             T1 = 1,
             T2 = 2,
@@ -24,7 +24,7 @@ mo(cd) MACHINE_L -> SENSOR(1), WHEEL(12), ARM
          * This is the heart
          * of the machine.
          */
-        repeated struct Numbers
+        repeated struct numbers
         {
             int x [default = 0];
             int(-12..42) xx [default = -4];

@@ -1,4 +1,4 @@
 mo NAME
 {
-    optional struct Name;
+    optional struct name;
 };

@@ -19,16 +19,16 @@ class TestGenerator():
  */
 mo(cd) MACHINE_L -> SENSOR(1), WHEEL(12), ARM
 {
-    struct StateBox
+    struct stateBox
     {
-        repeated enum FaultStatus
+        repeated enum faultStatus
         {
             Empty = 0,
             Disconnected = 1,
             RoofFlewOff = 2
         };
 
-        enum AdminStatus
+        enum adminStatus
         {
             Locked = 0,
             Unlocked = 1
@@ -37,16 +37,16 @@ mo(cd) MACHINE_L -> SENSOR(1), WHEEL(12), ARM
         /**
          * Enum can be documented too.
          */
-        enum AvailStatus [default = 1]
+        enum availStatus [default = 1]
         {
             Online = 0,
             Offline = 1
         };
     };
 
-    optional struct Core
+    optional struct core
     {
-        repeated enum Types
+        repeated enum types
         {
             T1 = 1,
             T2 = 2,
@@ -57,7 +57,7 @@ mo(cd) MACHINE_L -> SENSOR(1), WHEEL(12), ARM
         /**
          * This is the heart of the machine.
          */
-        repeated struct Numbers
+        repeated struct numbers
         {
             int x [default = 0];
             int(-12..42) xx [default = -4];

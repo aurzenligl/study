@@ -20,22 +20,22 @@ class TestGenerator():
     <childManagedObject class="SENSOR" maxOccurs="1"/>
     <childManagedObject class="WHEEL" maxOccurs="12"/>
     <childManagedObject class="ARM"/>
-    <p name="StateBox" maxOccurs="1">
+    <p name="stateBox" maxOccurs="1">
       <complexType>
-        <p name="FaultStatus" maxOccurs="999999">
+        <p name="faultStatus" maxOccurs="999999">
           <simpleType base="integer">
             <enumeration value="0" text="Empty"/>
             <enumeration value="1" text="Disconnected"/>
             <enumeration value="2" text="RoofFlewOff"/>
           </simpleType>
         </p>
-        <p name="AdminStatus" maxOccurs="1">
+        <p name="adminStatus" maxOccurs="1">
           <simpleType base="integer">
             <enumeration value="0" text="Locked"/>
             <enumeration value="1" text="Unlocked"/>
           </simpleType>
         </p>
-        <p name="AvailStatus" maxOccurs="1">
+        <p name="availStatus" maxOccurs="1">
           <simpleType base="integer">
             <enumeration value="0" text="On_line"/>
             <enumeration value="1" text="Offline"/>
@@ -44,16 +44,16 @@ class TestGenerator():
         </p>
       </complexType>
     </p>
-    <p name="Core" maxOccurs="1">
+    <p name="core" maxOccurs="1">
       <creation priority="optional"/>
       <complexType>
-        <p name="Types" maxOccurs="999999">
+        <p name="types" maxOccurs="999999">
           <simpleType base="integer">
             <enumeration value="1" text="T1"/>
             <enumeration value="2" text="T2"/>
           </simpleType>
         </p>
-        <p name="Numbers" maxOccurs="999999">
+        <p name="numbers" maxOccurs="999999">
           <complexType>
             <p name="x" maxOccurs="1">
               <simpleType base="integer">
