@@ -1249,7 +1249,7 @@ class XmlParser(object):
                 tag = simple.find('default')
                 if tag is None:
                     return
-                value = self.get(tag, 'value', _bool, '"true" or "false"')
+                return self.get(tag, 'value', _bool, '"true" or "false"')
 
             return Bool(get_default(self, simple))
 
