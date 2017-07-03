@@ -1207,13 +1207,13 @@ class XmlParser(object):
         return TranslationUnit(header, mos)
 
     def header(self, pdmeta, header):
-        version = self.get(pdmeta, 'version')
+        pdmetav = self.get(pdmeta, 'version')
         domain = self.get(header, 'domain')
         product = self.get(header, 'product')
         release = self.get(header, 'release')
         version = self.get(header, 'version')
         revision = self.get(header, 'revision')
-        return Header(version, domain, product, release, version, revision)
+        return Header(pdmetav, domain, product, release, version, revision)
 
     def mo(self, mo):
         name = self.get(mo, 'class')
@@ -1411,7 +1411,7 @@ class XmlGenerator(object):
         return hdr + body
 
     def header(self, header):
-        pelem = ET.Element('pdmeta', version=header.version)
+        pelem = ET.Element('pdmeta', version=header.pdmeta)
         helem = ET.SubElement(pelem, 'header')
         helem.set('domain', header.domain)
         helem.set('product', header.product)

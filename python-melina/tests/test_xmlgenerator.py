@@ -15,7 +15,7 @@ class TestGenerator():
         xml = generate(tu)
         assert xml == '''\
 <?xml version="1.0" encoding="utf-8"?>
-<pdmeta version="1.5.3.0.beta">
+<pdmeta version="1.7">
   <header domain="foo" product="bar" release="AX-19.2" version="1.5.3.0.beta" revision="1982713"/>
   <managedObject class="MACHINE_L" fullName="Mo documentation" hidden="false" create="true" update="false" delete="true">
     <childManagedObject class="SENSOR" maxOccurs="1"/>

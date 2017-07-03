@@ -55,7 +55,7 @@ class TestParser():
     def test_example(self):
         tu = parse('example.xml')
         assert str(tu) == '''\
-pdmeta: "1.5.3.0.beta", domain: "foo", product: "bar", release: "AX-19.2", version: "1.5.3.0.beta", revision: "1982713"
+pdmeta: "1.7", domain: "foo", product: "bar", release: "AX-19.2", version: "1.5.3.0.beta", revision: "1982713"
 mo(cd) MACHINE_L: SENSOR(1) WHEEL(12) ARM  // Mo documentation
     required struct StateBox
         repeated enum FaultStatus
