@@ -76,3 +76,8 @@ class TestDriver():
         ret = melina.main('--meta-stdout --xml-stdout short.xml')
         assert ret == melina.EXIT_FAILURE
         assert '--xml-stdout: not allowed with argument --meta-stdout' in capsys.readouterr()[1]
+
+    def test_demo(self, capsys):
+        ret = melina.main(fromdata('demo.meta'))
+        assert ret == melina.EXIT_OK
+        assert 'Your input is beautiful! No output selected though.\n' in capsys.readouterr()[1]
