@@ -1,0 +1,8 @@
+#!/bin/bash
+
+# Facilitates interactive testing with virtualenv produced by tox.
+# Script should be used as '. init-tox-env'.
+
+projectdir=`dirname $0`
+tox --notest && source ${projectdir}/.tox/python/bin/activate && cd ${projectdir}/test
+
