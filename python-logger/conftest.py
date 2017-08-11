@@ -1,35 +1,8 @@
 import os
+import sys
 import pytest
 import logging
 from process import process
-
-'''
-cleanup todo list (email todo, written todo, file todo)
-
-multiple hooks
-nested conftests
-logging fixtures
-logging libraries
-log levels
-incorrect logger names
-parametrized tests
-tests as class methods
-log from subprocess
-log format override
-
-1. see other plugins
-2. see cookie cutter
-3. see plugin tests
-4. plugin repo + layout
-5. test plugin
-6. readme to explain API
-7. docstrings for functions, classes
-8. release on pypi
-'''
-
-must_loggers = ['problem']
-configurable_loggers = ['setup', 'im', 'data', 'proc', 'daemon']
-default_loggers = ['setup']
 
 def pytest_addoption(parser):
     def comma_delimited_loggers(delimited_strings):
@@ -45,25 +18,13 @@ def pytest_addoption(parser):
                      help='Run each test the specified number of times')
     parser.addoption('--error', action='store_true',
                      help='Cause failure during test run')
-    parser.addoption('--log', default=default_loggers, metavar='LOGGER,...',
-                     type=comma_delimited_loggers,
-                     help='Pick configurable loggers for stdout from: %s'
-                        % ', '.join(configurable_loggers))
-    parser.addoption('--logall', action='store_true',
-                     help='Pick all loggers for stdout')
-    parser.addoption('--logflat', action='store_true',
-                     help='Log all to single logs file.')
-
-def pytest_logger_stdoutloggers(item):
-    option = item.config.option
-    return must_loggers + (option.logall and configurable_loggers or option.log)
-
-def pytest_logger_fileloggers(item):
-    logflat = item.config.option.logflat
-    return logflat and [''] or (must_loggers + configurable_loggers)
 
 def pytest_logger_logdirlink(config):
     return os.path.join(os.path.dirname(__file__), 'logs')
+
+def pytest_logger_config(logger_config):
+    logger_config.add_loggers(['setup', 'im', 'data', 'proc', 'daemon'], stdout_level=logging.INFO)
+    logger_config.set_log_option_default('setup,im')
 
 def pytest_generate_tests(metafunc):
     count = metafunc.config.option.count
