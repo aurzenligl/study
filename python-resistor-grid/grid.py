@@ -7,7 +7,7 @@ class Graphizer:
         self.count = 0
         self.name = name
     def __call__(self, nodes, edges):
-        g = gv.Graph(format='svg')
+        g = gv.Graph(format='svg', engine='neato')
         for n in nodes:
             g.node(n)
         for e in edges:
@@ -16,7 +16,8 @@ class Graphizer:
         self.count += 1
     def from_graph(self, graph):
         nodes = [node.name for node in graph.nodes]
-        edges = [(neigh.node.name, node.name) for node in graph.nodes for neigh in node.neighbors]
+        edges = {neigh.edge: (neigh.node.name, node.name) for node in graph.nodes for neigh in node.neighbors}
+        edges = edges.values()
         self(nodes, edges)
 
 class Loc:
@@ -67,48 +68,22 @@ class Graph:
 
 g = Graphizer('snapshot')
 
-# TODO loop over making nodes
 # TODO label edge values
-# TODO single edges instead of doubles
 
 x = Graph()
-x.add(0, 0)
-x.add(0, 1)
-x.add(1, 0)
-x.add(1, 1)
+for addr in [(i, j) for i in range(0, 3) for j in range(0, 2)]:
+    x.add(*addr)
 g.from_graph(x)
 
-x = Graph()
-x.add(0, 0)
-x.add(0, 1)
-x.add(1, 0)
-x.add(1, 1)
-x.add(2, 0)
-x.add(2, 1)
-g.from_graph(x)
-
-x = Graph()
-x.add(-1, -1)
-x.add(-1, 0)
-x.add(-1, 1)
-x.add(-1, 2)
-x.add(0, -1)
-x.add(0, 0)
-x.add(0, 1)
-x.add(0, 2)
-x.add(1, -1)
-x.add(1, 0)
-x.add(1, 1)
-x.add(1, 2)
-x.add(2, -1)
-x.add(2, 0)
-x.add(2, 1)
-x.add(2, 2)
-x.add(3, -1)
-x.add(3, 0)
-x.add(3, 1)
-x.add(3, 2)
-g.from_graph(x)
+# x = Graph()
+# for addr in [(i, j) for i in range(-1, 4) for j in range(-1, 3)]:
+#     x.add(*addr)
+# g.from_graph(x)
+# 
+# x = Graph()
+# for addr in [(i, j) for i in range(-2, 5) for j in range(-2, 4)]:
+#     x.add(*addr)
+# g.from_graph(x)
 
 '''
 g([
