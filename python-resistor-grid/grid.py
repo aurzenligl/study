@@ -6,26 +6,30 @@ class Graphizer:
     def __init__(self, name):
         self.count = 0
         self.name = name
+
     def __call__(self, nodes, edges):
         g = gv.Graph(format='svg', engine='neato')
         for n in nodes:
-            g.node(n)
+            g.node(n[0], **n[1])
         for e in edges:
-            g.edge(*e)
+            g.edge(*e[0], **e[1])
         g.render(filename='%s.%03d.graph' % (self.name, self.count))
         self.count += 1
+
     def from_graph(self, graph):
-        nodes = [node.name for node in graph.nodes]
-        edges = [(edge.nodes[0].name, edge.nodes[1].name) for edge in graph.edges]
+        nodes = [(node.name, {'pos': '%s,%s!' % (node.loc[0] * 1, node.loc[1] * 1)}) for node in graph.nodes]
+        edges = [((edge.nodes[0].name, edge.nodes[1].name), {'label': str(edge.value)}) for edge in graph.edges]
         self(nodes, edges)
 
 class Node:
     def __init__(self, loc):
         self.loc = loc
         self.nonremovable = False
+
     @property
     def name(self):
         return '%s,%s' % self.loc
+
     def __repr__(self):
         return "<Node '%s'>" % self.name
 
@@ -84,9 +88,6 @@ class Graph:
 
 g = Graphizer('snapshot')
 
-# TODO label edge values
-# TODO set fixed node coordinates
-
 def reduce_serial(gr):
     def find_serial(gr):
         for node in gr.nodes:
@@ -121,10 +122,10 @@ g.from_graph(x)
 assert reduce_serial(x)
 g.from_graph(x)
 
-x = Graph()
-for loc in [(i, j) for i in range(-1, 4) for j in range(-1, 3)]:
-    x.add_node(loc)
-g.from_graph(x)
+#x = Graph()
+#for loc in [(i, j) for i in range(-1, 4) for j in range(-1, 3)]:
+#    x.add_node(loc)
+#g.from_graph(x)
 # 
 # x = Graph()
 # for addr in [(i, j) for i in range(-2, 5) for j in range(-2, 4)]:
