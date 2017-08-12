@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 import graphviz as gv
+from fractions import Fraction as frac
 
 class Graphizer:
     def __init__(self, name):
@@ -84,7 +85,7 @@ class Graph:
         ]
         for cand in candidates:
             if cand:
-                self.edges.append(Edge(node, cand, 1))
+                self.edges.append(Edge(node, cand, frac(1)))
 
 g = Graphizer('snapshot')
 
@@ -111,6 +112,40 @@ def reduce_serial(gr):
         gr.add_edge(e3)
         return node, e1, e2
 
+def reduce_parallel(gr):
+    pass
+
+def reduce_wye(gr):
+    def find_wye(gr):
+        for node in gr.nodes:
+            if not node.nonremovable:
+                nedges = gr.neighbors(node)
+                if len(nedges) == 3:
+                    return node, nedges
+
+    def to_delta(node, e1, e2, e3):
+        n1 = next(_ for _ in e1.nodes if _ is not node)
+        n2 = next(_ for _ in e2.nodes if _ is not node)
+        n3 = next(_ for _ in e3.nodes if _ is not node)
+        numer = e1.value * e2.value + e2.value * e3.value + e3.value * e1.value
+        ea = Edge(n2, n3, value=numer/e1.value)
+        eb = Edge(n3, n1, value=numer/e2.value)
+        ec = Edge(n1, n2, value=numer/e3.value)
+        return ea, eb, ec
+
+    res = find_wye(gr)
+    if res:
+        node, (e1, e2, e3) = res
+        gr.remove_node(node)
+        gr.remove_edge(e1)
+        gr.remove_edge(e2)
+        gr.remove_edge(e3)
+        ea, eb, ec = to_delta(node, e1, e2, e3)
+        gr.add_edge(ea)
+        gr.add_edge(eb)
+        gr.add_edge(ec)
+        return node, e1, e2, e3
+
 x = Graph()
 for loc in [(i, j) for i in range(0, 3) for j in range(0, 2)]:
     x.add_node(loc)
@@ -120,6 +155,8 @@ g.from_graph(x)
 assert reduce_serial(x)
 g.from_graph(x)
 assert reduce_serial(x)
+g.from_graph(x)
+assert reduce_wye(x)
 g.from_graph(x)
 
 #x = Graph()
