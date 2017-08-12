@@ -40,9 +40,12 @@ class Node:
     def __init__(self, loc):
         self.loc = loc
         self.neighbors = []
+        self.nonremovable = False
     @property
     def name(self):
         return '%s,%s' % (self.loc.x, self.loc.y)
+    def __str__(self):
+        return self.name + '\n' + ''.join(['-> ' + n.node.name + '\n' for n in self.neighbors])
 
 class Graph:
     def __init__(self):
@@ -53,6 +56,11 @@ class Graph:
         node = Node(Loc(x, y))
         self.nodes.append(node)
         self._link(node)
+    def nonremovable(self, x, y):
+        node = self.find(x, y)
+        if not node:
+            raise Exception('node not found')
+        node.nonremovable = True
     def _link(self, node):
         candidates = [
             self.find(node.loc.x+1, node.loc.y),
@@ -69,10 +77,37 @@ class Graph:
 g = Graphizer('snapshot')
 
 # TODO label edge values
+# TODO set fixed node coordinates
+
+def reduce_serial(gr):
+    def find_serial(gr):
+        for node in gr.nodes:
+            if not node.nonremovable:
+                if len(node.neighbors) == 2:
+                    return node
+    node = find_serial(gr)
+    if node:
+        gr.nodes.remove(node)
+        ne1, ne2 = node.neighbors
+        no1 = ne1.node
+        no2 = ne2.node
+        nb1 = next(nb for nb in no1.neighbors if nb.node is node)  # TODO neighbor.other_neighbor
+        nb2 = next(nb for nb in no2.neighbors if nb.node is node)
+        nb1.edge.value += nb2.edge.value
+        nb2.edge = nb1.edge
+        nb2.node = no1
+        nb1.node = no2
+        return nb2.edge
 
 x = Graph()
 for addr in [(i, j) for i in range(0, 3) for j in range(0, 2)]:
     x.add(*addr)
+x.nonremovable(0, 0)
+x.nonremovable(2, 1)
+g.from_graph(x)
+reduce_serial(x)
+g.from_graph(x)
+reduce_serial(x)
 g.from_graph(x)
 
 # x = Graph()
