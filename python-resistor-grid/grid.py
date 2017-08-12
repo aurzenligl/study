@@ -113,7 +113,27 @@ def reduce_serial(gr):
         return node, e1, e2
 
 def reduce_parallel(gr):
-    pass
+    def find_parallel(gr):
+        x = {}
+        for edge in gr.edges:
+            y = x.setdefault(tuple(sorted(edge.nodes)), [])
+            if not y:
+                y.append(edge)
+            else:
+                return y[0], edge
+
+    def merge_parallel(e1, e2):
+        merged_value = (e1.value * e2.value) / (e1.value + e2.value)
+        return Edge(*e1.nodes, value=merged_value)
+
+    res = find_parallel(gr)
+    if res:
+        e1, e2 = res
+        gr.remove_edge(e1)
+        gr.remove_edge(e2)
+        e3 = merge_parallel(e1, e2)
+        gr.add_edge(e3)
+        return e1, e2
 
 def reduce_wye(gr):
     def find_wye(gr):
@@ -157,6 +177,14 @@ g.from_graph(x)
 assert reduce_serial(x)
 g.from_graph(x)
 assert reduce_wye(x)
+g.from_graph(x)
+assert reduce_parallel(x)
+g.from_graph(x)
+assert reduce_parallel(x)
+g.from_graph(x)
+assert reduce_serial(x)
+g.from_graph(x)
+assert reduce_parallel(x)
 g.from_graph(x)
 
 #x = Graph()
