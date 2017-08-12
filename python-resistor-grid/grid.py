@@ -12,67 +12,75 @@ class Graphizer:
             g.node(n)
         for e in edges:
             g.edge(*e)
-        g.render(filename='%s.%03d' % (self.name, self.count))
+        g.render(filename='%s.%03d.graph' % (self.name, self.count))
         self.count += 1
     def from_graph(self, graph):
         nodes = [node.name for node in graph.nodes]
-        edges = {neigh.edge: (neigh.node.name, node.name) for node in graph.nodes for neigh in node.neighbors}
-        edges = edges.values()
+        edges = [(edge.nodes[0].name, edge.nodes[1].name) for edge in graph.edges]
         self(nodes, edges)
-
-class Loc:
-    def __init__(self, x, y):
-        self.x = x
-        self.y = y
-    def __eq__(self, rhs):
-        return self.x == rhs.x and self.y == rhs.y
-
-class Edge:
-    def __init__(self, value):
-        self.value = value
-
-class Neighbor:
-    def __init__(self, node, edge):
-        self.node = node
-        self.edge = edge
 
 class Node:
     def __init__(self, loc):
         self.loc = loc
-        self.neighbors = []
         self.nonremovable = False
     @property
     def name(self):
-        return '%s,%s' % (self.loc.x, self.loc.y)
-    def __str__(self):
-        return self.name + '\n' + ''.join(['-> ' + n.node.name + '\n' for n in self.neighbors])
+        return '%s,%s' % self.loc
+    def __repr__(self):
+        return "<Node '%s'>" % self.name
+
+class Edge:
+    def __init__(self, n1, n2, value):
+        self.nodes = (n1, n2)
+        self.value = value
+
+    def has(self, node):
+        return node in self.nodes
+
+    def __repr__(self):
+        return "<Edge '%s':'%s'='%s'>" % (self.nodes + (self.value,))
 
 class Graph:
     def __init__(self):
         self.nodes = []
-    def find(self, x, y):
-        return next((node for node in self.nodes if node.loc == Loc(x, y)), None)
-    def add(self, x, y):
-        node = Node(Loc(x, y))
+        self.edges = []
+
+    def find(self, loc):
+        return next((node for node in self.nodes if node.loc == loc), None)
+
+    def add_node(self, loc):
+        node = Node(loc)
         self.nodes.append(node)
         self._link(node)
-    def nonremovable(self, x, y):
-        node = self.find(x, y)
+
+    def add_edge(self, edge):
+        self.edges.append(edge)
+
+    def remove_node(self, node):
+        self.nodes.remove(node)
+
+    def remove_edge(self, edge):
+        self.edges.remove(edge)
+
+    def set_nonremovable(self, loc):
+        node = self.find(loc)
         if not node:
             raise Exception('node not found')
         node.nonremovable = True
+
+    def neighbors(self, node):
+        return [edge for edge in self.edges if edge.has(node)]
+
     def _link(self, node):
         candidates = [
-            self.find(node.loc.x+1, node.loc.y),
-            self.find(node.loc.x-1, node.loc.y),
-            self.find(node.loc.x, node.loc.y+1),
-            self.find(node.loc.x, node.loc.y-1),
+            self.find((node.loc[0]+1, node.loc[1])),
+            self.find((node.loc[0]-1, node.loc[1])),
+            self.find((node.loc[0], node.loc[1]+1)),
+            self.find((node.loc[0], node.loc[1]-1)),
         ]
         for cand in candidates:
             if cand:
-                edge = Edge(1)
-                cand.neighbors.append(Neighbor(node, edge))
-                node.neighbors.append(Neighbor(cand, edge))
+                self.edges.append(Edge(node, cand, 1))
 
 g = Graphizer('snapshot')
 
@@ -83,37 +91,40 @@ def reduce_serial(gr):
     def find_serial(gr):
         for node in gr.nodes:
             if not node.nonremovable:
-                if len(node.neighbors) == 2:
-                    return node
-    node = find_serial(gr)
-    if node:
-        gr.nodes.remove(node)
-        ne1, ne2 = node.neighbors
-        no1 = ne1.node
-        no2 = ne2.node
-        nb1 = next(nb for nb in no1.neighbors if nb.node is node)  # TODO neighbor.other_neighbor
-        nb2 = next(nb for nb in no2.neighbors if nb.node is node)
-        nb1.edge.value += nb2.edge.value
-        nb2.edge = nb1.edge
-        nb2.node = no1
-        nb1.node = no2
-        return nb2.edge
+                nedges = gr.neighbors(node)
+                if len(nedges) == 2:
+                    return node, nedges
+
+    def merge_serial_edges(node, e1, e2):
+        merged_nodes = [_ for _ in e1.nodes + e2.nodes if _ is not node]
+        merged_value = e1.value + e2.value
+        return Edge(*merged_nodes, value=merged_value)
+
+    res = find_serial(gr)
+    if res:
+        node, (e1, e2) = res
+        gr.remove_node(node)
+        gr.remove_edge(e1)
+        gr.remove_edge(e2)
+        e3 = merge_serial_edges(node, e1, e2)
+        gr.add_edge(e3)
+        return node, e1, e2
 
 x = Graph()
-for addr in [(i, j) for i in range(0, 3) for j in range(0, 2)]:
-    x.add(*addr)
-x.nonremovable(0, 0)
-x.nonremovable(2, 1)
+for loc in [(i, j) for i in range(0, 3) for j in range(0, 2)]:
+    x.add_node(loc)
+x.set_nonremovable((0, 0))
+x.set_nonremovable((2, 1))
 g.from_graph(x)
-reduce_serial(x)
+assert reduce_serial(x)
 g.from_graph(x)
-reduce_serial(x)
+assert reduce_serial(x)
 g.from_graph(x)
 
-# x = Graph()
-# for addr in [(i, j) for i in range(-1, 4) for j in range(-1, 3)]:
-#     x.add(*addr)
-# g.from_graph(x)
+x = Graph()
+for loc in [(i, j) for i in range(-1, 4) for j in range(-1, 3)]:
+    x.add_node(loc)
+g.from_graph(x)
 # 
 # x = Graph()
 # for addr in [(i, j) for i in range(-2, 5) for j in range(-2, 4)]:
