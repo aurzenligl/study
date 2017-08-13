@@ -65,11 +65,19 @@ class Graph:
     def add_edge(self, edge):
         self.edges.append(edge)
 
+    def add_edges(self, edges):
+        for edge in edges:
+            self.add_edge(edge)
+
     def remove_node(self, node):
         self.nodes.remove(node)
 
     def remove_edge(self, edge):
         self.edges.remove(edge)
+
+    def remove_edges(self, edges):
+        for edge in edges:
+            self.remove_edge(edge)
 
     def set_nonremovable(self, loc):
         node = self.find(loc)
@@ -131,42 +139,10 @@ def reduce_parallel(gr):
     res = find_parallel(gr)
     if res:
         e1, e2 = res
-        gr.remove_edge(e1)
-        gr.remove_edge(e2)
+        gr.remove_edges([e1, e2])
         e3 = merge_parallel(e1, e2)
         gr.add_edge(e3)
         return e1, e2
-
-def reduce_wye(gr):
-    def find_wye(gr):
-        for node in gr.nodes:
-            if not node.nonremovable:
-                nedges = gr.neighbors(node)
-                if len(nedges) == 3:
-                    return node, nedges
-
-    def to_delta(node, e1, e2, e3):
-        n1 = next(_ for _ in e1.nodes if _ is not node)
-        n2 = next(_ for _ in e2.nodes if _ is not node)
-        n3 = next(_ for _ in e3.nodes if _ is not node)
-        numer = e1.value * e2.value + e2.value * e3.value + e3.value * e1.value
-        ea = Edge(n2, n3, value=numer/e1.value)
-        eb = Edge(n3, n1, value=numer/e2.value)
-        ec = Edge(n1, n2, value=numer/e3.value)
-        return ea, eb, ec
-
-    res = find_wye(gr)
-    if res:
-        node, (e1, e2, e3) = res
-        gr.remove_node(node)
-        gr.remove_edge(e1)
-        gr.remove_edge(e2)
-        gr.remove_edge(e3)
-        ea, eb, ec = to_delta(node, e1, e2, e3)
-        gr.add_edge(ea)
-        gr.add_edge(eb)
-        gr.add_edge(ec)
-        return node, e1, e2, e3
 
 def reduce_star(gr):
     def find_star(gr):
@@ -186,10 +162,8 @@ def reduce_star(gr):
     if res:
         node, nedges = res
         gr.remove_node(node)
-        for e in nedges:
-            gr.remove_edge(e)
-        for e in to_delta(node, nedges):
-            gr.add_edge(e)
+        gr.remove_edges(nedges)
+        gr.add_edges(to_delta(node, nedges))
         return node, nedges
 
 def reduce(gr, printer=None):
@@ -211,6 +185,8 @@ for loc in [(i, j) for i in range(0, 3) for j in range(0, 2)]:
 x.set_nonremovable((0, 0))
 x.set_nonremovable((2, 1))
 reduce(x, g)
+assert len(x.edges) == 1
+print x.edges[0].value
 
 # x = Graph()
 # for loc in [(i, j) for i in range(-1, 4) for j in range(-1, 3)]:
