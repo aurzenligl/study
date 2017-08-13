@@ -99,50 +99,24 @@ class Graph:
             if cand:
                 self.edges.append(Edge(node, cand, frac(1)))
 
-def reduce_serial(gr):
-    def find_serial(gr):
-        for node in gr.nodes:
-            if not node.nonremovable:
-                nedges = gr.neighbors(node)
-                if len(nedges) == 2:
-                    return node, nedges
-
-    def merge_serial_edges(node, e1, e2):
-        merged_nodes = [_ for _ in e1.nodes + e2.nodes if _ is not node]
-        merged_value = e1.value + e2.value
-        return Edge(*merged_nodes, value=merged_value)
-
-    res = find_serial(gr)
-    if res:
-        node, (e1, e2) = res
-        gr.remove_node(node)
-        gr.remove_edge(e1)
-        gr.remove_edge(e2)
-        e3 = merge_serial_edges(node, e1, e2)
-        gr.add_edge(e3)
-        return node, e1, e2
-
 def reduce_parallel(gr):
     def find_parallel(gr):
         x = {}
         for edge in gr.edges:
             y = x.setdefault(tuple(sorted(edge.nodes)), [])
-            if not y:
-                y.append(edge)
-            else:
-                return y[0], edge
+            y.append(edge)
+        for _, edges in x.items():
+            if len(edges) > 1:
+                yield edges
 
-    def merge_parallel(e1, e2):
-        merged_value = (e1.value * e2.value) / (e1.value + e2.value)
-        return Edge(*e1.nodes, value=merged_value)
+    def merge_parallel(edges):
+        assert len(edges) == 2
+        merged_value = (edges[0].value * edges[1].value) / (edges[0].value + edges[1].value)
+        return Edge(*edges[0].nodes, value=merged_value)
 
-    res = find_parallel(gr)
-    if res:
-        e1, e2 = res
-        gr.remove_edges([e1, e2])
-        e3 = merge_parallel(e1, e2)
-        gr.add_edge(e3)
-        return e1, e2
+    for edges in find_parallel(gr):
+        gr.remove_edges(edges)
+        gr.add_edge(merge_parallel(edges))
 
 def reduce_star(gr):
     def find_star(gr):
@@ -167,51 +141,38 @@ def reduce_star(gr):
         return node, nedges
 
 def reduce(gr, printer=None):
-    from_graph(printer, gr)
     while True:
-        while reduce_parallel(gr):
-            pass
+        reduce_parallel(gr)
         from_graph(printer, gr)
         if reduce_star(gr):
-            from_graph(printer, gr)
             continue
         break
 
+def gen_reduced(level):
+    x = Graph()
+    for loc in [(i, j) for i in range(-level, 3 + level) for j in range(-level, 2 + level)]:
+        x.add_node(loc)
+    x.set_nonremovable((0, 0))
+    x.set_nonremovable((2, 1))
+    reduce(x)
+    assert len(x.edges) == 1
+    return x.edges[0].value
+
 g = Graphizer('snapshot')
 
-x = Graph()
-for loc in [(i, j) for i in range(0, 3) for j in range(0, 2)]:
-    x.add_node(loc)
-x.set_nonremovable((0, 0))
-x.set_nonremovable((2, 1))
-reduce(x, g)
-assert len(x.edges) == 1
-print x.edges[0].value
-
 # x = Graph()
-# for loc in [(i, j) for i in range(-1, 4) for j in range(-1, 3)]:
+# lev = 0
+# for loc in [(i, j) for i in range(0-lev, 3+lev) for j in range(0-lev, 2+lev)]:
 #     x.add_node(loc)
 # x.set_nonremovable((0, 0))
 # x.set_nonremovable((2, 1))
 # reduce(x, g)
+# assert len(x.edges) == 1
+# print x.edges[0].value
 
-# x = Graph()
-# for loc in [(i, j) for i in range(-2, 5) for j in range(-2, 4)]:
-#     x.add_node(loc)
-# x.set_nonremovable((0, 0))
-# x.set_nonremovable((2, 1))
-# reduce(x, g)
+# TODO profile performance and optimize
+# TODO edges may be held as dictionary: tuple of nodes may be the key
 
-# def gen_reduced(level):
-#     x = Graph()
-#     for loc in [(i, j) for i in range(-level, 3 + level) for j in range(-level, 2 + level)]:
-#         x.add_node(loc)
-#     x.set_nonremovable((0, 0))
-#     x.set_nonremovable((2, 1))
-#     reduce(x)
-#     assert len(x.edges) == 1
-#     return x.edges[0].value
-#
-# for i in range(10):
-#     val = gen_reduced(i)
-#     print i, val, float(val)
+for i in range(10):
+    val = gen_reduced(i)
+    print i, val, float(val)
