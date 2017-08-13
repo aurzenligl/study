@@ -22,6 +22,10 @@ class Graphizer:
         edges = [((edge.nodes[0].name, edge.nodes[1].name), {'label': str(edge.value)}) for edge in graph.edges]
         self(nodes, edges)
 
+def from_graph(printer, graph):
+    if printer:
+        printer.from_graph(graph)
+
 class Node:
     def __init__(self, loc):
         self.loc = loc
@@ -164,12 +168,12 @@ def reduce_wye(gr):
         gr.add_edge(ec)
         return node, e1, e2, e3
 
-def reduce_star4(gr):
+def reduce_star(gr):
     def find_star(gr):
         for node in gr.nodes:
             if not node.nonremovable:
                 nedges = gr.neighbors(node)
-                if len(nedges) == 4:
+                if len(nedges) > 1:
                     return node, nedges
 
     def to_delta(node, es):
@@ -180,99 +184,58 @@ def reduce_star4(gr):
 
     res = find_star(gr)
     if res:
-        node, (e1, e2, e3, e4) = res
+        node, nedges = res
         gr.remove_node(node)
-        gr.remove_edge(e1)
-        gr.remove_edge(e2)
-        gr.remove_edge(e3)
-        gr.remove_edge(e4)
-        for e in to_delta(node, [e1, e2, e3, e4]):
+        for e in nedges:
+            gr.remove_edge(e)
+        for e in to_delta(node, nedges):
             gr.add_edge(e)
-        return node, e1, e2, e3, e4
+        return node, nedges
 
-def reduce(gr, printer):
-    printer.from_graph(gr)
+def reduce(gr, printer=None):
+    from_graph(printer, gr)
     while True:
-        while reduce_serial(gr):
-            printer.from_graph(gr)
+        while reduce_parallel(gr):
             pass
-        if reduce_parallel(gr):
-            printer.from_graph(gr)
+        from_graph(printer, gr)
+        if reduce_star(gr):
+            from_graph(printer, gr)
             continue
-        if reduce_wye(gr):
-            printer.from_graph(gr)
-            continue
-        if reduce_star4(gr):
-            printer.from_graph(gr)
-            continue
-        return
+        break
 
 g = Graphizer('snapshot')
 
-# x = Graph()
-# for loc in [(i, j) for i in range(0, 3) for j in range(0, 2)]:
-#     x.add_node(loc)
-# x.set_nonremovable((0, 0))
-# x.set_nonremovable((2, 1))
-# reduce(x, g)
-
 x = Graph()
-for loc in [(i, j) for i in range(-1, 4) for j in range(-1, 3)]:
+for loc in [(i, j) for i in range(0, 3) for j in range(0, 2)]:
     x.add_node(loc)
 x.set_nonremovable((0, 0))
 x.set_nonremovable((2, 1))
 reduce(x, g)
 
-# g.from_graph(x)
-# assert reduce_serial(x)
-# g.from_graph(x)
-# assert reduce_serial(x)
-# g.from_graph(x)
-# assert reduce_wye(x)
-# g.from_graph(x)
-# assert reduce_parallel(x)
-# g.from_graph(x)
-# assert reduce_parallel(x)
-# g.from_graph(x)
-# assert reduce_serial(x)
-# g.from_graph(x)
-# assert reduce_parallel(x)
-# g.from_graph(x)
-
-#x = Graph()
-#for loc in [(i, j) for i in range(-1, 4) for j in range(-1, 3)]:
-#    x.add_node(loc)
-#g.from_graph(x)
-# 
 # x = Graph()
-# for addr in [(i, j) for i in range(-2, 5) for j in range(-2, 4)]:
-#     x.add(*addr)
-# g.from_graph(x)
+# for loc in [(i, j) for i in range(-1, 4) for j in range(-1, 3)]:
+#     x.add_node(loc)
+# x.set_nonremovable((0, 0))
+# x.set_nonremovable((2, 1))
+# reduce(x, g)
 
-'''
-g([
-    'A',
-    'B',
-    'C',
-], [
-    ('B', 'C'),
-])
-g([
-    'A',
-    'B',
-    'C',
-], [
-    ('B', 'C'),
-    ('A', 'B'),
-    ('A', 'A'),
-])
-g([
-], [
-    ('B', 'C'),
-    ('A', 'B'),
-    ('A', 'A'),
-    ('D', 'B'),
-    ('D', 'A'),
-])
-'''
+# x = Graph()
+# for loc in [(i, j) for i in range(-2, 5) for j in range(-2, 4)]:
+#     x.add_node(loc)
+# x.set_nonremovable((0, 0))
+# x.set_nonremovable((2, 1))
+# reduce(x, g)
 
+# def gen_reduced(level):
+#     x = Graph()
+#     for loc in [(i, j) for i in range(-level, 3 + level) for j in range(-level, 2 + level)]:
+#         x.add_node(loc)
+#     x.set_nonremovable((0, 0))
+#     x.set_nonremovable((2, 1))
+#     reduce(x)
+#     assert len(x.edges) == 1
+#     return x.edges[0].value
+#
+# for i in range(10):
+#     val = gen_reduced(i)
+#     print i, val, float(val)
