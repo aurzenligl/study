@@ -40,12 +40,12 @@ class Node:
 
 class Edge:
     def __init__(self, n1, n2, value):
-        self.nodes = (n1, n2)
+        self.nodes = tuple(sorted([n1, n2]))
         self.value = value
 
     @property
     def pair(self):
-        return tuple(sorted(self.nodes))
+        return self.nodes
 
     def has(self, node):
         return node in self.nodes
@@ -67,7 +67,11 @@ class Graph:
         self._link(node)
 
     def add_edge(self, edge):
-        self.edges.setdefault(edge.pair, []).append(edge)
+        found = self.edges.get(edge.pair, None)
+        if found:
+            found.value = merge_parallel(found.value, edge.value)
+        else:
+            self.edges[edge.pair] = edge
 
     def add_edges(self, edges):
         for edge in edges:
@@ -77,10 +81,7 @@ class Graph:
         self.nodes.remove(node)
 
     def remove_edge(self, edge):
-        edges = self.edges[edge.pair]
-        edges.remove(edge)
-        if not edges:
-            del self.edges[edge.pair]
+        del self.edges[edge.pair]
 
     def remove_edges(self, edges):
         for edge in edges:
@@ -93,7 +94,7 @@ class Graph:
         node.nonremovable = True
 
     def neighbors(self, node):
-        return [edge for nodes, edges in self.edges.items() if node in nodes for edge in edges]
+        return [edge for edge in self.edges.values() if node in edge.pair]
 
     def _link(self, node):
         candidates = [
@@ -106,19 +107,8 @@ class Graph:
             if cand:
                 self.add_edge(Edge(node, cand, frac(1)))
 
-def reduce_parallel(gr):
-    def find_parallel(gr):
-        for edges in [_ for _ in gr.edges.values() if len(_) > 1]:
-            yield [_ for _ in edges]
-
-    def merge_parallel(edges):
-        assert len(edges) == 2
-        merged_value = (edges[0].value * edges[1].value) / (edges[0].value + edges[1].value)
-        return Edge(*edges[0].nodes, value=merged_value)
-
-    for edges in find_parallel(gr):
-        gr.remove_edges(edges)
-        gr.add_edge(merge_parallel(edges))
+def merge_parallel(v1, v2):
+    return (v1 * v2) / (v1 + v2)
 
 def reduce_star(gr):
     def find_star(gr):
@@ -143,12 +133,11 @@ def reduce_star(gr):
         return node, nedges
 
 def reduce(gr, printer=None):
-    while True:
-        reduce_parallel(gr)
+    def do(gr):
         from_graph(printer, gr)
-        if reduce_star(gr):
-            continue
-        break
+        return reduce_star(gr)
+    while do(gr):
+        pass
 
 def gen_reduced(level):
     x = Graph()
@@ -157,9 +146,8 @@ def gen_reduced(level):
     x.set_nonremovable((0, 0))
     x.set_nonremovable((2, 1))
     reduce(x)
-    assert len(x.edges.values()) == 1
-    assert len(x.edges.values()[0]) == 1
-    return x.edges.values()[0][0].value
+    assert len(x.edges) == 1
+    return x.edges.values()[0].value
 
 g = Graphizer('snapshot')
 
@@ -172,9 +160,6 @@ g = Graphizer('snapshot')
 # reduce(x, g)
 # assert len(x.edges) == 1
 # print x.edges[0].value
-
-# TODO profile performance and optimize
-# TODO edges may be held as dictionary: tuple of nodes may be the key
 
 for i in range(6):
     val = gen_reduced(i)
