@@ -43,6 +43,10 @@ class Edge:
         self.nodes = (n1, n2)
         self.value = value
 
+    @property
+    def pair(self):
+        return tuple(sorted(self.nodes))
+
     def has(self, node):
         return node in self.nodes
 
@@ -52,7 +56,7 @@ class Edge:
 class Graph:
     def __init__(self):
         self.nodes = []
-        self.edges = []
+        self.edges = {}
 
     def find(self, loc):
         return next((node for node in self.nodes if node.loc == loc), None)
@@ -63,7 +67,7 @@ class Graph:
         self._link(node)
 
     def add_edge(self, edge):
-        self.edges.append(edge)
+        self.edges.setdefault(edge.pair, []).append(edge)
 
     def add_edges(self, edges):
         for edge in edges:
@@ -73,7 +77,10 @@ class Graph:
         self.nodes.remove(node)
 
     def remove_edge(self, edge):
-        self.edges.remove(edge)
+        edges = self.edges[edge.pair]
+        edges.remove(edge)
+        if not edges:
+            del self.edges[edge.pair]
 
     def remove_edges(self, edges):
         for edge in edges:
@@ -86,7 +93,7 @@ class Graph:
         node.nonremovable = True
 
     def neighbors(self, node):
-        return [edge for edge in self.edges if edge.has(node)]
+        return [edge for nodes, edges in self.edges.items() if node in nodes for edge in edges]
 
     def _link(self, node):
         candidates = [
@@ -97,17 +104,12 @@ class Graph:
         ]
         for cand in candidates:
             if cand:
-                self.edges.append(Edge(node, cand, frac(1)))
+                self.add_edge(Edge(node, cand, frac(1)))
 
 def reduce_parallel(gr):
     def find_parallel(gr):
-        x = {}
-        for edge in gr.edges:
-            y = x.setdefault(tuple(sorted(edge.nodes)), [])
-            y.append(edge)
-        for _, edges in x.items():
-            if len(edges) > 1:
-                yield edges
+        for edges in [_ for _ in gr.edges.values() if len(_) > 1]:
+            yield [_ for _ in edges]
 
     def merge_parallel(edges):
         assert len(edges) == 2
@@ -155,8 +157,9 @@ def gen_reduced(level):
     x.set_nonremovable((0, 0))
     x.set_nonremovable((2, 1))
     reduce(x)
-    assert len(x.edges) == 1
-    return x.edges[0].value
+    assert len(x.edges.values()) == 1
+    assert len(x.edges.values()[0]) == 1
+    return x.edges.values()[0][0].value
 
 g = Graphizer('snapshot')
 
