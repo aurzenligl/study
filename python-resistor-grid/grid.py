@@ -173,6 +173,6 @@ g = Graphizer('snapshot')
 # TODO profile performance and optimize
 # TODO edges may be held as dictionary: tuple of nodes may be the key
 
-for i in range(10):
+for i in range(6):
     val = gen_reduced(i)
     print i, val, float(val)
