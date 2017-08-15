@@ -1,7 +1,12 @@
+#!/usr/bin/pypy
 #!/usr/bin/env python
 
 import graphviz as gv
-from fractions import Fraction as frac
+
+def value_type(x):
+    return float(x)
+#     from fractions import Fraction as frac
+#     return frac(x)
 
 class Graphizer:
     def __init__(self, name):
@@ -19,7 +24,7 @@ class Graphizer:
 
     def from_graph(self, graph):
         nodes = [(node.name, {'pos': '%s,%s!' % (node.loc[0] * 1, node.loc[1] * 1)}) for node in graph.nodes]
-        edges = [((edge.nodes[0].name, edge.nodes[1].name), {'label': str(edge.value)}) for edge in graph.edges]
+        edges = [((edge.nodes[0].name, edge.nodes[1].name), {'label': str(edge.value)}) for edge in graph.edges.values()]
         self(nodes, edges)
 
 def from_graph(printer, graph):
@@ -105,7 +110,7 @@ class Graph:
         ]
         for cand in candidates:
             if cand:
-                self.add_edge(Edge(node, cand, frac(1)))
+                self.add_edge(Edge(node, cand, value_type(1)))
 
 def merge_parallel(v1, v2):
     return (v1 * v2) / (v1 + v2)
@@ -145,6 +150,7 @@ def gen_reduced(level):
         x.add_node(loc)
     x.set_nonremovable((0, 0))
     x.set_nonremovable((2, 1))
+    #x.set_nonremovable((0, 1))
     reduce(x)
     assert len(x.edges) == 1
     return x.edges.values()[0].value
@@ -152,15 +158,15 @@ def gen_reduced(level):
 g = Graphizer('snapshot')
 
 # x = Graph()
-# lev = 0
+# lev = 10
 # for loc in [(i, j) for i in range(0-lev, 3+lev) for j in range(0-lev, 2+lev)]:
 #     x.add_node(loc)
 # x.set_nonremovable((0, 0))
 # x.set_nonremovable((2, 1))
 # reduce(x, g)
 # assert len(x.edges) == 1
-# print x.edges[0].value
+# print x.edges.values()[0].value
 
-for i in range(6):
+for i in range(50):
     val = gen_reduced(i)
-    print i, val, float(val)
+    print i, val
