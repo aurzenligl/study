@@ -121,6 +121,8 @@ def merge_parallel(v1, v2):
 
 def reduce_star(gr):
     def find_star(gr):
+#         import random
+#         for node in sorted(gr.nodes, key=lambda k: random.random()):
         for node in gr.nodes:
             if not node.nonremovable:
                 nedges = gr.neighbors(node)
@@ -162,7 +164,7 @@ def gen_reduced(level):
 g = Graphizer('snapshot')
 
 # x = Graph()
-# lev = 10
+# lev = 6
 # for loc in [(i, j) for i in range(0-lev, 3+lev) for j in range(0-lev, 2+lev)]:
 #     x.add_node(loc)
 # x.set_nonremovable((0, 0))
