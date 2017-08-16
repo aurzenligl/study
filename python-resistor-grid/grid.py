@@ -35,6 +35,7 @@ class Node:
     def __init__(self, loc):
         self.loc = loc
         self.nonremovable = False
+        self.edges = []
 
     @property
     def name(self):
@@ -72,11 +73,12 @@ class Graph:
         self._link(node)
 
     def add_edge(self, edge):
-        found = self.edges.get(edge.pair, None)
-        if found:
+        found = self.edges.setdefault(edge.pair, edge)
+        if found is not edge:
             found.value = merge_parallel(found.value, edge.value)
         else:
-            self.edges[edge.pair] = edge
+            edge.nodes[0].edges.append(edge)
+            edge.nodes[1].edges.append(edge)
 
     def add_edges(self, edges):
         for edge in edges:
@@ -87,6 +89,8 @@ class Graph:
 
     def remove_edge(self, edge):
         del self.edges[edge.pair]
+        edge.nodes[0].edges.remove(edge)
+        edge.nodes[1].edges.remove(edge)
 
     def remove_edges(self, edges):
         for edge in edges:
@@ -99,7 +103,7 @@ class Graph:
         node.nonremovable = True
 
     def neighbors(self, node):
-        return [edge for edge in self.edges.values() if node in edge.pair]
+        return [_ for _ in node.edges]
 
     def _link(self, node):
         candidates = [
