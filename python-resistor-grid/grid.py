@@ -1,12 +1,11 @@
-#!/usr/bin/pypy
 #!/usr/bin/env python
 
 import graphviz as gv
 
 def value_type(x):
     return float(x)
-#     from fractions import Fraction as frac
-#     return frac(x)
+    #from fractions import Fraction as frac
+    #return frac(x)
 
 class Graphizer:
     def __init__(self, name):
@@ -121,8 +120,8 @@ def merge_parallel(v1, v2):
 
 def reduce_star(gr):
     def find_star(gr):
-#         import random
-#         for node in sorted(gr.nodes, key=lambda k: random.random()):
+        #import random
+        #for node in sorted(gr.nodes, key=lambda k: random.random()):
         for node in gr.nodes:
             if not node.nonremovable:
                 nedges = gr.neighbors(node)
@@ -163,16 +162,18 @@ def gen_reduced(level):
 
 g = Graphizer('snapshot')
 
-# x = Graph()
-# lev = 6
-# for loc in [(i, j) for i in range(0-lev, 3+lev) for j in range(0-lev, 2+lev)]:
-#     x.add_node(loc)
-# x.set_nonremovable((0, 0))
-# x.set_nonremovable((2, 1))
-# reduce(x, g)
-# assert len(x.edges) == 1
-# print x.edges.values()[0].value
+if 0:
+    x = Graph()
+    lev = 2
+    for loc in [(i, j) for i in range(0-lev, 3+lev) for j in range(0-lev, 2+lev)]:
+        x.add_node(loc)
+    x.set_nonremovable((0, 0))
+    x.set_nonremovable((2, 1))
+    reduce(x, g)
+    assert len(x.edges) == 1
+    print x.edges.values()[0].value
 
-for i in range(50):
-    val = gen_reduced(i)
-    print i, val
+if 1:
+    for i in range(20):
+        val = gen_reduced(i)
+        print i, val
