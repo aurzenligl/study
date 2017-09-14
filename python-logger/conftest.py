@@ -1,19 +1,9 @@
 import os
-import sys
 import pytest
 import logging
 from process import process
 
 def pytest_addoption(parser):
-    def comma_delimited_loggers(delimited_strings):
-        loggernames = delimited_strings.split(',')
-        for name in loggernames:
-            if name not in configurable_loggers:
-                import argparse
-                raise argparse.ArgumentTypeError('logger "%s" not found, choose from: %s'
-                                                 % (name, ', '.join(configurable_loggers)))
-        return loggernames
-
     parser.addoption('--count', type='int', metavar='COUNT',
                      help='Run each test the specified number of times')
     parser.addoption('--error', action='store_true',
