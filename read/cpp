@@ -52,7 +52,7 @@ __OK__ CppCon 2015: John Lakos “Value Semantics: It ain't about the syntax!, P
 __OK__ CppCon 2015: John Lakos “Value Semantics: It ain't about the syntax!, Part II" https://www.youtube.com/watch?v=0EvSxHxFknM
 __OK__ CppCon 2015: Gwendolyn Hunt “Secure C++ Programming” https://www.youtube.com/watch?v=Z_jhNuoczfw
 __OK__ CppCon 2015: Lawrence Crowl “Comparison is not simple, but it can be simpler" https://www.youtube.com/watch?v=fi0CQ7laiXE
-CppCon 2015: Roland Bock “Pruning Error Messages From Your C++ Template Code" https://www.youtube.com/watch?v=2ISqFW9fRws
+__OK__ CppCon 2015: Roland Bock “Pruning Error Messages From Your C++ Template Code" https://www.youtube.com/watch?v=2ISqFW9fRws
 CppCon 2015: Marshall Clow “string_view" https://www.youtube.com/watch?v=H9gAaNRoon4
 CppCon 2015: Ben Deane “Testing Battle.net (before deploying to millions of players)" https://www.youtube.com/watch?v=OPoZWnYIcP4
 CppCon 2015: Rachel Cheng & Michael VanLoon “Evolving Legacy Code" https://www.youtube.com/watch?v=i1Tis90DBEY
