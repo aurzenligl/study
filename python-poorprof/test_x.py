@@ -6,51 +6,61 @@ class state:
     stack = []
     end = None
     @staticmethod
-    def indent(mod = 0):
-        return (len(state.stack) + mod) * 4 * ' '
+    def indent():
+        return (len(state.stack) - 1) * 4 * ' '
 
 def next_suf(suf):
     return chr(ord(suf) + 1)
 
+def report(name, part, whole=None):
+    spart = '%.3f' % part if part else ''
+    swhole = '%.3f' % whole if whole else ''
+    print('pp: %6s %6s %s%s' % (spart, swhole, state.indent(), name))
+
 class poorprof(object):
     def __init__(self,name):
         self.name = name
-        self.suffix = None
+        self.count = 0
+
+    def _report(self, exit=False):
+        end = time.time()
+        part = '%.3f' % (end - self.start)
+        whole = '%.3f' % (end - self.rstart) if exit and self.count else ''
+        name = self.name if exit and not self.count else self.name + '.' + chr(ord('a') + self.count)
+        self.count += 1
+        print('pp: %6s %6s %s%s' % (part, whole, state.indent(), name))
+        return end
+
     def __enter__(self):
         if state.stack:
             start = state.stack[-1]._intermittent()
         else:
             start = time.time()
-        if not state.stack and state.end:
-            print('pp: %6s %6s %s' % ('%.3f' % (start-state.end), '', '--'))
-            state.end = None
         self.rstart = self.start = start
         state.stack.append(self)
+
+        if state.end:
+            report('--', start-state.end)
+            state.end = None
+
     def __exit__(self, ty, val, tb):
+        end = self._report(exit=True)
         assert state.stack.pop() is self
         if state.stack:
-            state.stack[-1]._reset()
-        end = time.time()
-        if not state.stack:
-            state.end = end
-        self.suffix = next_suf(self.suffix) if self.suffix else self.suffix
-        if self.suffix:
-            whole = '%.3f' % (end-self.rstart)
+            state.stack[-1].start = end
         else:
-            whole = ''
-        print('pp: %6s %6s %s%s' % ('%.3f' % (end-self.start), whole, state.indent(), repr(self)))
+            state.end = end
         return False
+
     def _intermittent(self):
-        self.suffix = next_suf(self.suffix) if self.suffix else 'a'
-        start, newstart = self._reset()
-        print('pp: %6s %6s %s%s' % ('%.3f' % (newstart-start), '', state.indent(-1), repr(self)))
-        return newstart
+        self.start = self._report()
+        return self.start
+        # TODO return self.start
+
     def _reset(self):
         start = self.start
         self.start = time.time()
         return start, self.start
-    def __repr__(self):
-        return '%s.%s' % (self.name, self.suffix) if self.suffix else self.name
 
 '''
 0000.00         context.a
