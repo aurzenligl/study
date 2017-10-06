@@ -12,6 +12,7 @@ class poorprof(object):
     def __init__(self,name):
         self.name = name
         self.count = 0
+        self.init = False
 
     def __enter__(self):
         if poorprof.stack:
@@ -35,18 +36,27 @@ class poorprof(object):
         return False
 
     def _intermittent(self):
-        self.start = end = self._report()
-        return end
+        if abs(time.time() - self.start) < 0.001:
+            # don't print line which separates two poorprof points,
+            # instead assume that this point started a little earlier
+            if not self.init:
+                self._print_empty(self.name)
+                self.init = True
+            return self.start
+        else:
+            self.start = end = self._report()
+            return end
 
     def _report(self, exit=False):
         is_intermittent = not exit or self.count
-        is_final = is_intermittent and exit
+        is_final = exit and self.rstart != self.start
 
         end = time.time()
         part = end - self.start
         whole = end - self.rstart if is_final else None
         name = self.name + '.' + chr(ord('a') + self.count) if is_intermittent else self.name
         self.count += 1
+        self.init = True
 
         self._print_report(name, part, whole)
 
@@ -58,3 +68,8 @@ class poorprof(object):
         swhole = '%.3f' % whole if whole else ''
         indent = (len(poorprof.stack) - 1) * 4 * ' '
         print('pp: %6s %6s %s%s' % (spart, swhole, indent, name))
+
+    @staticmethod
+    def _print_empty(name):
+        indent = (len(poorprof.stack) - 1) * 4 * ' '
+        print('pp: %6s %6s %s%s' % ('', '', indent, name))
