@@ -1,0 +1,3 @@
+#!/bin/bash
+
+cat /proc/`pgrep a.out`/smaps | egrep '(Private|Shared)_[CD]' | sort | uniq -c | sort -n | egrep -v ' (0|4|8) kB'
