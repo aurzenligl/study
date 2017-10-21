@@ -1,6 +1,7 @@
 #include <unistd.h>
 #include <sys/types.h>
 #include <sys/socket.h>
+#include <poll.h>
 
 #include <stdexcept>
 #include <assert.h>
@@ -103,16 +104,15 @@ namespace net
         return fd;
     }
 
-    std::string recv(int sockfd, size_t len)
+    void recv(int sockfd, std::string& msg, size_t len)
     {
-        std::string x(len, 0);
-        int got = ::recv(sockfd, &x[0], x.size(), 0);
+        msg.resize(len);
+        int got = ::recv(sockfd, &msg[0], msg.size(), 0);
         if (got < 0)
         {
             throw error("recv failed");
         }
-        x.resize(got);
-        return x;
+        msg.resize(got);
     }
 }
 
@@ -138,11 +138,12 @@ int main()
 
     sockaddr_in cli_addr;
     int cli_fd = net::accept(serv_fd, cli_addr);
-    printf("accept got fd: %d %08x:%04x\n", cli_fd, cli_addr.sin_addr.s_addr, cli_addr.sin_port);
+    printf("accept got fd: %d %08x:%04x\n", cli_fd, ntohl(cli_addr.sin_addr.s_addr), ntohs(cli_addr.sin_port));
 
     while (true)
     {
-        std::string msg = net::recv(cli_fd, read_buffer_len);
+        std::string msg;
+        net::recv(cli_fd, msg, read_buffer_len);
         if (msg.empty())
         {
             break;
