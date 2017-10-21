@@ -1,12 +1,15 @@
+#include <unistd.h>
 #include <sys/types.h>
 #include <sys/socket.h>
 
 #include <stdexcept>
+#include <assert.h>
+#include <string.h>
+#include <iostream>
+#include <string>
+#include <algorithm>
 
 #include <netinet/ip.h>
-#include <unistd.h>
-#include <string.h>
-#include <assert.h>
 
 //http://man7.org/linux/man-pages/man7/socket.7.html
 // O_NONBLOCK flag on a socket file descriptor using fcntl(2)
@@ -21,6 +24,12 @@
 //               file description.  Using this flag saves extra calls
 //               to fcntl(2) to achieve the same result.
 
+//http://man7.org/linux/man-pages/man2/recv.2.html
+//If no messages are available at the socket, the receive calls wait
+//      for a message to arrive, unless the socket is nonblocking (see
+//      fcntl(2)), in which case the value -1 is returned and the external
+//      variable errno is set to EAGAIN or EWOULDBLOCK.
+
 template <typename T>
 void zero(T& x)
 {
@@ -29,6 +38,8 @@ void zero(T& x)
 
 namespace net
 {
+    typedef unsigned char byte;
+
     struct error : std::runtime_error
     {
         using std::runtime_error::runtime_error;
@@ -51,7 +62,6 @@ namespace net
         {
             throw error("socket allocation failed");
         }
-        setsockopt(fd, SO_REUSEADDR, true);
         return fd;
     }
 
@@ -92,30 +102,56 @@ namespace net
         assert(sizeof(sockaddr_in) == len);
         return fd;
     }
+
+    std::string recv(int sockfd, size_t len)
+    {
+        std::string x(len, 0);
+        int got = ::recv(sockfd, &x[0], x.size(), 0);
+        if (got < 0)
+        {
+            throw error("recv failed");
+        }
+        x.resize(got);
+        return x;
+    }
 }
 
 enum { server_port = 10000 };
+enum { server_backlog = 1 };
+enum { read_buffer_len = 20 };
 
 int main()
 {
+    // TODO what about using RAII for socket file descriptors?
+    // TODO make an API for shutting down gracefully using signals
+
     int serv_fd = net::socket_tcp();  // allocate tcp socket
+    net::setsockopt(serv_fd, SO_REUSEADDR, true);
     printf("server allocated fd: %d\n", serv_fd);
 
     sockaddr_in serv_addr = net::sockaddr_tcp(INADDR_ANY, server_port);
     net::bind(serv_fd, serv_addr);  // bind to address
     printf("bound port: %d\n", server_port);
 
-    listen(serv_fd, 1);
+    listen(serv_fd, server_backlog);
     printf("listen succeeded\n");
 
     sockaddr_in cli_addr;
     int cli_fd = net::accept(serv_fd, cli_addr);
     printf("accept got fd: %d %08x:%04x\n", cli_fd, cli_addr.sin_addr.s_addr, cli_addr.sin_port);
 
-    getchar();
+    while (true)
+    {
+        std::string msg = net::recv(cli_fd, read_buffer_len);
+        if (msg.empty())
+        {
+            break;
+        }
+        std::replace(msg.begin(), msg.end(), '\n', '.');
+        std::cout << "message: {" << msg << "}\n";
+    }
 
     close(cli_fd);
     close(serv_fd);
-    getchar();
     return 0;
 }
