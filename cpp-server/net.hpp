@@ -162,13 +162,31 @@ inline bool recv(int sockfd, std::string* msg, size_t len)
     return true;
 }
 
+void shutdown(int fd, int how)
+{
+    int ret = ::shutdown(fd, how);
+    if (ret < 0)
+    {
+        throw error("shutdown failed");
+    }
+}
+
+void close(int fd)
+{
+    int ret = ::close(fd);
+    if (ret < 0)
+    {
+        throw error("close failed");
+    }
+}
+
 class socket
 {
 public:
     socket(int fd) : _fd(fd)
     {}
 
-    socket(socket&& sock)
+    socket(socket&& sock) : _fd(0)
     {
         std::swap(sock._fd, _fd);
     }
@@ -177,12 +195,65 @@ public:
     {
         if (_fd)
         {
-            // TODO shutdown + close with exceptions
-            ::close(_fd);
+            try
+            {
+                net::shutdown(_fd, SHUT_RDWR);
+                net::close(_fd);
+            }
+            catch (const net::error& e)
+            {
+                printf("socket dtor error: %s\n", e.what());
+            }
         }
     }
 
     int fd() const
+    {
+        return _fd;
+    }
+
+    explicit operator bool()
+    {
+        return _fd;
+    }
+
+private:
+    int _fd;
+};
+
+class epoll
+{
+public:
+    epoll()
+    {
+        _fd = net::epoll_create();
+    }
+
+    epoll(const socket& sock) = delete;
+
+    ~epoll()
+    {
+        net::close(_fd);
+    }
+
+    template <typename Socket>
+    void add(Socket& sock, uint32_t events, void* data)
+    {
+        net::epoll_ctl(_fd, EPOLL_CTL_ADD, sock.fd(), events, data);
+    }
+
+    template <int N>
+    gsl::span<epoll_event> wait(epoll_event (&events)[N])
+    {
+        return net::epoll_wait(_fd, events);
+    }
+
+    int fd() const
+    {
+        return _fd;
+    }
+
+    explicit operator bool()
     {
         return _fd;
     }

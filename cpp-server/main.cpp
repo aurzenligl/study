@@ -94,8 +94,8 @@ int main()
     listen(serv.fd(), server_backlog);
     printf("listen succeeded\n");
 
-    int epoll_fd = net::epoll_create();
-    net::epoll_ctl(epoll_fd, EPOLL_CTL_ADD, serv.fd(), EPOLLIN, &serv);
+    net::epoll epoll;
+    epoll.add(serv, EPOLLIN, &serv);
 
     // server data would lie here
     app::database db;
@@ -103,14 +103,13 @@ int main()
     while (true)
     {
         epoll_event events[max_epoll_events];
-        // TODO array_view ?
-        for (epoll_event& ev : net::epoll_wait(epoll_fd, events))
+        for (epoll_event& ev : epoll.wait(events))
         {
             if (ev.data.ptr == &serv)
             {
                 sockaddr_in cli_addr;
                 net::socket cli(net::accept(serv.fd(), &cli_addr));
-                if (!cli.fd())
+                if (!cli)
                 {
                     // spurious accept
                     continue;
@@ -118,10 +117,8 @@ int main()
                 printf("accept got fd: %d %08x:%04x\n", cli.fd(), ntohl(cli_addr.sin_addr.s_addr), ntohs(cli_addr.sin_port));
 
                 net::setflags(cli.fd(), O_NONBLOCK);
-
-                int fd = cli.fd();
                 app::client_memento mem = db.add({std::move(cli), cli_addr});
-                net::epoll_ctl(epoll_fd, EPOLL_CTL_ADD, fd, EPOLLIN | EPOLLET, mem);
+                epoll.add(db.to_client(mem).sock, EPOLLIN | EPOLLET, mem);
             }
             else
             {
