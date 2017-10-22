@@ -24,7 +24,7 @@ inline To horrible_cast(From from)
 
 struct client
 {
-    int fd;
+    net::socket sock;
     sockaddr_in addr;
 };
 
@@ -35,7 +35,7 @@ class database
 public:
     client_memento add(client cl)
     {
-        auto it = _clients.insert(_clients.end(), cl);
+        auto it = _clients.insert(_clients.end(), std::move(cl));
         return horrible_cast<client_memento>(it);
     }
 
@@ -63,7 +63,7 @@ private:
 void process_data(const app::client& cli, std::string& msg)
 {
     std::replace(msg.begin(), msg.end(), '\n', '.');
-    printf("message from: %d %08x:%04x {%s}\n", cli.fd, ntohl(cli.addr.sin_addr.s_addr), ntohs(cli.addr.sin_port), msg.c_str());
+    printf("message from: %d %08x:%04x {%s}\n", cli.sock.fd(), ntohl(cli.addr.sin_addr.s_addr), ntohs(cli.addr.sin_port), msg.c_str());
 }
 
 }  // namespace app
@@ -82,20 +82,20 @@ int main()
     // TODO and RAII for epoll_fd?
     // TODO make an API for shutting down gracefully using signals using self-pipe trick
 
-    int serv_fd = net::socket_tcp();  // allocate tcp socket
-    net::setsockopt(serv_fd, SO_REUSEADDR, true);
-    net::setflags(serv_fd, O_NONBLOCK);
-    printf("server allocated fd: %d\n", serv_fd);
+    net::socket serv(net::socket_tcp());
+    net::setsockopt(serv.fd(), SO_REUSEADDR, true);
+    net::setflags(serv.fd(), O_NONBLOCK);
+    printf("server allocated fd: %d\n", serv.fd());
 
     sockaddr_in serv_addr = net::sockaddr_tcp(INADDR_ANY, server_port);
-    net::bind(serv_fd, serv_addr);  // bind to address
+    net::bind(serv.fd(), serv_addr);  // bind to address
     printf("bound port: %d\n", server_port);
 
-    listen(serv_fd, server_backlog);
+    listen(serv.fd(), server_backlog);
     printf("listen succeeded\n");
 
     int epoll_fd = net::epoll_create();
-    net::epoll_ctl(epoll_fd, EPOLL_CTL_ADD, serv_fd, EPOLLIN, &serv_fd);
+    net::epoll_ctl(epoll_fd, EPOLL_CTL_ADD, serv.fd(), EPOLLIN, &serv);
 
     // server data would lie here
     app::database db;
@@ -106,20 +106,22 @@ int main()
         // TODO array_view ?
         for (epoll_event& ev : net::epoll_wait(epoll_fd, events))
         {
-            if (ev.data.ptr == &serv_fd)
+            if (ev.data.ptr == &serv)
             {
                 sockaddr_in cli_addr;
-                int cli_fd = net::accept(serv_fd, &cli_addr);
-                if (!cli_fd)
+                net::socket cli(net::accept(serv.fd(), &cli_addr));
+                if (!cli.fd())
                 {
                     // spurious accept
                     continue;
                 }
-                printf("accept got fd: %d %08x:%04x\n", cli_fd, ntohl(cli_addr.sin_addr.s_addr), ntohs(cli_addr.sin_port));
+                printf("accept got fd: %d %08x:%04x\n", cli.fd(), ntohl(cli_addr.sin_addr.s_addr), ntohs(cli_addr.sin_port));
 
-                net::setflags(cli_fd, O_NONBLOCK);
-                app::client_memento mem = db.add({cli_fd, cli_addr});
-                net::epoll_ctl(epoll_fd, EPOLL_CTL_ADD, cli_fd, EPOLLIN | EPOLLET, mem);
+                net::setflags(cli.fd(), O_NONBLOCK);
+
+                int fd = cli.fd();
+                app::client_memento mem = db.add({std::move(cli), cli_addr});
+                net::epoll_ctl(epoll_fd, EPOLL_CTL_ADD, fd, EPOLLIN | EPOLLET, mem);
             }
             else
             {
@@ -127,13 +129,11 @@ int main()
                 const app::client& cli = db.to_client(mem);
 
                 std::string msg;
-                while (net::recv(cli.fd, &msg, read_buffer_len))
+                while (net::recv(cli.sock.fd(), &msg, read_buffer_len))
                 {
                     if (msg.empty())
                     {
-                        // TODO net close with exception + shutdown
-                        close(cli.fd);
-                        printf("closing fd: %d %08x:%04x\n", cli.fd, ntohl(cli.addr.sin_addr.s_addr), ntohs(cli.addr.sin_port));
+                        printf("closing fd: %d %08x:%04x\n", cli.sock.fd(), ntohl(cli.addr.sin_addr.s_addr), ntohs(cli.addr.sin_port));
                         db.remove(mem);
                         break;
                     }
@@ -142,12 +142,5 @@ int main()
             }
         }
     }
-
-    // TODO shutdown first, throw on errors
-    for (const app::client& cli : db.clients())
-    {
-        close(cli.fd);
-    }
-    close(serv_fd);
     return 0;
 }

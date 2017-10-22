@@ -162,4 +162,33 @@ inline bool recv(int sockfd, std::string* msg, size_t len)
     return true;
 }
 
+class socket
+{
+public:
+    socket(int fd) : _fd(fd)
+    {}
+
+    socket(socket&& sock)
+    {
+        std::swap(sock._fd, _fd);
+    }
+
+    ~socket()
+    {
+        if (_fd)
+        {
+            // TODO shutdown + close with exceptions
+            ::close(_fd);
+        }
+    }
+
+    int fd() const
+    {
+        return _fd;
+    }
+
+private:
+    int _fd;
+};
+
 }  // namespace net
