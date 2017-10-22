@@ -1,7 +1,9 @@
+#include <errno.h>
+#include <fcntl.h>
 #include <unistd.h>
 #include <sys/types.h>
 #include <sys/socket.h>
-#include <poll.h>
+#include <sys/epoll.h>
 
 #include <stdexcept>
 #include <assert.h>
@@ -56,6 +58,19 @@ namespace net
         }
     }
 
+    void setflags(int fd, int flags)
+    {
+        int cur = fcntl(fd, F_GETFL);
+        if (cur < 0)
+        {
+            throw error("flags get failed");
+        }
+        if (fcntl(fd, F_SETFL, cur | flags) < 0)
+        {
+            throw error("flags set failed");
+        }
+    }
+
     int socket_tcp()
     {
         int fd = socket(AF_INET, SOCK_STREAM, 0);
@@ -92,10 +107,43 @@ namespace net
         }
     }
 
-    int accept(int sockfd, sockaddr_in& addr)
+    int epoll_create()
+    {
+        int fd = ::epoll_create1(0);
+        if (fd < 0)
+        {
+            throw error("epoll create failed");
+        }
+        return fd;
+    }
+
+    void epoll_ctl(int epoll_fd, int op, int fd, uint32_t events, int data)
+    {
+        epoll_event ev;
+        ev.events = events;
+        ev.data.fd = fd;
+        int ret = ::epoll_ctl(epoll_fd, EPOLL_CTL_ADD, fd, &ev);
+        if (ret < 0)
+        {
+            throw error("epoll control failed");
+        }
+    }
+
+    template <int N>
+    int epoll_wait(int epoll_fd, epoll_event (&events) [N])
+    {
+        int nfds = ::epoll_wait(epoll_fd, events, N, -1);
+        if (nfds < 0)
+        {
+            throw error("epoll wait failed");
+        }
+        return nfds;
+    }
+
+    int accept(int sockfd, sockaddr_in* addr)
     {
         socklen_t len = sizeof(sockaddr_in);
-        int fd = ::accept(sockfd, reinterpret_cast<sockaddr*>(&addr), &len);
+        int fd = ::accept(sockfd, reinterpret_cast<sockaddr*>(addr), &len);
         if (fd < 0)
         {
             throw error("accept failed");
@@ -104,29 +152,40 @@ namespace net
         return fd;
     }
 
-    void recv(int sockfd, std::string& msg, size_t len)
+    // returns true if data may be pending in read buffer
+    bool recv(int sockfd, std::string* msg, size_t len)
     {
-        msg.resize(len);
-        int got = ::recv(sockfd, &msg[0], msg.size(), 0);
+        msg->resize(len);
+        int got = ::recv(sockfd, &msg->front(), msg->size(), 0);
         if (got < 0)
         {
+            if (errno == EAGAIN)
+            {
+                return false;
+            }
             throw error("recv failed");
         }
-        msg.resize(got);
+        msg->resize(got);
+        return true;
     }
 }
 
 enum { server_port = 10000 };
 enum { server_backlog = 1 };
-enum { read_buffer_len = 20 };
+enum { read_buffer_len = 10 };
+enum { max_epoll_events = 10 };
+
+bool serve_client(int fd);
 
 int main()
 {
     // TODO what about using RAII for socket file descriptors?
-    // TODO make an API for shutting down gracefully using signals
+    // TODO and RAII for epoll_fd?
+    // TODO make an API for shutting down gracefully using signals using self-pipe trick
 
     int serv_fd = net::socket_tcp();  // allocate tcp socket
     net::setsockopt(serv_fd, SO_REUSEADDR, true);
+    net::setflags(serv_fd, O_NONBLOCK);
     printf("server allocated fd: %d\n", serv_fd);
 
     sockaddr_in serv_addr = net::sockaddr_tcp(INADDR_ANY, server_port);
@@ -136,23 +195,59 @@ int main()
     listen(serv_fd, server_backlog);
     printf("listen succeeded\n");
 
-    sockaddr_in cli_addr;
-    int cli_fd = net::accept(serv_fd, cli_addr);
-    printf("accept got fd: %d %08x:%04x\n", cli_fd, ntohl(cli_addr.sin_addr.s_addr), ntohs(cli_addr.sin_port));
+    int epoll_fd = net::epoll_create();
+    net::epoll_ctl(epoll_fd, EPOLL_CTL_ADD, serv_fd, EPOLLIN, serv_fd);
+
+    // server data would lie here
+    std::vector<int> cfds;
 
     while (true)
     {
-        std::string msg;
-        net::recv(cli_fd, msg, read_buffer_len);
+        epoll_event events[max_epoll_events];
+        // TODO array_view ?
+        int nfds = net::epoll_wait(epoll_fd, events);
+        for (int n = 0; n < nfds; ++n)
+        {
+            if (events[n].data.fd == serv_fd)
+            {
+                sockaddr_in cli_addr;
+                int cli_fd = net::accept(serv_fd, &cli_addr);
+                printf("accept got fd: %d %08x:%04x\n", cli_fd, ntohl(cli_addr.sin_addr.s_addr), ntohs(cli_addr.sin_port));
+
+                net::setflags(cli_fd, O_NONBLOCK);
+                net::epoll_ctl(epoll_fd, EPOLL_CTL_ADD, cli_fd, EPOLLIN | EPOLLET, cli_fd);
+                cfds.push_back(cli_fd);
+            }
+            else
+            {
+                if (serve_client(events[n].data.fd))
+                {
+                    close(events[n].data.fd);
+                }
+            }
+        }
+    }
+
+    for (int cfd : cfds)
+    {
+        close(cfd);
+    }
+    close(serv_fd);
+    return 0;
+}
+
+// returns true on read shutdown
+bool serve_client(int fd)
+{
+    std::string msg;
+    while (net::recv(fd, &msg, read_buffer_len))
+    {
         if (msg.empty())
         {
-            break;
+            return true;
         }
         std::replace(msg.begin(), msg.end(), '\n', '.');
         std::cout << "message: {" << msg << "}\n";
     }
-
-    close(cli_fd);
-    close(serv_fd);
-    return 0;
+    return false;
 }
