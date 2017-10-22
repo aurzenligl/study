@@ -91,8 +91,14 @@ int main()
     serv.listen(server_backlog);
     printf("listen succeeded\n");
 
+    net::pipeend stopper_rd;
+    net::pipeend stopper_wr;
+    net::pipeend::open(&stopper_rd, &stopper_wr);
+    stopper_rd.setflags(O_NONBLOCK);
+
     net::epoll epoll;
     epoll.add(serv, EPOLLIN, &serv);
+    epoll.add(stopper_rd, EPOLLIN | EPOLLET, &stopper_rd);
 
     // server data would lie here
     app::database db;

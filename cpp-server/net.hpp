@@ -34,6 +34,18 @@ inline void zero(T& x)
     memset(&x, 0, sizeof(T));
 }
 
+inline void open_pipe(int* rd, int* wr)
+{
+    int rdwr[2];
+    int ret = ::pipe(rdwr);
+    if (ret < 0)
+    {
+        throw error("pipe failed");
+    }
+    *rd = rdwr[0];
+    *wr = rdwr[1];
+}
+
 inline void setsockopt(int sockfd, int optname, int val)
 {
     if (::setsockopt(sockfd, SOL_SOCKET, optname, &val, sizeof(int)) < 0)
@@ -178,6 +190,68 @@ void close(int fd)
         throw error("close failed");
     }
 }
+
+class pipeend
+{
+public:
+    pipeend(): _fd(0)
+    {}
+
+    explicit pipeend(int fd): _fd(fd)
+    {}
+
+    pipeend(pipeend&& pp) : _fd(0)
+    {
+        std::swap(pp._fd, _fd);
+    }
+
+    const pipeend& operator=(pipeend&& pp)
+    {
+        std::swap(pp._fd, _fd);
+        return *this;
+    }
+
+    ~pipeend()
+    {
+        if (_fd)
+        {
+            net::close(_fd);
+        }
+    }
+
+    static void open(pipeend* rrd, pipeend* rwr)
+    {
+        int rd;
+        int wr;
+        net::open_pipe(&rd, &wr);
+        *rrd = pipeend(rd);
+        *rwr = pipeend(wr);
+    }
+
+    void setflags(int flags)
+    {
+        net::setflags(_fd, flags);
+    }
+
+    // returns true if data may be pending in read buffer
+    bool recv(std::string* msg, size_t len)
+    {
+        return net::recv(_fd, msg, len);
+    }
+
+    int fd() const
+    {
+        return _fd;
+    }
+
+    explicit operator bool()
+    {
+        return _fd;
+    }
+
+private:
+    int _fd;
+};
 
 class socket
 {
