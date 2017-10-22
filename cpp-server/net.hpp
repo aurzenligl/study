@@ -13,11 +13,11 @@
 #include <assert.h>
 #include <string.h>
 
-template <typename T>
-inline void zero(T& x)
-{
-    memset(&x, 0, sizeof(T));
-}
+// C++
+#include <stdexcept>
+#include <string>
+
+#include "gsl/span"
 
 namespace net
 {
@@ -29,7 +29,13 @@ struct error : std::runtime_error
     using std::runtime_error::runtime_error;
 };
 
-void setsockopt(int sockfd, int optname, int val)
+template <typename T>
+inline void zero(T& x)
+{
+    memset(&x, 0, sizeof(T));
+}
+
+inline void setsockopt(int sockfd, int optname, int val)
 {
     if (::setsockopt(sockfd, SOL_SOCKET, optname, &val, sizeof(int)) < 0)
     {
@@ -39,7 +45,7 @@ void setsockopt(int sockfd, int optname, int val)
     }
 }
 
-void setflags(int fd, int flags)
+inline void setflags(int fd, int flags)
 {
     int cur = fcntl(fd, F_GETFL);
     if (cur < 0)
@@ -52,7 +58,7 @@ void setflags(int fd, int flags)
     }
 }
 
-int socket_tcp()
+inline int socket_tcp()
 {
     int fd = socket(AF_INET, SOCK_STREAM, 0);
     if (fd < 0)
@@ -62,7 +68,7 @@ int socket_tcp()
     return fd;
 }
 
-sockaddr_in sockaddr_tcp(in_addr_t addr, in_port_t port)
+inline sockaddr_in sockaddr_tcp(in_addr_t addr, in_port_t port)
 {
     sockaddr_in sa;
     zero(sa);  // clear memory
@@ -72,7 +78,7 @@ sockaddr_in sockaddr_tcp(in_addr_t addr, in_port_t port)
     return sa;
 }
 
-void bind(int sockfd, sockaddr_in addr)
+inline void bind(int sockfd, sockaddr_in addr)
 {
     if (::bind(sockfd, reinterpret_cast<sockaddr*>(&addr), sizeof(sockaddr)) < 0)
     {
@@ -80,7 +86,7 @@ void bind(int sockfd, sockaddr_in addr)
     }
 }
 
-void listen(int sockfd, int backlog)
+inline void listen(int sockfd, int backlog)
 {
     if (::listen(sockfd, backlog) < 0)
     {
@@ -88,7 +94,7 @@ void listen(int sockfd, int backlog)
     }
 }
 
-int epoll_create()
+inline int epoll_create()
 {
     int fd = ::epoll_create1(0);
     if (fd < 0)
@@ -98,7 +104,7 @@ int epoll_create()
     return fd;
 }
 
-void epoll_ctl(int epoll_fd, int op, int fd, uint32_t events, void* data)
+inline void epoll_ctl(int epoll_fd, int op, int fd, uint32_t events, void* data)
 {
     epoll_event ev;
     ev.events = events;
@@ -111,18 +117,19 @@ void epoll_ctl(int epoll_fd, int op, int fd, uint32_t events, void* data)
 }
 
 template <int N>
-int epoll_wait(int epoll_fd, epoll_event (&events) [N])
+inline gsl::span<epoll_event> epoll_wait(int epoll_fd, epoll_event (&events)[N])
 {
     int nfds = ::epoll_wait(epoll_fd, events, N, -1);
     if (nfds < 0)
     {
         throw error("epoll wait failed");
     }
-    return nfds;
+    gsl::span<epoll_event> x(events, nfds);
+    return x;
 }
 
 // returns 0 when no connection was accepted
-int accept(int sockfd, sockaddr_in* addr)
+inline int accept(int sockfd, sockaddr_in* addr)
 {
     socklen_t len = sizeof(sockaddr_in);
     int fd = ::accept(sockfd, reinterpret_cast<sockaddr*>(addr), &len);
@@ -139,7 +146,7 @@ int accept(int sockfd, sockaddr_in* addr)
 }
 
 // returns true if data may be pending in read buffer
-bool recv(int sockfd, std::string* msg, size_t len)
+inline bool recv(int sockfd, std::string* msg, size_t len)
 {
     msg->resize(len);
     int got = ::recv(sockfd, &msg->front(), msg->size(), 0);

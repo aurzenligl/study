@@ -1,17 +1,7 @@
-// C++
-#include <stdexcept>
 #include <iostream>
-#include <string>
 #include <algorithm>
-#include <vector>
 #include <list>
-
 #include "net.hpp"
-
-enum { server_port = 10000 };
-enum { server_backlog = 1 };
-enum { read_buffer_len = 10 };
-enum { max_epoll_events = 10 };
 
 namespace app
 {
@@ -19,6 +9,11 @@ namespace app
 template <typename To, typename From>
 inline To horrible_cast(From from)
 {
+    // I'm really sorry for doing this, but I find no other
+    // way to type erase iterator and regenerate it from pointer memento.
+    // Without type erasure I'd need to search in to_client or remove.
+    // I guess I'd need to write my own list to make it seamlessly.
+
     static_assert(sizeof(To) == sizeof(From), "sizes differ");
     static_assert(alignof(To) == alignof(From), "alignments differ");
 
@@ -35,25 +30,25 @@ struct client
 
 typedef void* client_memento;
 
-const client& to_client(client_memento mem)
-{
-    auto it = horrible_cast<std::list<client>::iterator>(mem);
-    return *it;
-}
-
 class database
 {
 public:
     client_memento add(client cl)
     {
         auto it = _clients.insert(_clients.end(), cl);
-        return horrible_cast<void*>(it);
+        return horrible_cast<client_memento>(it);
     }
 
     void remove(client_memento mem)
     {
         auto it = horrible_cast<std::list<client>::iterator>(mem);
         _clients.erase(it);
+    }
+
+    static const client& to_client(client_memento mem)
+    {
+        auto it = horrible_cast<std::list<client>::iterator>(mem);
+        return *it;
     }
 
     const std::list<client>& clients() const
@@ -73,9 +68,16 @@ void process_data(const app::client& cli, std::string& msg)
 
 }  // namespace app
 
+enum
+{
+    server_port = 10000,
+    server_backlog = 1,
+    read_buffer_len = 10,
+    max_epoll_events = 10
+};
+
 int main()
 {
-    // TODO make application namespace and data
     // TODO what about using RAII for socket file descriptors?
     // TODO and RAII for epoll_fd?
     // TODO make an API for shutting down gracefully using signals using self-pipe trick
@@ -102,10 +104,9 @@ int main()
     {
         epoll_event events[max_epoll_events];
         // TODO array_view ?
-        int nfds = net::epoll_wait(epoll_fd, events);
-        for (int n = 0; n < nfds; ++n)
+        for (epoll_event& ev : net::epoll_wait(epoll_fd, events))
         {
-            if (events[n].data.ptr == &serv_fd)
+            if (ev.data.ptr == &serv_fd)
             {
                 sockaddr_in cli_addr;
                 int cli_fd = net::accept(serv_fd, &cli_addr);
@@ -122,8 +123,8 @@ int main()
             }
             else
             {
-                app::client_memento mem = events[n].data.ptr;
-                const app::client& cli = app::to_client(mem);
+                app::client_memento mem = ev.data.ptr;
+                const app::client& cli = db.to_client(mem);
 
                 std::string msg;
                 while (net::recv(cli.fd, &msg, read_buffer_len))
