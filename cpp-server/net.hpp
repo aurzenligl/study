@@ -16,13 +16,12 @@
 // C++
 #include <stdexcept>
 #include <string>
+#include <vector>
 
 #include "gsl/span"
 
 namespace net
 {
-
-typedef unsigned char byte;
 
 struct error : std::runtime_error
 {
@@ -58,9 +57,9 @@ inline void setflags(int fd, int flags)
     }
 }
 
-inline int socket_tcp()
+inline int open_socket(int domain, int type)
 {
-    int fd = socket(AF_INET, SOCK_STREAM, 0);
+    int fd = ::socket(domain, type, 0);
     if (fd < 0)
     {
         throw error("socket allocation failed");
@@ -183,8 +182,13 @@ void close(int fd)
 class socket
 {
 public:
-    socket(int fd) : _fd(fd)
+    explicit socket(int fd) : _fd(fd)
     {}
+
+    socket(int domain, int type)
+    {
+        _fd = net::open_socket(domain, type);
+    }
 
     socket(socket&& sock) : _fd(0)
     {
@@ -205,6 +209,39 @@ public:
                 printf("socket dtor error: %s\n", e.what());
             }
         }
+    }
+
+    void setsockopt(int optname, int val)
+    {
+        net::setsockopt(_fd, optname, val);
+    }
+
+    void setflags(int flags)
+    {
+        net::setflags(_fd, flags);
+    }
+
+    void bind(in_addr_t addr, in_port_t port)
+    {
+        sockaddr_in serv_addr = net::sockaddr_tcp(addr, port);
+        net::bind(_fd, serv_addr);
+    }
+
+    void listen(int backlog)
+    {
+        net::listen(_fd, backlog);
+    }
+
+    // returns empty socket in case of spurious epoll wakeup
+    net::socket accept(sockaddr_in* addr)
+    {
+        return net::socket(net::accept(_fd, addr));
+    }
+
+    // returns true if data may be pending in read buffer
+    bool recv(std::string* msg, size_t len)
+    {
+        return net::recv(_fd, msg, len);
     }
 
     int fd() const
@@ -242,8 +279,16 @@ public:
         net::epoll_ctl(_fd, EPOLL_CTL_ADD, sock.fd(), events, data);
     }
 
-    template <int N>
-    gsl::span<epoll_event> wait(epoll_event (&events)[N])
+    template <int MaxEvents>
+    std::vector<epoll_event> wait()
+    {
+        epoll_event events[MaxEvents];
+        auto got = net::epoll_wait(_fd, events);
+        return std::vector<epoll_event>(got.begin(), got.end());
+    }
+
+    template <int MaxEvents>
+    gsl::span<epoll_event> wait(epoll_event (&events)[MaxEvents])
     {
         return net::epoll_wait(_fd, events);
     }

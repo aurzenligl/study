@@ -12,7 +12,7 @@ inline To horrible_cast(From from)
     // I'm really sorry for doing this, but I find no other
     // way to type erase iterator and regenerate it from pointer memento.
     // Without type erasure I'd need to search in to_client or remove.
-    // I guess I'd need to write my own list to make it seamlessly.
+    // I guess I'd need to write my own list to do it seamlessly.
 
     static_assert(sizeof(To) == sizeof(From), "sizes differ");
     static_assert(alignof(To) == alignof(From), "alignments differ");
@@ -45,7 +45,7 @@ public:
         _clients.erase(it);
     }
 
-    static const client& to_client(client_memento mem)
+    static client& to_client(client_memento mem)
     {
         auto it = horrible_cast<std::list<client>::iterator>(mem);
         return *it;
@@ -60,7 +60,7 @@ private:
     std::list<client> _clients;
 };
 
-void process_data(const app::client& cli, std::string& msg)
+void process_data(app::client& cli, std::string& msg)
 {
     std::replace(msg.begin(), msg.end(), '\n', '.');
     printf("message from: %d %08x:%04x {%s}\n", cli.sock.fd(), ntohl(cli.addr.sin_addr.s_addr), ntohs(cli.addr.sin_port), msg.c_str());
@@ -78,20 +78,17 @@ enum
 
 int main()
 {
-    // TODO what about using RAII for socket file descriptors?
-    // TODO and RAII for epoll_fd?
     // TODO make an API for shutting down gracefully using signals using self-pipe trick
 
-    net::socket serv(net::socket_tcp());
-    net::setsockopt(serv.fd(), SO_REUSEADDR, true);
-    net::setflags(serv.fd(), O_NONBLOCK);
+    net::socket serv(AF_INET, SOCK_STREAM);
+    serv.setsockopt(SO_REUSEADDR, true);
+    serv.setflags(O_NONBLOCK);
     printf("server allocated fd: %d\n", serv.fd());
 
-    sockaddr_in serv_addr = net::sockaddr_tcp(INADDR_ANY, server_port);
-    net::bind(serv.fd(), serv_addr);  // bind to address
+    serv.bind(INADDR_ANY, server_port);
     printf("bound port: %d\n", server_port);
 
-    listen(serv.fd(), server_backlog);
+    serv.listen(server_backlog);
     printf("listen succeeded\n");
 
     net::epoll epoll;
@@ -102,31 +99,29 @@ int main()
 
     while (true)
     {
-        epoll_event events[max_epoll_events];
-        for (epoll_event& ev : epoll.wait(events))
+        for (epoll_event& ev : epoll.wait<max_epoll_events>())
         {
             if (ev.data.ptr == &serv)
             {
                 sockaddr_in cli_addr;
-                net::socket cli(net::accept(serv.fd(), &cli_addr));
+                net::socket cli = serv.accept(&cli_addr);
                 if (!cli)
                 {
-                    // spurious accept
-                    continue;
+                    continue;  // spurious accept
                 }
                 printf("accept got fd: %d %08x:%04x\n", cli.fd(), ntohl(cli_addr.sin_addr.s_addr), ntohs(cli_addr.sin_port));
 
-                net::setflags(cli.fd(), O_NONBLOCK);
+                cli.setflags(O_NONBLOCK);
                 app::client_memento mem = db.add({std::move(cli), cli_addr});
                 epoll.add(db.to_client(mem).sock, EPOLLIN | EPOLLET, mem);
             }
             else
             {
                 app::client_memento mem = ev.data.ptr;
-                const app::client& cli = db.to_client(mem);
+                app::client& cli = db.to_client(mem);
 
                 std::string msg;
-                while (net::recv(cli.sock.fd(), &msg, read_buffer_len))
+                while (cli.sock.recv(&msg, read_buffer_len))
                 {
                     if (msg.empty())
                     {
