@@ -76,38 +76,20 @@ enum
     max_epoll_events = 10
 };
 
-int main()
+void serve_forever(app::database& db, net::sigfile& sig, net::socket& serv, net::epoll& epoll)
 {
-    // TODO make an API for shutting down gracefully using signals using self-pipe trick
-
-    net::socket serv(AF_INET, SOCK_STREAM);
-    serv.setsockopt(SO_REUSEADDR, true);
-    serv.setflags(O_NONBLOCK);
-    printf("server allocated fd: %d\n", serv.fd());
-
-    serv.bind(INADDR_ANY, server_port);
-    printf("bound port: %d\n", server_port);
-
-    serv.listen(server_backlog);
-    printf("listen succeeded\n");
-
-    net::pipeend stopper_rd;
-    net::pipeend stopper_wr;
-    net::pipeend::open(&stopper_rd, &stopper_wr);
-    stopper_rd.setflags(O_NONBLOCK);
-
-    net::epoll epoll;
-    epoll.add(serv, EPOLLIN, &serv);
-    epoll.add(stopper_rd, EPOLLIN | EPOLLET, &stopper_rd);
-
-    // server data would lie here
-    app::database db;
-
     while (true)
     {
         for (epoll_event& ev : epoll.wait<max_epoll_events>())
         {
-            if (ev.data.ptr == &serv)
+            if (ev.data.ptr == &sig)
+            {
+                signalfd_siginfo siginfo;
+                sig.read(&siginfo);
+                printf("received signal no: %d code: %d\n", siginfo.ssi_signo, siginfo.ssi_code);
+                return;
+            }
+            else if (ev.data.ptr == &serv)
             {
                 sockaddr_in cli_addr;
                 net::socket cli = serv.accept(&cli_addr);
@@ -140,5 +122,40 @@ int main()
             }
         }
     }
+}
+
+int main()
+{
+    try
+    {
+        net::sigprocmask(SIG_BLOCK, SIGINT, SIGQUIT);
+        net::sigfile sig(SIGINT, SIGQUIT);
+
+        net::socket serv(AF_INET, SOCK_STREAM);
+        serv.setsockopt(SO_REUSEADDR, true);
+        serv.setflags(O_NONBLOCK);
+        printf("server allocated fd: %d\n", serv.fd());
+
+        serv.bind(INADDR_ANY, server_port);
+        printf("bound port: %d\n", server_port);
+
+        serv.listen(server_backlog);
+        printf("listen succeeded\n");
+
+        net::epoll epoll;
+        epoll.add(serv, EPOLLIN, &serv);
+        epoll.add(sig, EPOLLIN, &sig);
+
+        // server data would lie here
+        app::database db;
+        serve_forever(db, sig, serv, epoll);
+    }
+    catch (const std::exception& e)
+    {
+        printf("exceptional exit: %s\n", e.what());
+        return 1;
+    }
+
+    printf("thank you for graceful shutdown, bye\n");
     return 0;
 }

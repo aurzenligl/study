@@ -4,9 +4,11 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <unistd.h>
+#include <signal.h>
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/epoll.h>
+#include <sys/signalfd.h>
 #include <netinet/in.h>
 
 // C
@@ -32,6 +34,36 @@ template <typename T>
 inline void zero(T& x)
 {
     memset(&x, 0, sizeof(T));
+}
+
+template <typename... Ts>
+sigset_t make_sigset(Ts... signals)
+{
+    sigset_t mask;
+    sigemptyset(&mask);
+    std::initializer_list<int>{(sigaddset(&mask, signals), 0)...};
+    return mask;
+}
+
+template <typename... Ts>
+void sigprocmask(int how, Ts... signals)
+{
+    sigset_t mask = net::make_sigset(signals...);
+    int ret = ::sigprocmask(how, &mask, 0);
+    if (ret < 0)
+    {
+        throw error("sigprocmask failed");
+    }
+}
+
+int signalfd(sigset_t& mask)
+{
+    int fd = signalfd(-1, &mask, 0);
+    if (fd < 0)
+    {
+        throw error("signalfd failed");
+    }
+    return fd;
 }
 
 inline void open_pipe(int* rd, int* wr)
@@ -173,6 +205,26 @@ inline bool recv(int sockfd, std::string* msg, size_t len)
     return true;
 }
 
+// returns true if data may be pending in read buffer
+template <typename T>
+inline bool read(int sockfd, T* t)
+{
+    int got = ::read(sockfd, t, sizeof(T));
+    if (got < 0)
+    {
+        if (errno == EAGAIN)
+        {
+            return false;
+        }
+        throw error("recv failed");
+    }
+    if (got != sizeof(T))
+    {
+        throw error("recv read insufficient data");
+    }
+    return true;
+}
+
 void shutdown(int fd, int how)
 {
     int ret = ::shutdown(fd, how);
@@ -190,6 +242,51 @@ void close(int fd)
         throw error("close failed");
     }
 }
+
+class sigfile
+{
+public:
+    template <typename... Ints>
+    explicit sigfile(Ints... signals)
+    {
+        sigset_t mask = net::make_sigset(signals...);
+        _fd = net::signalfd(mask);
+    }
+
+    sigfile(const sigfile& other) = delete;
+
+    ~sigfile()
+    {
+        try
+        {
+            net::close(_fd);
+        }
+        catch (const net::error& e)
+        {
+            printf("pipeend dtor error: %s\n", e.what());
+        }
+    }
+
+    void setflags(int flags)
+    {
+        net::setflags(_fd, flags);
+    }
+
+    // returns true if data may be pending in read buffer
+    template <typename T>
+    bool read(T* msg)
+    {
+        return net::read(_fd, msg);
+    }
+
+    int fd() const
+    {
+        return _fd;
+    }
+
+private:
+    int _fd;
+};
 
 class pipeend
 {
@@ -215,7 +312,14 @@ public:
     {
         if (_fd)
         {
-            net::close(_fd);
+            try
+            {
+                net::close(_fd);
+            }
+            catch (const net::error& e)
+            {
+                printf("pipeend dtor error: %s\n", e.what());
+            }
         }
     }
 
@@ -340,11 +444,18 @@ public:
         _fd = net::epoll_create();
     }
 
-    epoll(const socket& sock) = delete;
+    epoll(const epoll& other) = delete;
 
     ~epoll()
     {
-        net::close(_fd);
+        try
+        {
+            net::close(_fd);
+        }
+        catch (const net::error& e)
+        {
+            printf("epoll dtor error: %s\n", e.what());
+        }
     }
 
     template <typename Socket>
