@@ -25,7 +25,8 @@ inline To horrible_cast(From from)
 struct client
 {
     net::socket sock;
-    sockaddr_in addr;
+    sockaddr_in addr = {};
+    uint64_t data_processed = 0;
 };
 
 typedef void* client_memento;
@@ -42,6 +43,7 @@ public:
     void remove(client_memento mem)
     {
         auto it = horrible_cast<std::list<client>::iterator>(mem);
+        _data_processed += it->data_processed;
         _clients.erase(it);
     }
 
@@ -56,14 +58,22 @@ public:
         return _clients;
     }
 
+    uint64_t data_processed() const
+    {
+        return _data_processed;
+    }
+
 private:
     std::list<client> _clients;
+    uint64_t _data_processed = 0;
 };
 
 void process_data(app::client& cli, std::string& msg)
 {
     std::replace(msg.begin(), msg.end(), '\n', '.');
-    printf("message from: %d %08x:%04x {%s}\n", cli.sock.fd(), ntohl(cli.addr.sin_addr.s_addr), ntohs(cli.addr.sin_port), msg.c_str());
+    cli.data_processed += msg.size();
+    printf("message from: %d %08x:%04x {%s}\n", cli.sock.fd(),
+            ntohl(cli.addr.sin_addr.s_addr), ntohs(cli.addr.sin_port), msg.c_str());
 }
 
 }  // namespace app
@@ -97,7 +107,8 @@ void serve_forever(app::database& db, net::sigfile& sig, net::socket& serv, net:
                 {
                     continue;  // spurious accept
                 }
-                printf("accept got fd: %d %08x:%04x\n", cli.fd(), ntohl(cli_addr.sin_addr.s_addr), ntohs(cli_addr.sin_port));
+                printf("accept got fd: %d %08x:%04x\n", cli.fd(),
+                        ntohl(cli_addr.sin_addr.s_addr), ntohs(cli_addr.sin_port));
 
                 cli.setflags(O_NONBLOCK);
                 app::client_memento mem = db.add({std::move(cli), cli_addr});
@@ -113,7 +124,9 @@ void serve_forever(app::database& db, net::sigfile& sig, net::socket& serv, net:
                 {
                     if (msg.empty())
                     {
-                        printf("closing fd: %d %08x:%04x\n", cli.sock.fd(), ntohl(cli.addr.sin_addr.s_addr), ntohs(cli.addr.sin_port));
+                        printf("closing fd: %d %08x:%04x, data processed: %ld\n", cli.sock.fd(),
+                                ntohl(cli.addr.sin_addr.s_addr), ntohs(cli.addr.sin_port),
+                                cli.data_processed);
                         db.remove(mem);
                         break;
                     }
@@ -149,6 +162,7 @@ int main()
         // server data would lie here
         app::database db;
         serve_forever(db, sig, serv, epoll);
+        printf("summary - data processed %ld\n", db.data_processed());
     }
     catch (const std::exception& e)
     {
