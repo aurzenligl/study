@@ -5,7 +5,7 @@ t = -0.1:1/fs:0.1;
 n = length(t);
 
 f = cos((t)*2*pi*fswave);
-g = square((t+shift)*2*pi*fswave, 25);
+g = uni_square((t+shift)*2*pi*fswave, 25);
 
 t2 = -0.3:1/fs:0.3;
 
