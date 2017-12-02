@@ -3,6 +3,8 @@ mod.norm = @norm;
 mod.invnoise_gen = @invnoise_gen;
 mod.norm_gen = @norm_gen;
 mod.gen = @gen;
+mod.scram_qpsk_gen = @scram_qpsk_gen;
+mod.descr_qpsk = @descr_qpsk;
 end
 
 function [] = gen()
@@ -43,6 +45,17 @@ data.invNoise2 = invNoise(3,:);
 data.nInvNoise = nInvNoise;
 data.softbits = softbits;
 data.softbitsRef = softbitsRef;
+end
+
+function [scramseq] = scram_qpsk_gen(nSym)
+bits = uint8(rand(nSym, 2));
+scramseq = bits(:,1) * 128 + bits(:,2) * 64;
+end
+
+function [softbits] = descr_qpsk(softbits, scramseq)
+bits = dec2bin(scramseq)(:,1:2)'(:) == '1';
+reverser = bits * -2 + 1;
+softbits = softbits .* reverser;
 end
 
 function [] = _store(data, suffix)
