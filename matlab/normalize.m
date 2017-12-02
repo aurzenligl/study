@@ -4,9 +4,9 @@ mod.gen = @gen;
 end
 
 function [] = gen()
-store(norm(2), 'Qpsk');
-store(norm(4), '16Qam');
-store(norm(6), '64Qam');
+_store(norm(2), 'Qpsk');
+_store(norm(4), '16Qam');
+_store(norm(6), '64Qam');
 end
 
 function [data] = norm(sbPerSym)
@@ -26,13 +26,15 @@ scaleSyms = invNoise(repelems([1:3], [1:3; nInvNoise']), :)'(:);
 scaleSbs = repelems(scaleSyms, [1:length(scaleSyms); sbPerSym * ones(1,length(scaleSyms))])';
 softbitsRef = softbits .* scaleSbs;
 
-data.invNoise = invNoise;
+data.invNoise0 = invNoise(1,:);
+data.invNoise1 = invNoise(2,:);
+data.invNoise2 = invNoise(3,:);
 data.nInvNoise = nInvNoise;
 data.softbits = softbits;
 data.softbitsRef = softbitsRef;
 end
 
-function [] = store(data, suffix)
+function [] = _store(data, suffix)
 name = strcat('Normalize', suffix, '.mat');
 save('-binary', name, 'data')
 end
