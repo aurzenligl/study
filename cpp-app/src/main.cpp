@@ -1,25 +1,6 @@
 #include <iostream>
-#include <opencv2/opencv.hpp>
 #include "opts.hpp"
-
-namespace app
-{
-
-bool show_image(const std::string& filepath)
-{
-    cv::Mat image = cv::imread(filepath);
-    if (!image.data)
-    {
-        printf("No image data\n");
-        return false;
-    }
-    cv::namedWindow("image");
-    cv::imshow("image", image);
-    cv::waitKey();
-    return true;
-}
-
-}
+#include "process.hpp"
 
 int main(int ac, char* av[])
 {

@@ -35,12 +35,12 @@ cmdline_status parse(int ac, char* av[], cmdline_opts& opts)
         ("help", "produce help message")
         ("compression,c", po::value<int>(&compr)->default_value(0), "compression level");
 
-    po::options_description hidden("Positional");
-    hidden.add_options()
+    po::options_description positional("Positional");
+    positional.add_options()
         ("input-file", po::value<std::string>(), "input file");
 
     po::options_description cmdline_options;
-    cmdline_options.add(generic).add(hidden);
+    cmdline_options.add(generic).add(positional);
 
     po::variables_map vm;
     try
@@ -56,6 +56,7 @@ cmdline_status parse(int ac, char* av[], cmdline_opts& opts)
 
     if (vm.count("help"))
     {
+        std::cout << positional << "\n";
         std::cout << generic << "\n";
         return cmdline_status(0);
     }
