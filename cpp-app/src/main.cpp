@@ -1,45 +1,21 @@
-#include <string>
 #include <iostream>
-#include <boost/program_options.hpp>
+#include <opencv2/opencv.hpp>
+#include "opts.hpp"
 
 namespace app
 {
 
-namespace po = boost::program_options;
-
-bool parse_cmdline(int ac, char* av[], po::variables_map& vm)
+bool show_image(const std::string& filepath)
 {
-    po::positional_options_description pos;
-    pos.add("input-file", -1);
-
-    int compr;
-    po::options_description generic("Options");
-    generic.add_options()
-        ("help", "produce help message")
-        ("compression,c", po::value<int>(&compr)->default_value(0), "compression level");
-
-    po::options_description hidden("Positional");
-    hidden.add_options()
-        ("input-file", po::value<std::string>(), "input file");
-
-    po::options_description cmdline_options;
-    cmdline_options.add(generic).add(hidden);
-
-    po::store(po::command_line_parser(ac, av).options(cmdline_options).positional(pos).run(), vm);
-    po::notify(vm);
-
-    if (vm.count("help"))
+    cv::Mat image = cv::imread(filepath);
+    if (!image.data)
     {
-        std::cout << generic << "\n";
+        printf("No image data\n");
         return false;
     }
-
-    if (not vm.count("input-file"))
-    {
-        std::cout << "No input file, nothing to do\n";
-        return false;
-    }
-
+    cv::namedWindow("image");
+    cv::imshow("image", image);
+    cv::waitKey();
     return true;
 }
 
@@ -47,20 +23,14 @@ bool parse_cmdline(int ac, char* av[], po::variables_map& vm)
 
 int main(int ac, char* av[])
 {
-    app::po::variables_map opts;
-    try
+    app::cmdline_opts opts;
+    if (app::cmdline_status st = app::parse(ac, av, opts))
     {
-        if (not app::parse_cmdline(ac, av, opts))
-        {
-            return 0;
-        }
-    }
-    catch (std::exception& ex)
-    {
-        std::cout << ex.what() << '\n';
-        return 1;
+        return st.return_code;
     }
 
-    std::cout << "Compression level " << opts["compression"].as<int>() << " set.\n";
-    std::cout << "File " << opts["input-file"].as<std::string>() << " set.\n";
+    std::cout << "Compression level " << opts.compression << " set.\n";
+    std::cout << "File " << opts.filename << " set.\n";
+
+    app::show_image(opts.filename);
 }

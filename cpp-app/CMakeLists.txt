@@ -2,6 +2,10 @@ cmake_minimum_required(VERSION 3.0)
 project(cppapp)
 
 find_package(Boost COMPONENTS program_options)
+find_package(OpenCV REQUIRED)
+
+include_directories(${Boost_INCLUDE_DIRS})
+include_directories(${OpenCV_INCLUDE_DIRS})
 
 set(default_build_type Debug)
 set(allowed_build_types Debug Release)
