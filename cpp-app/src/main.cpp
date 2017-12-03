@@ -10,8 +10,19 @@ int main(int ac, char* av[])
         return st.return_code;
     }
 
-    std::cout << "Compression level " << opts.compression << " set.\n";
+    std::cout << "Operation " << opts.operation << " set.\n";
     std::cout << "File " << opts.filename << " set.\n";
 
-    app::show_image(opts.filename);
+    switch (opts.operation)
+    {
+    case 0:
+        app::show_image(opts.filename);
+        break;
+    case 1:
+        app::convert_image(opts.filename);
+        break;
+    default:
+        std::cout << "Operation " << opts.operation << " has no action.\n";
+        break;
+    }
 }

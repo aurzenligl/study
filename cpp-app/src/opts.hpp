@@ -10,7 +10,7 @@ namespace app
 struct cmdline_opts
 {
     std::string filename;
-    int compression;
+    int operation;
 };
 
 struct cmdline_status

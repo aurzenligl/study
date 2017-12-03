@@ -29,11 +29,11 @@ cmdline_status parse(int ac, char* av[], cmdline_opts& opts)
     po::positional_options_description pos;
     pos.add("input-file", -1);
 
-    int compr;
+    int oper;
     po::options_description generic("Options");
     generic.add_options()
         ("help", "produce help message")
-        ("compression,c", po::value<int>(&compr)->default_value(0), "compression level");
+        ("operation,o", po::value<int>(&oper)->default_value(0), "operation number");
 
     po::options_description positional("Positional");
     positional.add_options()
@@ -67,7 +67,7 @@ cmdline_status parse(int ac, char* av[], cmdline_opts& opts)
         return cmdline_status(1);
     }
 
-    opts.compression = vm["compression"].as<int>();
+    opts.operation = vm["operation"].as<int>();
     opts.filename = vm["input-file"].as<std::string>();
 
     if (not check_if_file(opts.filename))
