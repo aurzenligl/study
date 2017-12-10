@@ -22,7 +22,6 @@ struct color_space_reduction
 };
 
 static constexpr std::array<uint8_t, 256> redlut = make_lut<256, color_space_reduction>();
-static cv::Mat redlut_mat(1, 256, CV_8U, (void*)redlut.data(), sizeof(uint8_t));
 
 void reduce_color_space(cv::Mat& image)
 {
@@ -46,7 +45,7 @@ void reduce_color_space(cv::Mat& image)
 
 void reduce_color_space_lut(cv::Mat& image)
 {
-    cv::LUT(image, redlut_mat, image);
+    cv::LUT(image, {redlut.data(), redlut.size()}, image);
 }
 
 }

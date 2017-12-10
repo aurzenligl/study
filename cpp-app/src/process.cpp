@@ -51,7 +51,7 @@ bool reduce_color_space(const std::string& filepath)
         algo::reduce_color_space_lut(cloned);
     }
 
-    algo::reduce_color_space(image);
+    algo::reduce_color_space_lut(image);
     algo::show(image);
     return true;
 }
