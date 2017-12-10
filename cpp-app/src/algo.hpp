@@ -10,6 +10,7 @@ namespace algo
 
 void show(cv::Mat& image);
 void reduce_color_space(cv::Mat& image);
+void reduce_color_space_lut(cv::Mat& image);
 
 }
 }

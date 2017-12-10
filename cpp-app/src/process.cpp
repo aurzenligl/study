@@ -1,5 +1,6 @@
 #include <opencv2/opencv.hpp>
 #include "algo.hpp"
+#include "timeit.hpp"
 #include "process.hpp"
 
 namespace app
@@ -37,6 +38,19 @@ bool reduce_color_space(const std::string& filepath)
     {
         return false;
     }
+
+    {
+        cv::Mat cloned = image.clone();
+        timeit _("manual lut");
+        algo::reduce_color_space(cloned);
+    }
+
+    {
+        cv::Mat cloned = image.clone();
+        timeit _("opencv lut");
+        algo::reduce_color_space_lut(cloned);
+    }
+
     algo::reduce_color_space(image);
     algo::show(image);
     return true;
