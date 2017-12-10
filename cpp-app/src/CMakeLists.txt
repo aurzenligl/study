@@ -2,6 +2,7 @@ add_executable(cppapp
     main.cpp
     opts.cpp
     process.cpp
+    algo.cpp
 )
 target_link_libraries(cppapp
     ${Boost_LIBRARIES}

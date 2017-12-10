@@ -21,6 +21,9 @@ int main(int ac, char* av[])
     case 1:
         app::convert_image(opts.filename);
         break;
+    case 2:
+        app::reduce_color_space(opts.filename);
+        break;
     default:
         std::cout << "Operation " << opts.operation << " has no action.\n";
         break;

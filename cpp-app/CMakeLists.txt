@@ -19,7 +19,7 @@ if (${_index} EQUAL -1)
 endif()
 message(STATUS "Build type: ${CMAKE_BUILD_TYPE}")
 
-set(GENERIC_FLAGS "-std=c++11 -Wall -Werror")
+set(GENERIC_FLAGS "-std=c++11 -Wall -Werror -ftemplate-depth=1024")
 set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS} ${GENERIC_FLAGS} -g -O0")
 set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS} ${GENERIC_FLAGS} -O3")
 
