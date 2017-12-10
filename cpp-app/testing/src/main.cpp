@@ -1,6 +1,6 @@
-#include "foo.hpp"
+#include "app.hpp"
 
 int main()
 {
-    app::foo(42);
+    app::bar(app::foo(42));
 }

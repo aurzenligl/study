@@ -5,9 +5,14 @@ include_directories(
     ${CMAKE_SOURCE_DIR}/src
 )
 
-add_executable(test0
-    main.cpp
-    test_foo.cpp
-)
+add_library(gmain STATIC main.cpp)
 
-target_link_libraries(test0 gtest libapp)
+add_executable(test_foo
+    foo/test_foo.cpp
+)
+target_link_libraries(test_foo gtest gmain libapp)
+
+add_executable(test_bar
+    bar/test_bar.cpp
+)
+target_link_libraries(test_bar gtest gmain libapp)

@@ -1,5 +1,5 @@
 #include <gtest/gtest.h>
-#include "foo.hpp"
+#include <app.hpp>
 
 using namespace testing;
 
