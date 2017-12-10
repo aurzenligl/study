@@ -4,6 +4,8 @@
 
 int main(int ac, char* av[])
 {
+    // TODO: use clara as cmdline parser
+
     app::cmdline_opts opts;
     if (app::cmdline_status st = app::parse(ac, av, opts))
     {
