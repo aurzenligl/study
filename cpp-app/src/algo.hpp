@@ -11,6 +11,8 @@ namespace algo
 void show(cv::Mat& image);
 void reduce_color_space(cv::Mat& image);
 void reduce_color_space_lut(cv::Mat& image);
+void sharpen(const cv::Mat& in, cv::Mat& out);
+void sharpen_kernel(const cv::Mat& in, cv::Mat& out);
 
 }
 }

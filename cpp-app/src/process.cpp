@@ -56,4 +56,24 @@ bool reduce_color_space(const std::string& filepath)
     return true;
 }
 
+bool sharpen(const std::string& filepath)
+{
+    cv::Mat image = cv::imread(filepath, cv::IMREAD_COLOR);
+    if (!image.data)
+    {
+        return false;
+    }
+    cv::Mat out;
+    {
+        timeit _("manual sharpen");
+        algo::sharpen(image, out);
+    }
+    {
+        timeit _("opencv sharpen");
+        algo::sharpen_kernel(image, out);
+    }
+    algo::show(out);
+    return true;
+}
+
 }

@@ -12,6 +12,8 @@ bool convert_image(const std::string& filepath);
 
 bool reduce_color_space(const std::string& filepath);
 
+bool sharpen(const std::string& filepath);
+
 }
 
 #endif /* CPP_APP_SRC_PROCESS_HPP_ */

@@ -48,5 +48,41 @@ void reduce_color_space_lut(cv::Mat& image)
     cv::LUT(image, {redlut.data(), redlut.size()}, image);
 }
 
+void sharpen(const cv::Mat& in, cv::Mat& out)
+{
+    const int nChannels = in.channels();
+    out.create(in.size(), in.type());
+    for (int j = 1 ; j < in.rows - 1; ++j)
+    {
+        const uchar* previous = in.ptr<uchar>(j - 1);
+        const uchar* current = in.ptr<uchar>(j    );
+        const uchar* next = in.ptr<uchar>(j + 1);
+        uchar* output = out.ptr<uchar>(j);
+        for (int i = nChannels; i < nChannels * (in.cols - 1); ++i)
+        {
+            *output++ = cv::saturate_cast<uchar>(
+                5 * current[i]
+                - current[i - nChannels]
+                - current[i + nChannels]
+                - previous[i]
+                - next[i]
+            );
+        }
+    }
+    out.row(0).setTo(cv::Scalar(0));
+    out.row(out.rows - 1).setTo(cv::Scalar(0));
+    out.col(0).setTo(cv::Scalar(0));
+    out.col(out.cols - 1).setTo(cv::Scalar(0));
+}
+
+void sharpen_kernel(const cv::Mat& in, cv::Mat& out)
+{
+    cv::Mat kernel = (cv::Mat_<char>(3,3) <<  0, -1,  0,
+                                             -1,  5, -1,
+                                              0, -1,  0);
+
+    cv::filter2D(in, out, in.depth(), kernel);
+}
+
 }
 }
