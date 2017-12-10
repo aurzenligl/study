@@ -1,11 +1,8 @@
 cmake_minimum_required(VERSION 3.0)
 project(cppapp)
+enable_testing()
 
-find_package(Boost COMPONENTS program_options)
-find_package(OpenCV REQUIRED)
-
-include_directories(${Boost_INCLUDE_DIRS})
-include_directories(${OpenCV_INCLUDE_DIRS})
+# flags
 
 set(default_build_type Debug)
 set(allowed_build_types Debug Release)
@@ -19,8 +16,19 @@ if (${_index} EQUAL -1)
 endif()
 message(STATUS "Build type: ${CMAKE_BUILD_TYPE}")
 
-set(GENERIC_FLAGS "-std=c++11 -Wall -Werror -ftemplate-depth=1024")
+set(GENERIC_FLAGS "-std=c++11 -Wall -Werror")
 set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS} ${GENERIC_FLAGS} -g -O0")
 set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS} ${GENERIC_FLAGS} -O3")
 
+# dependencies
+
+set(GTEST_ROOT ${CMAKE_SOURCE_DIR}/vendor/gtest-1.8.0)
+set(BUILD_GTEST ON)
+set(BUILD_GMOCK OFF)
+add_subdirectory(${GTEST_ROOT})
+set(GTEST_INCLUDE_DIRS ${GTEST_ROOT}/googletest/include)
+
+# sub-scripts
+
 add_subdirectory(src)
+add_subdirectory(test)
