@@ -77,9 +77,9 @@ void sharpen(const cv::Mat& in, cv::Mat& out)
 
 void sharpen_kernel(const cv::Mat& in, cv::Mat& out)
 {
-    cv::Mat kernel = (cv::Mat_<char>(3,3) <<  0, -1,  0,
-                                             -1,  5, -1,
-                                              0, -1,  0);
+    cv::Mat kernel = (cv::Mat_<char>(3,3) <<  0, -5,  0,
+                                             -5,  21, -5,
+                                              0, -5,  0);
 
     cv::filter2D(in, out, in.depth(), kernel);
 }

@@ -1,4 +1,4 @@
 #!/bin/bash
 
-cd cpp-app/build
+cd cpp-app/opencv/build
 ninja
