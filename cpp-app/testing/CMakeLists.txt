@@ -1,3 +1,9 @@
+# TODO: add_subdirectory(gtest) imports a lot of rubbish (e.g. install commands), think of cleaner solution
+# TODO: add ut-valgrind target
+# TODO: automate adding ut binaries using macro of sorts
+# TODO: check performance using google benchmark
+# TODO: check coverage
+
 cmake_minimum_required(VERSION 3.0)
 project(cppapp)
 enable_testing()
