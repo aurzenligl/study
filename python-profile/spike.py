@@ -10,4 +10,4 @@ foo(xx)
 if 'subpro' in sys.argv:
     sys.exit(0)
 
-subprocess.Popen('python ~/tmp/sandbox/x.py subpro', shell=True)
+subprocess.Popen('python spike.py subpro', shell=True)
