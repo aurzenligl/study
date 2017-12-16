@@ -7,21 +7,23 @@ self.seqXors = @seqXors;
 self.seqXorsNeg = @seqXorsNeg;
 end
 
-% 1. see how it behaves with taps [1,2,3,4]
+% 1. see how it behaves with taps [1,2,3,4], write jumps down
 % 2. try to calculate performance of scrambling function
 % 3. how does gmpy work, is it helpful?
+% 4. understand white-papers
+% 5. read both jump implementations (pusch + npusch)
 
 function [x] = seq(n)
 x = eye(31);
 for i = 1:n
-    x = [x(:,2:31), mod(sum(x(:,[1,4]), 2), 2)];
+    x = [x(:,2:31), mod(sum(x(:,[1,2,3,4]), 2), 2)];
 end
 end
 
 function [q] = seqDensity(n)
 x = eye(31);
 for i = 1:n
-    x = [x(:,2:31), mod(sum(x(:,[1,4]), 2), 2)];
+    x = [x(:,2:31), mod(sum(x(:,[1,2,3,4]), 2), 2)];
     q(i) = sum(sum(x));
 end
 end
@@ -29,13 +31,13 @@ end
 function [q] = seqXors(n)
 x = eye(31);
 for i = 1:n
-    x = [x(:,2:31), mod(sum(x(:,[1,4]), 2), 2)];
+    x = [x(:,2:31), mod(sum(x(:,[1,2,3,4]), 2), 2)];
     q(i) = sum(logical(sum(circulant_shift(x))));
 end
 end
 
 %{
-possible jumps
+possible jumps for taps [1, 4]
 -------------
 
 65536: (2**16)
