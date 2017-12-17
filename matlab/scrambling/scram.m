@@ -13,25 +13,25 @@ end
 % 4. understand white-papers
 % 5. read both jump implementations (pusch + npusch)
 
-function [x] = seq(n)
+function [x] = seq(n, taps)
 x = eye(31);
 for i = 1:n
-    x = [x(:,2:31), mod(sum(x(:,[1,2,3,4]), 2), 2)];
+    x = [x(:,2:31), mod(sum(x(:,taps), 2), 2)];
 end
 end
 
-function [q] = seqDensity(n)
+function [q] = seqDensity(n, taps)
 x = eye(31);
 for i = 1:n
-    x = [x(:,2:31), mod(sum(x(:,[1,2,3,4]), 2), 2)];
+    x = [x(:,2:31), mod(sum(x(:,taps), 2), 2)];
     q(i) = sum(sum(x));
 end
 end
 
-function [q] = seqXors(n)
+function [q] = seqXors(n, taps)
 x = eye(31);
 for i = 1:n
-    x = [x(:,2:31), mod(sum(x(:,[1,2,3,4]), 2), 2)];
+    x = [x(:,2:31), mod(sum(x(:,taps), 2), 2)];
     q(i) = sum(logical(sum(circulant_shift(x))));
 end
 end
