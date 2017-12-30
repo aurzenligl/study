@@ -1,11 +1,21 @@
-# dummy targets
+# ut proxies
 
 add_custom_target(ut)
 
 add_custom_target(ut-run
-    COMMAND ${CMAKE_CTEST_COMMAND}
+    COMMAND ${CMAKE_CTEST_COMMAND} --output-on-failure
     DEPENDS ut
 )
+
+add_custom_target(ut-valgrind
+    COMMAND ${CMAKE_CTEST_COMMAND} -T memcheck -j${CMAKE_CPU_COUNT}
+    DEPENDS ut
+    WORKING_DIRECTORY ${PROJECT_BINARY_DIR}
+)
+
+set(VALGRIND_FLAGS "--leak-check=full --track-origins=yes --num-callers=50 --error-exitcode=1 --gen-suppressions=all ${VALGRIND_FLAGS}")
+find_program(MEMORYCHECK_COMMAND valgrind)
+set(MEMORYCHECK_COMMAND_OPTIONS ${VALGRIND_FLAGS})
 
 # ut utilities
 

@@ -25,6 +25,18 @@ set(GENERIC_FLAGS "-std=c++11 -Wall -Werror -Wextra")
 set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS} ${GENERIC_FLAGS} -g -O0")
 set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS} ${GENERIC_FLAGS} -O3 -DNDEBUG")
 
+# cpu count
+
+execute_process(COMMAND nproc
+                RESULT_VARIABLE retcode
+                OUTPUT_VARIABLE result
+                OUTPUT_STRIP_TRAILING_WHITESPACE)
+if(${retcode} STREQUAL 0)
+    set(CMAKE_CPU_COUNT ${result})
+else()
+    set(CMAKE_CPU_COUNT 1)
+endif()
+
 # paths
 
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
