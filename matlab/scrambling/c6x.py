@@ -4,6 +4,9 @@ reg32 = ''.join(reversed(
 ))
 
 x = 'vutsrqponmlkjihgfedcba9876543210'
+x3 = '................PONMLKJIHGFEDCBAvutsrqponmlkjihgfedcba9876543210'
+x2 = '........nmlkjihgfedcba9876543210'
+y2 = '..hgfedc..ba9876..543210..nmlkji'
 y = '......nmlkjihgfedcba9876543210..'
 z = '..nmlkji..hgfedc..ba9876..543210'
 q = '1032547698badcfehglkjinm........'
@@ -11,8 +14,39 @@ v = '........................76543210'
 t = '......10......32......54......76'
 qpsk =  'pohg9810rqjiba32tslkdc54vunmfe76'
 qam16 = 'rqpojihgba983210vutsnmlkfedc7654'
+qam64 = '................JIHGFEtsrqpohgfedc543210PONMLKDCBAvunmlkjiba9876'
 q1 = '..tsrqpo..lkjihg..dcba98..543210'
 q2 = '........tsrqpolkjihgdcba98543210'
+
+def split48_8(x):
+    return x[16:24], x[24:32], x[32:40], x[40:48], x[48:56], x[56:]
+
+def split64_32(x):
+    return x[:32], x[32:]
+
+def lo32(x, fun):
+    b1, b0 = split64_32(x)
+    return b1 + fun(b0)
+
+def swap3_02(x):
+    b = split48(x)
+    return '.' * 16 + a + b + c
+
+def swap3_02(x):
+    a, b, c = x[48:], x[32:48], x[16:32]
+    return '.' * 16 + a + b + c
+
+def swap3_12(x):
+    a, b, c = x[48:], x[32:48], x[16:32]
+    return '.' * 16 + b + c + a
+
+def swap3_01(x):
+    a, b, c = x[48:], x[32:48], x[16:32]
+    return '.' * 16 + c + a + b
+
+def shfl3(x):
+    a, b, c = x[48:], x[32:48], x[16:32]
+    return '.' * 16 + ''.join(''.join(x) for x in zip(c,b,a))
 
 def swap(x):
     b0, b1, b2, b3 = x[24:], x[16:24], x[8:16], x[:8]
@@ -68,6 +102,27 @@ def deal(x, n=1):
 def named(name, fun):
     fun.__name__ = name
     return fun
+
+ops = [
+    shfl3,
+    swap3_02,
+    swap3_12,
+    swap3_01,
+    named('deal', lambda x: lo32(x, deal)),
+    named('shfl', lambda x: lo32(x, shfl)),
+    named('bitr', lambda x: lo32(x, bitr)),
+    named('rotl1', lambda x: lo32(x, lambda x: rotl(1, x))),
+    named('rotl2', lambda x: lo32(x, lambda x: rotl(2, x))),
+    named('rotl4', lambda x: lo32(x, lambda x: rotl(4, x))),
+    named('rotl8', lambda x: lo32(x, lambda x: rotl(8, x))),
+    named('rotl24', lambda x: lo32(x, lambda x: rotl(24, x))),
+    named('swap02', lambda x: lo32(x, swap02)),
+    named('swap12', lambda x: lo32(x, swap12)),
+    named('swap03', lambda x: lo32(x, swap03)),
+    named('swap13', lambda x: lo32(x, swap13)),
+    named('swap2', lambda x: lo32(x, swap2)),
+    named('swap4', lambda x: lo32(x, swap4)),
+]
 
 ops = [
     deal,
