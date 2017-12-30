@@ -1,0 +1,25 @@
+language: cpp
+env:
+  matrix:
+    - TYPE: Debug
+      TARGETS: ut ut-valgrind
+    - TYPE: Release
+      TARGETS: perf
+addons:
+  apt:
+    packages:
+      - valgrind
+      - ninja-build
+before_install:
+  - uname -a
+  - lsb_release -a
+install:
+  - cd cpp-app/testing
+  - ./install-dependencies.sh
+script:
+  - cd cpp-app/testing
+  - mkdir build && cd build
+  - cmake -GNinja -DCMAKE_BUILD_TYPE=$TYPE ..
+  - ninja $TARGETS
+notifications:
+  email: false
