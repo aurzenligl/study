@@ -1,5 +1,3 @@
-# TODO: add ut-valgrind target
-# TODO: automate adding ut binaries using macro of sorts
 # TODO: check performance using google benchmark
 # TODO: check coverage
 
@@ -41,8 +39,13 @@ endif()
 
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
 
+# dependencies
+
+find_package(PkgConfig)
+pkg_check_modules(GTEST REQUIRED gtest)
+
 # sub-scripts
 
 add_subdirectory(src)
-add_subdirectory(vendor EXCLUDE_FROM_ALL)
 add_subdirectory(test EXCLUDE_FROM_ALL)
+#add_subdirectory(vendor EXCLUDE_FROM_ALL)
