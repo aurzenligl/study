@@ -1,5 +1,3 @@
-# TODO: check coverage
-
 cmake_minimum_required(VERSION 3.0)
 project(cppapp)
 enable_testing()
