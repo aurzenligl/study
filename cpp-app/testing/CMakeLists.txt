@@ -1,4 +1,3 @@
-# TODO: check performance using google benchmark
 # TODO: check coverage
 
 cmake_minimum_required(VERSION 3.0)
