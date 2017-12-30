@@ -1,0 +1,3 @@
+set(GTEST_ROOT ${CMAKE_CURRENT_SOURCE_DIR}/gtest-1.8.0)
+add_subdirectory(${GTEST_ROOT})
+set(GTEST_INCLUDE_DIRS ${GTEST_ROOT}/include PARENT_SCOPE)

@@ -29,13 +29,8 @@ set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS} ${GENERIC_FLAGS} -O3 -DNDEBUG")
 
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
 
-# dependencies
-
-set(GTEST_ROOT ${CMAKE_SOURCE_DIR}/vendor/gtest-1.8.0)
-add_subdirectory(${GTEST_ROOT} EXCLUDE_FROM_ALL)
-set(GTEST_INCLUDE_DIRS ${GTEST_ROOT}/include)
-
 # sub-scripts
 
 add_subdirectory(src)
+add_subdirectory(vendor EXCLUDE_FROM_ALL)
 add_subdirectory(test EXCLUDE_FROM_ALL)
