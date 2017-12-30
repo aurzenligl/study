@@ -18,7 +18,6 @@ install:
   - cd cpp-app/testing
   - ./install-dependencies.sh
 script:
-  - cd cpp-app/testing
   - mkdir build && cd build
   - cmake -GNinja -DCMAKE_BUILD_TYPE=$TYPE ..
   - ninja $TARGET
