@@ -1,10 +1,10 @@
 language: cpp
 env:
   matrix:
-    - TYPE: Debug
-      TARGETS: ut ut-valgrind
-    - TYPE: Release
-      TARGETS: perf
+    - TARGET: ut ut-valgrind
+      TYPE: Debug
+    - TARGET: perf
+      TYPE: Release
 addons:
   apt:
     packages:
@@ -20,6 +20,6 @@ script:
   - cd cpp-app/testing
   - mkdir build && cd build
   - cmake -GNinja -DCMAKE_BUILD_TYPE=$TYPE ..
-  - ninja $TARGETS
+  - ninja $TARGET
 notifications:
   email: false
