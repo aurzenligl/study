@@ -42,7 +42,9 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
 # dependencies
 
 find_package(PkgConfig)
+
 pkg_check_modules(GTEST REQUIRED gtest)
+find_package(benchmark)
 
 # sub-scripts
 

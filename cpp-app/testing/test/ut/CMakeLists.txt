@@ -1,15 +1,15 @@
 # ut proxies
 
-add_custom_target(ut)
+add_custom_target(ut-build)
 
-add_custom_target(ut-run
-    COMMAND ${CMAKE_CTEST_COMMAND} --output-on-failure
-    DEPENDS ut
+add_custom_target(ut
+    COMMAND ${CMAKE_CTEST_COMMAND} -L "ut" --output-on-failure
+    DEPENDS ut-build
 )
 
 add_custom_target(ut-valgrind
-    COMMAND ${CMAKE_CTEST_COMMAND} -T memcheck -j${CMAKE_CPU_COUNT}
-    DEPENDS ut
+    COMMAND ${CMAKE_CTEST_COMMAND} -L "ut"  -T memcheck -j${CMAKE_CPU_COUNT}
+    DEPENDS ut-build
     WORKING_DIRECTORY ${PROJECT_BINARY_DIR}
 )
 
@@ -28,10 +28,11 @@ add_library(gmain STATIC main.cpp)
 
 function(ut_test name)
     add_executable(${name} ${ARGN})
-    target_link_libraries(${name} ${GTEST_LIBRARIES} gmain)
+    target_link_libraries(${name} ${GTEST_STATIC_LIBRARIES} gmain)
     target_compile_options(${name} PUBLIC ${GTEST_CFLAGS_OTHER})
     add_test(NAME ${name} COMMAND ${name})
-    add_dependencies(ut ${name})
+    set_tests_properties(${name} PROPERTIES LABELS ut)
+    add_dependencies(ut-build ${name})
 endfunction()
 
 # ut executables
