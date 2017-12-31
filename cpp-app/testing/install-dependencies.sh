@@ -11,9 +11,9 @@ cmake -GNinja -DCMAKE_BUILD_TYPE=Release ..
 sudo ninja install
 
 cd /tmp/cpp-app-deps
-wget https://github.com/google/googletest/archive/release-1.8.0.zip -O googletest.zip
+wget https://github.com/google/googletest/archive/master.zip -O googletest.zip
 unzip googletest.zip
-cd googletest-release-1.8.0
+cd googletest-master
 mkdir build && cd build
 cmake -GNinja -DCMAKE_BUILD_TYPE=Release ..
 sudo ninja install
