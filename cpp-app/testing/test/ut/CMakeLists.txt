@@ -13,9 +13,9 @@ add_custom_target(ut-valgrind
     WORKING_DIRECTORY ${PROJECT_BINARY_DIR}
 )
 
-set(VALGRIND_FLAGS "--leak-check=full --track-origins=yes --num-callers=50 --error-exitcode=1 --gen-suppressions=all ${VALGRIND_FLAGS}")
 find_program(MEMORYCHECK_COMMAND valgrind)
-set(MEMORYCHECK_COMMAND_OPTIONS ${VALGRIND_FLAGS})
+set(MEMORYCHECK_COMMAND_OPTIONS "--leak-check=full --track-origins=yes --num-callers=50 --error-exitcode=1 --gen-suppressions=all ${VALGRIND_FLAGS}")
+include(CTest)
 
 # ut utilities
 
