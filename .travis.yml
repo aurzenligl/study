@@ -15,11 +15,9 @@ before_install:
   - uname -a
   - lsb_release -a
 install:
-  - cd cpp-app/testing
-  - ./install-dependencies.sh
+  - cd cpp-app/testing && ./install-dependencies.sh
 script:
-  - mkdir build && cd build
-  - cmake -GNinja -DCMAKE_BUILD_TYPE=$TYPE ..
+  - mkdir build && cd build && cmake -GNinja -DCMAKE_BUILD_TYPE=$TYPE ..
   - ninja $TARGET
 notifications:
   email: false

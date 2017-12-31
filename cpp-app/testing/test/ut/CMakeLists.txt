@@ -28,7 +28,7 @@ add_library(gmain STATIC main.cpp)
 
 function(ut_test name)
     add_executable(${name} ${ARGN})
-    target_link_libraries(${name} ${GTEST_STATIC_LIBRARIES} gmain)
+    target_link_libraries(${name} ${GTEST_STATIC_LIBRARIES} ${GTEST_LDFLAGS_OTHER} gmain)
     target_compile_options(${name} PUBLIC ${GTEST_CFLAGS_OTHER})
     add_test(NAME ${name} COMMAND ${name})
     set_tests_properties(${name} PROPERTIES LABELS ut)
