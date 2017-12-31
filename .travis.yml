@@ -2,7 +2,7 @@ language: cpp
 sudo: required
 env:
   matrix:
-    - TARGET: ut ut-valgrind
+    - TARGET: "ut ut-valgrind"
       TYPE: Debug
     - TARGET: perf
       TYPE: Release
