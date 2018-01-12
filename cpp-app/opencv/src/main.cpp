@@ -28,6 +28,7 @@ int main(int ac, char* av[])
     bool help = false;
     int operation = 0;
     std::string filename;
+    std::string filename2;
 
     auto cli
         = clara::Help(help)
@@ -35,7 +36,9 @@ int main(int ac, char* av[])
             ["-o"]["--oper"]
             ("operation to apply to image")
         | clara::Arg(check_file(filename), "image file")
-            ("image file");
+            ("image file")
+        | clara::Arg(check_file(filename2), "second image file")
+            ("second image file");
 
     auto result = cli.parse(clara::Args(ac, av));
     if (!result)
@@ -66,6 +69,10 @@ int main(int ac, char* av[])
         break;
     case 3:
         app::sharpen(filename);
+        break;
+    case 4:
+        assert(!filename2.empty());
+        app::blend(filename, filename2);
         break;
     default:
         std::cout << "Operation " << operation << " has no action.\n";

@@ -14,6 +14,8 @@ bool reduce_color_space(const std::string& filepath);
 
 bool sharpen(const std::string& filepath);
 
+bool blend(const std::string& filepath, const std::string& filepath2);
+
 }
 
 #endif /* CPP_APP_SRC_PROCESS_HPP_ */

@@ -76,4 +76,20 @@ bool sharpen(const std::string& filepath)
     return true;
 }
 
+bool blend(const std::string& filepath, const std::string& filepath2)
+{
+    cv::Mat img0 = cv::imread(filepath);
+    cv::Mat img1 = cv::imread(filepath2);
+    if (!img0.data || !img1.data)
+    {
+        return false;
+    }
+
+    cv::Mat out;
+    cv::addWeighted(img0, 0.5, img1, 0.5, 0, out);
+
+    algo::show(out);
+    return true;
+}
+
 }
