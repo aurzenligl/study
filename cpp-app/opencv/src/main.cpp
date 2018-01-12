@@ -47,6 +47,7 @@ int main(int ac, char* av[])
     if (help or filename.empty())
     {
         std::cout << cli;
+        exit(0);
     }
 
     std::cout << "Operation " << operation << " set.\n";
