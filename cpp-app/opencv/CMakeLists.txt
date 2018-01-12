@@ -25,10 +25,8 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
 
 # dependencies
 
-find_package(Boost COMPONENTS program_options)
 find_package(OpenCV REQUIRED)
 
-include_directories(${Boost_INCLUDE_DIRS})
 include_directories(${OpenCV_INCLUDE_DIRS})
 
 # sub-scripts
