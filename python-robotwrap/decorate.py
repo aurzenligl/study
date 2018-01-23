@@ -25,13 +25,16 @@ def find_functions(node):
         fun.parent = node
     return funs
 
-def insert(decorator, path, locs):
+def insert(func_decorator, class_decorator, path, nodes):
     with open(path, 'rw+') as f:
         lines = f.readlines()
         already_inserted = 0
-        for loc in locs:
-            line, offset = loc
-            pill = ' ' * offset + decorator + '\n'
+        for node in nodes:
+            line, offset = (node.lineno, node.col_offset)
+            if not is_class(node.parent):
+                pill = ' ' * offset + func_decorator + '\n'
+            else:
+                pill = ' ' * offset + class_decorator + '\n'
             lines.insert(line + already_inserted -1, pill)
             already_inserted += 1
         f.seek(0)
@@ -51,8 +54,7 @@ def process_file(filepath):
     funs = find_functions(tree)
     meths = find_functions(find_class(tree, to_purebasename(filepath)))
 
-    locs = [(node.lineno, node.col_offset) for node in sort_by_line(funs + meths)]
-    insert('@trxstub', filepath, locs)
+    insert('@trxstub_fun', '@trxstub_cls', filepath, sort_by_line(funs + meths))
 
 def main():
     args = sys.argv[1:]
