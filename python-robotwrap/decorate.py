@@ -18,6 +18,8 @@ def find_class(node, name):
     return None
 
 def find_functions(node):
+    if node is None:
+        return []
     funs = [child for child in ast.iter_child_nodes(node) if is_fun(child)]
     for fun in funs:
         fun.parent = node
