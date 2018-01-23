@@ -7,8 +7,8 @@ import ast
 def is_fun(node):
     return isinstance(node, ast.FunctionDef)
 
-def is_module(node):
-    return isinstance(node, ast.FunctionDef)
+def is_class(node):
+    return isinstance(node, ast.ClassDef)
 
 def get_path(node):
     path = [node]
@@ -21,7 +21,7 @@ def get_path(node):
 
 def find_class(node, name):
     for child in ast.iter_child_nodes(node):
-        if isinstance(child, ast.ClassDef) and child.name == name:
+        if is_class(child) and child.name == name:
             child.parent = node
             return child
     return None
