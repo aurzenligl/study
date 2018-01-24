@@ -54,7 +54,7 @@ def process_file(filepath):
     funs = find_functions(tree)
     meths = find_functions(find_class(tree, to_purebasename(filepath)))
 
-    insert('@trxstub_fun', '@trxstub_cls', filepath, sort_by_line(funs + meths))
+    insert('@trxstub(is_fun=True)', '@trxstub(is_fun=False)', filepath, sort_by_line(funs + meths))
 
 def main():
     args = sys.argv[1:]
