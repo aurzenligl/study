@@ -19,9 +19,8 @@ class decorated(object):
     You may access class at call time.
     '''
     def __call__(self, *args, **kwargs):
-        clsname = self.type.__name__
-        funcname = self.func.__name__
-        print('called %s.%s with args=%s kwargs=%s' % (clsname, funcname, args, kwargs))
+        name = '%s.%s' % (self.type.__name__, self.func.__name__)
+        print('called %s with args=%s kwargs=%s' % (name, args, kwargs))
         return self.func(*args, **kwargs)
 
 class Foo(object):
