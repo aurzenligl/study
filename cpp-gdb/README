@@ -49,12 +49,13 @@ gdb -c core
 # doesn't provide any good information
 
 gdb a.out
+run
 b main
 b _exit.c:32
-command 3
+command 2
 > run
 > end
-command 2
+command 1
 > record
 > continue
 > end
