@@ -8,5 +8,6 @@ perf.data*
 .settings
 .pydevproject
 .cache
+.pytest_cache
 __pycache__
 *.pyc
