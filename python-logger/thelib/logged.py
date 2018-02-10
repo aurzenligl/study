@@ -16,13 +16,16 @@ class logged(object):
     def __call__(self, *args, **kwargs):
         indent = ' ' * 4
 
+        def flatten(lines):
+            return [line for x in lines for line in x.splitlines()]
+
         def to_str(arg):
             lines = pprint.pformat(arg).splitlines(True)
             return lines[0] + ''.join(indent * 2 + line for line in lines[1:])
 
         lines = ([_to_path(self.func, self.type)] +
-                 [indent + '%s: %s' % (i, to_str(a)) for i, a in enumerate(args)] +
-                 [indent + '%s: %s' % (k, to_str(v)) for k, v in kwargs.items()])
+                 flatten([indent + '%s: %s' % (i, to_str(a)) for i, a in enumerate(args)]) +
+                 flatten([indent + '%s: %s' % (k, to_str(v)) for k, v in kwargs.items()]))
         for line in lines:
             thelib_logger.info(line)
         with _Timeit() as t:
