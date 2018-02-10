@@ -14,35 +14,39 @@ class logged(object):
         return self.__class__(self.func.__get__(obj, type_), type_)
 
     def __call__(self, *args, **kwargs):
-        indent = ' ' * 4
-
-        def flatten(lines):
-            return [line for x in lines for line in x.splitlines()]
-
-        def to_str(arg):
-            lines = pprint.pformat(arg).splitlines(True)
-            return lines[0] + ''.join(indent * 2 + line for line in lines[1:])
-
-        lines = ([_to_path(self.func, self.type)] +
-                 flatten([indent + '%s: %s' % (i, to_str(a)) for i, a in enumerate(args)]) +
-                 flatten([indent + '%s: %s' % (k, to_str(v)) for k, v in kwargs.items()]))
-        for line in lines:
+        for line in _func_call_to_lines(self.func, self.type, args, kwargs):
             thelib_logger.info(line)
         with _Timeit() as t:
             ret = self.func(*args, **kwargs)
-        thelib_logger.info(indent + '-> (%.2fs) %s' % (t.duration, ret))
+        for line in _indent(_func_ret_to_lines(t.duration, ret)):
+            thelib_logger.info(line)
         return ret
 
-def _to_path(fun, cls):
-    def cls2str(cls):
-        if cls:
-            return cls.__name__ + '.'
-        else:
-            return ''
+def _func_call_to_lines(fun, cls, args, kwargs):
+    return [_to_path(fun, cls)] + _indent(_flatten_lines(
+        ['%s: %s' % (i, pprint.pformat(a)) for i, a in enumerate(args)] +
+        ['%s: %s' % (k, pprint.pformat(v)) for k, v in kwargs.items()]
+    ))
 
+def _func_ret_to_lines(duration, ret):
+    return _flatten_lines(['-> (%.2fs) %s' % (duration, pprint.pformat(ret))])
+
+def _flatten_lines(lines):
+    out = []
+    for line in lines:
+        rawlines = line.splitlines()
+        out.append(rawlines[0])
+        out.extend(_indent(rawlines[1:]))
+    return out
+
+def _to_path(fun, cls):
     physical_path = fun.__module__.replace('.', '/') + '.py:%s' % fun.__code__.co_firstlineno
-    logical_path = cls2str(cls) + fun.func_name
+    logical_path = (cls.__name__ + '.' if cls else '') + fun.func_name
     return '%s %s' % (physical_path, logical_path)
+
+def _indent(lines):
+    indent = ' ' * 4
+    return [indent + line for line in lines]
 
 class _Timeit:
     def __enter__(self):

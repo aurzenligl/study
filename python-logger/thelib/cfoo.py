@@ -7,7 +7,12 @@ class Foo():
 
     @logged
     def foo(self, a):
-        pass
+        return {
+            'asaiosjd': 83,
+            'aoskokss': True,
+            'dksdoifjsd': {1:4, 4:6, 93:293, 238:1},
+            'asdokss': False,
+        }
 
     @logged
     def bar(self, a, b, c=2, d=3):
