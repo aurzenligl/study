@@ -1,4 +1,5 @@
 import time
+import pprint
 import logging
 
 thelib_logger = logging.getLogger('thelib')
@@ -14,14 +15,19 @@ class logged(object):
 
     def __call__(self, *args, **kwargs):
         indent = ' ' * 4
+
+        def to_str(arg):
+            lines = pprint.pformat(arg).splitlines(True)
+            return lines[0] + ''.join(indent * 2 + line for line in lines[1:])
+
         lines = ([_to_path(self.func, self.type)] +
-                 ['%sarg[%s]=%s' % (indent, i, a) for i, a in enumerate(args)] +
-                 ['%s%s=%s' % (indent, k, v) for k, v in kwargs.items()])
+                 [indent + '%s: %s' % (i, to_str(a)) for i, a in enumerate(args)] +
+                 [indent + '%s: %s' % (k, to_str(v)) for k, v in kwargs.items()])
         for line in lines:
             thelib_logger.info(line)
         with timeit() as t:
             ret = self.func(*args, **kwargs)
-        thelib_logger.info('-> (%.2fs) %s' % (t.duration, ret))
+        thelib_logger.info(indent + '-> (%.2fs) %s' % (t.duration, ret))
         return ret
 
 def _to_path(fun, cls):

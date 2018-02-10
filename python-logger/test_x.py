@@ -42,12 +42,23 @@ def test_bar(the_error_fixture, tmpdir, logdir):
     thelib.fbar.ffoo(a=5)
     thelib.fbar.fbar(a='1', b='2')
 
-def test_thelib():
+def test_thelib(request):
+    class Printable():
+        def __repr__(self):
+            return '<Printable>'
+        def __str__(self):
+            import pprint
+            return pprint.pformat(request.node.__dict__)
+
+    printable_obj = Printable()
+    example_dict = datalgr.__dict__
+
     thelib.cfoo.Foo(42)
     thelib.cfoo.Foo(a=42)
 
     foo = thelib.cfoo.Foo()
     foo.foo('ghs')
-    foo.bar(1,2,3,4)
-    foo.sfoo(a=[5,4,3])
+    foo.bar(1, 2, printable_obj, d=4)
+    foo.sfoo(a=[5, 4, 3])
+    thelib.fbar.fbar(a=example_dict, b='2')
     foo.cfoo(a='abc')
