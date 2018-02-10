@@ -25,7 +25,7 @@ class logged(object):
                  [indent + '%s: %s' % (k, to_str(v)) for k, v in kwargs.items()])
         for line in lines:
             thelib_logger.info(line)
-        with timeit() as t:
+        with _Timeit() as t:
             ret = self.func(*args, **kwargs)
         thelib_logger.info(indent + '-> (%.2fs) %s' % (t.duration, ret))
         return ret
@@ -41,7 +41,7 @@ def _to_path(fun, cls):
     logical_path = cls2str(cls) + fun.func_name
     return '%s %s' % (physical_path, logical_path)
 
-class timeit:
+class _Timeit:
     def __enter__(self):
         self.start = time.time()
         return self
