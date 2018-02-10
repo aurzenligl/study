@@ -18,7 +18,7 @@ class logged(object):
             thelib_logger.info(line)
         with _Timeit() as t:
             ret = self.func(*args, **kwargs)
-        for line in _indent(_func_ret_to_lines(t.duration, ret)):
+        for line in _func_ret_to_lines(t.duration, ret):
             thelib_logger.info(line)
         return ret
 
@@ -29,7 +29,7 @@ def _func_call_to_lines(fun, cls, args, kwargs):
     ))
 
 def _func_ret_to_lines(duration, ret):
-    return _flatten_lines(['-> (%.2fs) %s' % (duration, pprint.pformat(ret))])
+    return _indent(_flatten_lines(['-> (%.2fs) %s' % (duration, pprint.pformat(ret))]))
 
 def _flatten_lines(lines):
     out = []
