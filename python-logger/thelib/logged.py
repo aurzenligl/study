@@ -2,8 +2,8 @@ import time
 import pprint
 import logging
 
-thelib_logger = logging.getLogger('thelib')
-thelib_logger.addHandler(logging.NullHandler())
+logger = logging.getLogger('thelib')
+logger.addHandler(logging.NullHandler())
 
 class logged(object):
     def __init__(self, func, type_=None):
@@ -14,13 +14,17 @@ class logged(object):
         return self.__class__(self.func.__get__(obj, type_), type_)
 
     def __call__(self, *args, **kwargs):
-        for line in _func_call_to_lines(self.func, self.type, args, kwargs):
-            thelib_logger.info(line)
-        with _Timeit() as t:
-            ret = self.func(*args, **kwargs)
-        for line in _func_ret_to_lines(t.duration, ret):
-            thelib_logger.info(line)
-        return ret
+        if _logging.currently:
+            return self.func(*args, **kwargs)
+
+        with _logging:
+            for line in _func_call_to_lines(self.func, self.type, args, kwargs):
+                logger.info(line)
+            with _Timed() as t:
+                ret = self.func(*args, **kwargs)
+            for line in _func_ret_to_lines(t.duration, ret):
+                logger.info(line)
+            return ret
 
 def _func_call_to_lines(fun, cls, args, kwargs):
     return [_to_path(fun, cls)] + _indent(_flatten_lines(
@@ -48,10 +52,23 @@ def _indent(lines):
     indent = ' ' * 4
     return [indent + line for line in lines]
 
-class _Timeit:
+class _Timed:
     def __enter__(self):
         self.start = time.time()
         return self
+
     def __exit__(self, *_):
         end = time.time()
         self.duration = end - self.start
+
+class _Logging:
+    def __init__(self):
+        self.currently = False
+
+    def __enter__(self):
+        self.currently = True
+
+    def __exit__(self, *_):
+        self.currently = False
+
+_logging = _Logging()
