@@ -1,30 +1,47 @@
 import time
 import pprint
 import logging
+from functools import wraps
 
 logger = logging.getLogger('thelib')
 logger.addHandler(logging.NullHandler())
 
-class logged(object):
-    def __init__(self, func, type_=None):
-        self.func = func
-        self.type = type_
+def logged(fun):
+    desc = next((desc for desc in (staticmethod, classmethod) if isinstance(fun, desc)), None)
+    if desc:
+        fun = fun.__func__
 
-    def __get__(self, obj, type_=None):
-        return self.__class__(self.func.__get__(obj, type_), type_)
+    @wraps(fun)
+    def wrap(*args, **kwargs):
+        cls, nonselfargs = _declassify(fun, args)
 
-    def __call__(self, *args, **kwargs):
         if _logging.currently:
-            return self.func(*args, **kwargs)
+            return fun(*args, **kwargs)
 
         with _logging:
-            for line in _func_call_to_lines(self.func, self.type, args, kwargs):
+            for line in _func_call_to_lines(fun, cls, nonselfargs, kwargs):
                 logger.info(line)
             with _Timed() as t:
-                ret = self.func(*args, **kwargs)
+                ret = fun(*args, **kwargs)
             for line in _func_ret_to_lines(t.duration, ret):
                 logger.info(line)
             return ret
+    wrap.original = fun
+
+    if desc:
+        wrap = desc(wrap)
+    return wrap
+
+def _declassify(fun, args):
+    if len(args):
+        met = getattr(args[0], fun.__name__, None)
+        if met:
+            wrap = getattr(met, '__func__', None)
+            if wrap.original is fun:
+                maybe_cls = args[0]
+                cls = getattr(maybe_cls, '__class__', maybe_cls)
+                return cls, args[1:]
+    return None, args
 
 def _func_call_to_lines(fun, cls, args, kwargs):
     return [_to_path(fun, cls)] + _indent(_flatten_lines(
