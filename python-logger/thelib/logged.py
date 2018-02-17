@@ -2,6 +2,7 @@ import time
 import pprint
 import logging
 from functools import wraps
+from inspect import isclass
 
 logger = logging.getLogger('thelib')
 logger.addHandler(logging.NullHandler())
@@ -26,7 +27,7 @@ def logged(fun):
             for line in _func_ret_to_lines(t.duration, ret):
                 logger.info(line)
             return ret
-    wrap.original = fun
+    wrap.wrapped = fun
 
     if desc:
         wrap = desc(wrap)
@@ -37,10 +38,12 @@ def _declassify(fun, args):
         met = getattr(args[0], fun.__name__, None)
         if met:
             wrap = getattr(met, '__func__', None)
-            if wrap.original is fun:
-                maybe_cls = args[0]
-                cls = getattr(maybe_cls, '__class__', maybe_cls)
-                return cls, args[1:]
+            if wrap:
+                wrapped = getattr(wrap, 'wrapped', None)
+                if wrapped is fun:
+                    maybe_cls = args[0]
+                    cls = maybe_cls if isclass(maybe_cls) else maybe_cls.__class__
+                    return cls, args[1:]
     return None, args
 
 def _func_call_to_lines(fun, cls, args, kwargs):
