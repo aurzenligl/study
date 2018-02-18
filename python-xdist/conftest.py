@@ -2,51 +2,100 @@ import os
 import pytest
 from logger import logger, put
 import logging
+import time
+import Pyro4
+from queue import Queue, Empty
+
+def do_the_long_thing():
+    put('LONGTHING.start %.4f' % (time.time()))
+    time.sleep(0.5)
+    put('LONGTHING.end %.4f' % (time.time()))
+    return '<long thing result>'
 
 @pytest.fixture(scope='session')
 def sfix(request):
-    put('FIX.pytest.fixture.session')
+    uri = request.config.slaveinput['uri']
+    gm = Pyro4.Proxy(uri)
+    if gm.should_produce():
+        status = do_the_long_thing()
+        for _ in range(request.config.slaveinput['slavecount']):
+            gm.put(status)
+    res = gm.get()
+
+    put('FIX.pytest.fixture.session %s' % res)
     logger.info('sfix')
     yield 1
     logger.info('~sfix')
 
 @pytest.fixture
 def tfix(sfix):
-    put('FIX.pytest.fixture')
+    #put('FIX.pytest.fixture')
     logger.info('tfix')
     yield 1
     logger.info('~tfix')
 
 def pytest_addoption(parser):
-    put('HOOK.pytest_addoption')
+    #put('HOOK.pytest_addoption')
     parser.addoption('--dummy', type='int', metavar='COUNT',
                      help='Dummy variable just for the heck of it')
 
 def pytest_logger_logdirlink(config):
-    put('HOOK.pytest_logger_logdirlink')
+    #put('HOOK.pytest_logger_logdirlink')
     return os.path.join(os.path.dirname(__file__), 'logs')
 
 def pytest_logger_config(logger_config):
-    put('HOOK.pytest_logger_config')
+    #put('HOOK.pytest_logger_config')
     logger_config.add_loggers(['setup'], stdout_level='info')
     logger_config.set_log_option_default('setup')
 
+@Pyro4.expose
+class GreetingMaker(object):
+    def __init__(self):
+        self.pq = Queue()
+        self.pq.put(True)
+        self.q = Queue()
+    def should_produce(self):
+        try:
+            return self.pq.get(False)
+        except Empty:
+            pass
+    def get(self):
+        return self.q.get()
+    def put(self, x):
+        self.q.put(x)
+    def name(self):
+        return "the name"
+    def get_fortune(self, name):
+        return "Hello, {0}. Here is your fortune message:\n" \
+               "Behold the warranty -- the bold print giveth and the fine print taketh away.".format(name)
 
+def pytest_configure_node(node):
+    put('HOOK.pytest_configure_node')
+    if getattr(node.config, 'firstnode', None) is None:
+        node.config.firstnode = node
+    if node.config.firstnode is node:
+        daemon, uri = setup_daemon()
+        node.pyro = daemon
+        node.slaveinput['uri'] = str(uri)
+    else:
+        node.slaveinput['uri'] = node.config.firstnode.slaveinput['uri']
 
-def pytest_cmdline_preparse(config, args):
-    put('HOOK.pytest_cmdline_preparse')
+def setup_daemon():
+    daemon = Pyro4.Daemon()
+    uri = daemon.register(GreetingMaker())
 
-def pytest_generate_tests(metafunc):
-    put('HOOK.pytest_generate_tests')
+    from threading import Thread
+    thr = Thread(target=daemon.requestLoop)
+    thr.daemon = True
+    thr.start()
 
-def pytest_runtestloop(session):
-    put('HOOK.pytest_runtestloop')
+    return daemon, uri
 
-def pytest_runtestloop(session):
-    put('HOOK.pytest_runtestloop')
+def pytest_testnodedown(node, error):
+    if node.config.firstnode is node:
+        node.pyro.close()
+    put('HOOK.pytest_testnodedown')
 
 def pytest_runtest_protocol(item, nextitem):
-    put('HOOK.pytest_runtest_protocol')
-
-def pytest_collection_modifyitems(session, config, items):
-    put('HOOK.pytest_collection_modifyitems')
+    session = item.session
+    put('HOOK.pytest_runtest_protocol %s' % session.config.slaveinput)

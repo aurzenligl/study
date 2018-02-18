@@ -5,6 +5,3 @@ def test_fun(tfix):
 
 def test_gun(tfix):
     logger.info('gun')
-
-def test_hun(tfix):
-    logger.info('hun')

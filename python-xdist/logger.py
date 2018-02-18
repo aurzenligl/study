@@ -1,6 +1,7 @@
 import logging
 import os
 import sys
+import time
 
 logger = logging.getLogger('setup')
 logger.addHandler(logging.NullHandler())
@@ -16,7 +17,7 @@ class Luger:
         self.put('-- starting %s --' % self.pid)
     def put(self, line):
         with open('%s/%s' % (self.path, self.pid), 'a') as f:
-            f.write(line + '\n')
+            f.write('%.4f: %s\n' % (time.time(), line))
 
 luger = Luger('/tmp/luger/')
 
