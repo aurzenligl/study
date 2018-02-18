@@ -5,62 +5,10 @@ import logging
 import time
 import Pyro4
 from queue import Queue, Empty
+from decorator import decorator
+import inspect
 
-def do_the_long_thing():
-    put('LONGTHING.start %.4f' % (time.time()))
-    time.sleep(0.5)
-    put('LONGTHING.end %.4f' % (time.time()))
-    return 42
-
-@pytest.fixture(scope='session')
-def sfix(request):
-    uri = request.config.slaveinput['uri']
-    gm = Pyro4.Proxy(uri)
-    if gm.should_produce():
-        status = do_the_long_thing()
-        for _ in range(request.config.slaveinput['slavecount']):
-            gm.put(status)
-    res = gm.get()
-
-    put('FIX.pytest.fixture.session %s' % res)
-    logger.info('sfix')
-    yield 1
-    logger.info('~sfix')
-
-@pytest.fixture
-def tfix(sfix):
-    #put('FIX.pytest.fixture')
-    logger.info('tfix')
-    yield 1
-    logger.info('~tfix')
-
-def pytest_addoption(parser):
-    #put('HOOK.pytest_addoption')
-    parser.addoption('--dummy', type='int', metavar='COUNT',
-                     help='Dummy variable just for the heck of it')
-
-def pytest_logger_logdirlink(config):
-    return os.path.join(os.path.dirname(__file__), 'logs')
-
-def pytest_logger_config(logger_config):
-    logger_config.add_loggers(['setup'], stdout_level='info')
-    logger_config.set_log_option_default('setup')
-
-@Pyro4.expose
-class TestrunFixtureEngine(object):
-    def __init__(self):
-        self.produce_token = Queue()
-        self.produce_token.put(True)
-        self.results = Queue()
-    def should_produce(self):
-        try:
-            return self.produce_token.get(False)
-        except Empty:
-            pass
-    def get(self):
-        return self.results.get()
-    def put(self, x):
-        self.results.put(x)
+####### pytest_fixture_scope_testrun plugin code #######
 
 def pytest_configure_node(node):
     put('HOOK.pytest_configure_node')
@@ -70,12 +18,6 @@ def pytest_configure_node(node):
 def pytest_testnodedown(node, error):
     in_firstnode(node, lambda: node.pyro.close())
     put('HOOK.pytest_testnodedown')
-
-def pytest_runtest_protocol(item, nextitem):
-    session = item.session
-    put('HOOK.pytest_runtest_protocol %s' % session.config.slaveinput)
-
-#######
 
 def in_firstnode(node, fun):
     if getattr(node.config, 'firstnode', None) is None:
@@ -94,3 +36,97 @@ def setup_daemon(node):
 
     node.pyro = daemon
     node.slaveinput['uri'] = str(uri)
+
+@Pyro4.expose
+class TestrunFixtureEngine(object):
+    def __init__(self):
+        self.produce_token = Queue()
+        self.produce_token.put(True)
+        self.results = Queue()
+    def should_produce(self):
+        try:
+            return self.produce_token.get(False)
+        except Empty:
+            pass
+    def get(self):
+        return self.results.get()
+    def put(self, x):
+        self.results.put(x)
+
+def fixture_scope_testrun(fun):
+    if inspect.isgeneratorfunction(fun):
+        pytest.fail('testrun fixture must not be a generator')
+
+    def wrap(fun, *args, **kwargs):
+        has_session = lambda arg: isinstance(getattr(arg, 'session', None), pytest.Session)
+        request = next((arg for arg in args if has_session(arg)), None)
+        if not request:
+            pytest.fail('testrun fixture must have request argument')
+
+        slaveinput = getattr(request.config, 'slaveinput', None)
+        if not slaveinput:
+            return fun(*args, **kwargs)
+
+        proxy = Pyro4.Proxy(slaveinput['uri'])
+        if proxy.should_produce():
+            try:
+                ret = fun(*args, **kwargs)
+            except Exception as ex:
+                ret = ex
+            for _ in range(slaveinput['slavecount']):
+                try:
+                    proxy.put(ret)
+                except Exception as ex:
+                    proxy.put(ex)
+        ret = proxy.get()
+        if isinstance(ret, Exception):
+            raise ret
+        else:
+            return ret
+
+    return pytest.fixture(scope='session')(decorator(wrap)(fun))
+
+pytest.fixture_scope_testrun = fixture_scope_testrun
+
+####### pytest_fixture_scope_testrun plugin code end #######
+
+def do_the_long_thing():
+    put('LONGTHING.start %.4f' % (time.time()))
+    time.sleep(0.5)
+    put('LONGTHING.end %.4f' % (time.time()))
+    return 42
+
+@pytest.fixture_scope_testrun
+def rfix(request):
+    put('RFIX.testrun')
+    def fin():
+        put('RFIX.~testrun')
+    request.addfinalizer(fin)
+    return do_the_long_thing()
+
+@pytest.fixture(scope='session')
+def sfix(rfix):
+    put('SFIX.testrun')
+    yield
+    put('SFIX.~testrun')
+
+@pytest.fixture
+def tfix(sfix, rfix):
+    put('FIX.rfix=%s' % rfix)
+    yield 1
+
+def pytest_addoption(parser):
+    parser.addoption('--dummy', type='int', metavar='COUNT',
+                     help='Dummy variable just for the heck of it')
+
+def pytest_logger_logdirlink(config):
+    return os.path.join(os.path.dirname(__file__), 'logs')
+
+def pytest_logger_config(logger_config):
+    logger_config.add_loggers(['setup'], stdout_level='info')
+    logger_config.set_log_option_default('setup')
+
+def pytest_runtest_protocol(item, nextitem):
+    session = item.session
+    slaveinput = getattr(session.config, 'slaveinput', {})
+    put('HOOK.pytest_runtest_protocol %s' % slaveinput)
