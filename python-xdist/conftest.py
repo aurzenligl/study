@@ -15,9 +15,10 @@ def pytest_configure_node(node):
     in_firstnode(node, lambda: setup_daemon(node))
     node.slaveinput['uri'] = node.config.firstnode.slaveinput['uri']
 
-def pytest_testnodedown(node, error):
-    in_firstnode(node, lambda: node.pyro.close())
-    put('HOOK.pytest_testnodedown')
+def pytest_unconfigure(config):
+    pyro = getattr(config, 'pyro', None)
+    if pyro:
+        pyro.close()
 
 def in_firstnode(node, fun):
     if getattr(node.config, 'firstnode', None) is None:
@@ -34,7 +35,7 @@ def setup_daemon(node):
     thr.daemon = True
     thr.start()
 
-    node.pyro = daemon
+    node.config.pyro = daemon
     node.slaveinput['uri'] = str(uri)
 
 @Pyro4.expose
@@ -115,8 +116,14 @@ def tfix(sfix, rfix):
     put('FIX.rfix=%s' % rfix)
     yield 1
 
+@pytest.mark.tryfirst
+def pytest_cmdline_main(config):
+    if not getattr(config, 'slaveinput', None):
+        if config.getvalue('poolmode'):
+            config.option.numprocesses = 3
+
 def pytest_addoption(parser):
-    parser.addoption('--dummy', type='int', metavar='COUNT',
+    parser.addoption('--poolmode', action='store_true',
                      help='Dummy variable just for the heck of it')
 
 def pytest_logger_logdirlink(config):
