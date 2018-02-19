@@ -54,40 +54,58 @@ class TestrunFixtureEngine(object):
     def put(self, x):
         self.results.put(x)
 
-def fixture_scope_testrun(fun):
-    if inspect.isgeneratorfunction(fun):
-        pytest.fail('testrun fixture must not be a generator')
+def fixture_scope_testrun(*args, **kwargs):
+    if not getattr(fixture_scope_testrun, 'used', None):
+        fixture_scope_testrun.used = True
+    else:
+        pytest.fail('only one supersession fixture supported')
 
-    def wrap(fun, *args, **kwargs):
-        has_session = lambda arg: isinstance(getattr(arg, 'session', None), pytest.Session)
-        request = next((arg for arg in args if has_session(arg)), None)
-        if not request:
-            pytest.fail('testrun fixture must have request argument')
+    def the_decorator(fun):
+        if inspect.isgeneratorfunction(fun):
+            pytest.fail('supersession fixture must not be a generator')
 
-        slaveinput = getattr(request.config, 'slaveinput', None)
-        if not slaveinput:
-            return fun(*args, **kwargs)
+        def wrap(fun, *args, **kwargs):
+            has_session = lambda arg: isinstance(getattr(arg, 'session', None), pytest.Session)
+            request = next((arg for arg in args if has_session(arg)), None)
+            if not request:
+                pytest.fail('supersession fixture must have request argument')
 
-        proxy = Pyro4.Proxy(slaveinput['uri'])
-        if proxy.should_produce():
-            try:
-                ret = fun(*args, **kwargs)
-            except Exception as ex:
-                ret = ex
-            for _ in range(slaveinput['slavecount']):
+            slaveinput = getattr(request.config, 'slaveinput', None)
+            if not slaveinput:
+                return fun(*args, **kwargs)
+
+            proxy = Pyro4.Proxy(slaveinput['uri'])
+            if proxy.should_produce():
                 try:
-                    proxy.put(ret)
+                    ret = fun(*args, **kwargs)
                 except Exception as ex:
-                    proxy.put(ex)
-        ret = proxy.get()
-        if isinstance(ret, Exception):
-            raise ret
-        else:
-            return ret
+                    ret = ex
+                for _ in range(slaveinput['slavecount']):
+                    try:
+                        proxy.put(ret)
+                    except Exception as ex:
+                        proxy.put(ex)
+            ret = proxy.get()
+            if isinstance(ret, Exception):
+                raise ret
+            else:
+                return ret
 
-    return pytest.fixture(scope='session')(decorator(wrap)(fun))
+        kwargs['scope'] = 'session'
+        return pytest.fixture(*args, **kwargs)(decorator(wrap)(fun))
+    return the_decorator
 
-pytest.fixture_scope_testrun = fixture_scope_testrun
+_pytest_fixture = pytest.fixture
+
+def fixture(*args, **kwargs):
+    scope = kwargs.get('scope')
+    if scope and scope == 'supersession':
+        return fixture_scope_testrun(*args, **kwargs)
+    else:
+        global _pytest_fixture
+        return _pytest_fixture(*args, **kwargs)
+
+pytest.fixture = fixture
 
 ####### pytest_fixture_scope_testrun plugin code end #######
 
@@ -97,7 +115,7 @@ def do_the_long_thing():
     put('LONGTHING.end %.4f' % (time.time()))
     return 42
 
-@pytest.fixture_scope_testrun
+@pytest.fixture(scope='supersession')
 def rfix(request):
     put('RFIX.testrun')
     def fin():
