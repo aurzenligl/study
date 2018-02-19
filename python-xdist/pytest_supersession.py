@@ -1,35 +1,19 @@
 import pytest
-import Pyro4
-from queue import Queue, Empty
-from decorator import decorator
 import inspect
+from queue import Queue, Empty
+from threading import Thread
+import Pyro4
+from decorator import decorator
 
 def pytest_configure_node(node):
-    in_firstnode(node, lambda: setup_daemon(node))
-    node.slaveinput['uri'] = node.config.firstnode.slaveinput['uri']
+    if 'pyro' not in dir(node.config):
+        setup_pyro(node.config)
+    node.slaveinput['uri'] = node.config.pyro_uri
 
 def pytest_unconfigure(config):
     pyro = getattr(config, 'pyro', None)
     if pyro:
         pyro.close()
-
-def in_firstnode(node, fun):
-    if getattr(node.config, 'firstnode', None) is None:
-        node.config.firstnode = node
-    if node.config.firstnode is node:
-        fun()
-
-def setup_daemon(node):
-    daemon = Pyro4.Daemon()
-    uri = daemon.register(TestrunFixtureEngine())
-
-    from threading import Thread
-    thr = Thread(target=daemon.requestLoop)
-    thr.daemon = True
-    thr.start()
-
-    node.config.pyro = daemon
-    node.slaveinput['uri'] = str(uri)
 
 @Pyro4.expose
 class TestrunFixtureEngine(object):
@@ -46,6 +30,17 @@ class TestrunFixtureEngine(object):
         return self.results.get()
     def put(self, x):
         self.results.put(x)
+
+def setup_pyro(config):
+    daemon = Pyro4.Daemon()
+    uri = daemon.register(TestrunFixtureEngine())
+
+    thr = Thread(target=daemon.requestLoop)
+    thr.daemon = True
+    thr.start()
+
+    config.pyro = daemon
+    config.pyro_uri = str(uri)
 
 def supersession_fixture(orig, *args):
     if not getattr(supersession_fixture, 'used', None):
