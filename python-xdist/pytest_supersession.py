@@ -47,7 +47,7 @@ class TestrunFixtureEngine(object):
     def put(self, x):
         self.results.put(x)
 
-def supersession_fixture(fix, *args, **kwargs):
+def supersession_fixture(orig, *args):
     if not getattr(supersession_fixture, 'used', None):
         supersession_fixture.used = True
     else:
@@ -57,7 +57,7 @@ def supersession_fixture(fix, *args, **kwargs):
         if inspect.isgeneratorfunction(fun):
             pytest.fail('supersession fixture must not be a generator')
 
-        def wrap(fun, *args, **kwargs):
+        def wrap(fun, *args):
             has_session = lambda arg: isinstance(getattr(arg, 'session', None), pytest.Session)
             request = next((arg for arg in args if has_session(arg)), None)
             if not request:
@@ -65,12 +65,12 @@ def supersession_fixture(fix, *args, **kwargs):
 
             slaveinput = getattr(request.config, 'slaveinput', None)
             if not slaveinput:
-                return fun(*args, **kwargs)
+                return fun(*args)
 
             proxy = Pyro4.Proxy(slaveinput['uri'])
             if proxy.should_produce():
                 try:
-                    ret = fun(*args, **kwargs)
+                    ret = fun(*args)
                 except Exception as ex:
                     ret = ex
                 for _ in range(slaveinput['slavecount']):
@@ -84,15 +84,15 @@ def supersession_fixture(fix, *args, **kwargs):
             else:
                 return ret
 
-        return fix(*args, **kwargs)(decorator(wrap, fun))
+        return orig(*args)(decorator(wrap, fun))
     return the_decorator
 
-def fixture(fix, *args, **kw):
+def fixture(orig, *args):
     scope = args[0]
     if scope == 'supersession':
         args = ('session',) + args[1:]
-        return supersession_fixture(fix, *args, **kw)
+        return supersession_fixture(orig, *args)
     else:
-        return fix(*args, **kw)
+        return orig(*args)
 
 pytest.fixture = decorator(fixture, pytest.fixture)
