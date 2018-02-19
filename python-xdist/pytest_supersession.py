@@ -1,15 +1,10 @@
-import os
 import pytest
-from logger import logger, put
-import logging
-import time
 import Pyro4
 from queue import Queue, Empty
 from decorator import decorator
 import inspect
 
 def pytest_configure_node(node):
-    put('HOOK.pytest_configure_node')
     in_firstnode(node, lambda: setup_daemon(node))
     node.slaveinput['uri'] = node.config.firstnode.slaveinput['uri']
 
@@ -52,9 +47,9 @@ class TestrunFixtureEngine(object):
     def put(self, x):
         self.results.put(x)
 
-def fixture_scope_testrun(*args, **kwargs):
-    if not getattr(fixture_scope_testrun, 'used', None):
-        fixture_scope_testrun.used = True
+def supersession_fixture(fix, *args, **kwargs):
+    if not getattr(supersession_fixture, 'used', None):
+        supersession_fixture.used = True
     else:
         pytest.fail('only one supersession fixture supported')
 
@@ -89,18 +84,15 @@ def fixture_scope_testrun(*args, **kwargs):
             else:
                 return ret
 
-        kwargs['scope'] = 'session'
-        return pytest.fixture(*args, **kwargs)(decorator(wrap)(fun))
+        return fix(*args, **kwargs)(decorator(wrap, fun))
     return the_decorator
 
-_pytest_fixture = pytest.fixture
-
-def fixture(*args, **kwargs):
-    scope = kwargs.get('scope')
-    if scope and scope == 'supersession':
-        return fixture_scope_testrun(*args, **kwargs)
+def fixture(fix, *args, **kw):
+    scope = args[0]
+    if scope == 'supersession':
+        args = ('session',) + args[1:]
+        return supersession_fixture(fix, *args, **kw)
     else:
-        global _pytest_fixture
-        return _pytest_fixture(*args, **kwargs)
+        return fix(*args, **kw)
 
-pytest.fixture = fixture
+pytest.fixture = decorator(fixture, pytest.fixture)

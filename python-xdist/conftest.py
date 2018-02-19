@@ -1,21 +1,16 @@
 import os
 import pytest
-from logger import logger, put
-import logging
+from logger import put
 import time
-import Pyro4
-from queue import Queue, Empty
-from decorator import decorator
-import inspect
 
 pytest.register_assert_rewrite('pytest_supersession')
 __import__('pytest_supersession')
 pytest_plugins = 'pytest_supersession'
 
 def do_the_long_thing():
-    put('LONGTHING.start %.4f' % (time.time()))
+    put('LONGTHING.start')
     time.sleep(0.5)
-    put('LONGTHING.end %.4f' % (time.time()))
+    put('LONGTHING.end')
     return 42
 
 @pytest.fixture(scope='supersession')
