@@ -34,9 +34,11 @@ def tfix(sfix, rfix):
 
 @pytest.mark.tryfirst
 def pytest_cmdline_main(config):
-    if not getattr(config, 'slaveinput', None):
-        if config.getvalue('poolmode'):
-            config.option.numprocesses = 3
+    if 'slaveinput' in dir(config):
+        return
+
+    if config.getvalue('poolmode'):
+        config.option.numprocesses = 3
 
 def pytest_addoption(parser):
     parser.addoption('--poolmode', action='store_true',
