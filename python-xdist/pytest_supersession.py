@@ -1,8 +1,8 @@
-import pytest
 import inspect
-from queue import Queue, Empty
-from threading import Thread
+import pytest
 import Pyro4
+from queue import Queue, Empty
+from threading import Thread, Event
 from decorator import decorator
 
 def pytest_configure_node(node):
@@ -16,24 +16,38 @@ def pytest_unconfigure(config):
         pyro.close()
 
 @Pyro4.expose
-class TestrunFixtureEngine(object):
+class SuperSessionMediator(object):
     def __init__(self):
-        self.produce_token = Queue()
-        self.produce_token.put(True)
-        self.results = Queue()
-    def should_produce(self):
+        self.request = Queue()
+        self.request.put(True)
+        self.ready = Event()
+        self.result = None
+        self.exc = None
+
+    def request_production(self):
         try:
-            return self.produce_token.get(False)
+            return self.request.get(block=False)
         except Empty:
-            pass
+            return False
+
+    def set(self, res):
+        self.result = res
+        self.ready.set()
+
+    def set_exception(self, exc):
+        self.exc = exc
+        self.ready.set()
+
     def get(self):
-        return self.results.get()
-    def put(self, x):
-        self.results.put(x)
+        self.ready.wait()
+        if self.exc:
+            raise self.exc
+        else:
+            return self.result
 
 def setup_pyro(config):
     daemon = Pyro4.Daemon()
-    uri = daemon.register(TestrunFixtureEngine())
+    uri = daemon.register(SuperSessionMediator())
 
     thr = Thread(target=daemon.requestLoop)
     thr.daemon = True
@@ -43,7 +57,7 @@ def setup_pyro(config):
     config.pyro_uri = str(uri)
 
 def supersession_fixture(orig, *args):
-    if not getattr(supersession_fixture, 'used', None):
+    if 'used' not in dir(supersession_fixture):
         supersession_fixture.used = True
     else:
         pytest.fail('only one supersession fixture supported')
@@ -63,21 +77,18 @@ def supersession_fixture(orig, *args):
                 return fun(*args)
 
             proxy = Pyro4.Proxy(slaveinput['uri'])
-            if proxy.should_produce():
+            if proxy.request_production():
                 try:
-                    ret = fun(*args)
+                    res = fun(*args)
+                    proxy.set(res)
+                    return res
                 except Exception as ex:
-                    ret = ex
-                for _ in range(slaveinput['slavecount']):
-                    try:
-                        proxy.put(ret)
-                    except Exception as ex:
-                        proxy.put(ex)
-            ret = proxy.get()
-            if isinstance(ret, Exception):
-                raise ret
-            else:
-                return ret
+                    proxy.set_exception(ex)
+                    raise
+            try:
+                return proxy.get()
+            except Exception as ex:
+                pytest.fail('Remote exception: %s' % ex)
 
         return orig(*args)(decorator(wrap, fun))
     return the_decorator
