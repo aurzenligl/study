@@ -2,52 +2,7 @@ import os
 import pytest
 import logging
 from process import process
-
-from datetime import datetime
 from py.xml import html
-import pytest
-
-@pytest.mark.optionalhook
-def pytest_html_results_table_header(cells):
-    cells.insert(-1, html.th('Start', class_='sortable time', col='time'))
-    cells.append(html.th('Logs'))
-
-@pytest.mark.optionalhook
-def pytest_html_results_table_row(report, cells):
-    cells.insert(-1, html.td('%.3f' % report._start, class_='col-time'))
-    cells.append(html.td('No loggies captured.'))
-
-@pytest.mark.optionalhook
-def pytest_html_results_table_html(report, data):
-    for handler in report._handlers:
-        filename = getattr(handler, 'baseFilename', None)
-        if filename:
-            handler.flush()
-            try:
-                text = open(filename).read()
-            except IOError:
-                continue
-            data[0].append(html.div(text.strip()))
-
-@pytest.mark.hookwrapper
-def pytest_runtest_makereport(item, call):
-    pytest_html = item.config.pluginmanager.getplugin('html')
-
-    if not hasattr(pytest_html, '_start'):
-        pytest_html._start = call.start
-
-    outcome = yield
-    report = outcome.get_result()
-    extra = getattr(report, 'extra', [])
-    report._start = call.start - pytest_html._start
-    report._handlers = item._logger.handlers
-    if report.when == 'call':
-        # always add url to report
-        extra.append(pytest_html.extras.url('http://www.google.com/'))
-        extra.append(pytest_html.extras.json({'name': 'pytest'}))
-        extra.append(pytest_html.extras.text('Add some simple Text'))
-        extra.append(pytest_html.extras.text('some string', name='Different title'))
-        report.extra = extra
 
 def pytest_addoption(parser):
     parser.addoption('--count', type='int', metavar='COUNT',
@@ -67,6 +22,52 @@ def pytest_generate_tests(metafunc):
     if count is not None:
         for i in range(count):
             metafunc.addcall()
+
+@pytest.mark.optionalhook
+def pytest_html_results_table_header(cells):
+    cells.pop()
+    cells.insert(-1, html.th('Start', class_='sortable time', col='time'))
+
+@pytest.mark.optionalhook
+def pytest_html_results_table_row(report, cells):
+    cells.pop()
+    cells.insert(-1, html.td('%.3f' % report._start, class_='col-time'))
+
+@pytest.mark.optionalhook
+def pytest_html_results_table_html(report, data):
+    add_html_logs(report, data)
+
+@pytest.mark.hookwrapper
+def pytest_runtest_makereport(item, call):
+    outcome = yield
+    add_html_extras(item, call, outcome)
+
+def add_html_logs(report, data):
+    for handler in report._handlers:
+        filename = getattr(handler, 'baseFilename', None)
+        if filename:
+            handler.flush()
+            try:
+                text = open(filename).read()
+            except IOError:
+                continue
+
+            name = os.path.basename(filename)
+            header = '\n'.join(['logfile %s' % name, '-' * 50, ''])
+            data[0].append(('\n\n' + header + text.strip()))
+
+def add_html_extras(item, call, output):
+    html = getattr(item.config, '_html')
+    if html:
+        report = output.get_result()
+
+        if not hasattr(html, '_start'):
+            html._start = call.start
+        report._start = call.start - html._start
+
+        logger = getattr(item, '_logger', None)
+        handlers = getattr(logger, 'handlers', [])
+        report._handlers = handlers
 
 setuplgr = logging.getLogger('setup')
 setuplgr.addHandler(logging.NullHandler())
