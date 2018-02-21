@@ -24,6 +24,7 @@ def test_foo(the_error_fixture):
     thelib.fbar.ffoo('sdda')
     thelib.fbar.fbar(1, 2)
 
+@pytest.mark.favourites
 def test_bar(the_error_fixture, tmpdir, logdir):
     datalgr.info('data -1')
     datalgr.info('connection available')
@@ -42,7 +43,8 @@ def test_bar(the_error_fixture, tmpdir, logdir):
     thelib.fbar.ffoo(a=5)
     thelib.fbar.fbar(a='1', b='2')
 
-def test_thelib(request):
+@pytest.mark.deplorables
+def test_thelib(the_error_fixture, request):
     class Printable():
         def __repr__(self):
             return '<Printable>'
