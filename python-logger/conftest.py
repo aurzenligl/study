@@ -74,8 +74,6 @@ setuplgr.addHandler(logging.NullHandler())
 daemonlgr = logging.getLogger('daemon')
 daemonlgr.addHandler(logging.NullHandler())
 
-logging.root.setLevel(logging.NOTSET)
-
 @pytest.yield_fixture(scope='session', autouse=True)
 def sessionfixture():
     setuplgr.info('session begins')
