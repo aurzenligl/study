@@ -16,43 +16,38 @@ def pytest_html_results_table_row(report, cells):
 
 @pytest.mark.optionalhook
 def pytest_html_results_table_html(report, data):
-    add_html_logs(report, data)
+    data[0].append(report._extras['logs'])
 
 @pytest.mark.hookwrapper
 def pytest_runtest_makereport(item, call):
     outcome = yield
     add_html_extras(item, call, outcome)
 
-def add_html_logs(report, data):
-    for handler in report._extras['handlers']:
-        filename = getattr(handler, 'baseFilename', None)
-        if filename:
-            handler.flush()
-            try:
-                text = open(filename).read()
-            except IOError:
-                continue
-
-            name = os.path.basename(filename)
-            header = '\n'.join(['logfile %s' % name, '-' * 50, ''])
-            data[0].append(('\n\n' + header + text.strip()))
-
 def add_html_extras(item, call, output):
-    try:
-        html = item.config._html
-    except AttributeError:
-        return
-
     report = output.get_result()
     report._extras = extras = {}
 
-    if not hasattr(html, '_start'):
-        html._start = call.start
-    extras['start'] = call.start - html._start
+    config = item.config
+    config._first_setup_start = getattr(config, '_first_setup_start', call.start)
+    extras['start'] = call.start - config._first_setup_start
 
     extras['markers'] = sorted(filter(item.get_marker, item.keywords.keys()))
 
-    try:
-        extras['handlers'] = item._logger.handlers
-    except AttributeError:
-        extras['handlers'] = []
+    def read_logs(handler):
+        filename = getattr(handler, 'baseFilename', None)
+        if not filename:
+            return ''
+
+        handler.flush()
+        try:
+            text = open(filename).read()
+        except IOError:
+            return ''
+
+        name = os.path.basename(filename)
+        header = '\n'.join(['logfile %s' % name, '-' * 50, ''])
+        return '\n\n' + header + text.strip()
+
+    logger = getattr(item, '_logger', None)
+    handlers = getattr(logger, 'handlers', [])
+    extras['logs'] = ''.join(read_logs(h) for h in handlers)
