@@ -3,6 +3,52 @@ import pytest
 import logging
 from process import process
 
+from datetime import datetime
+from py.xml import html
+import pytest
+
+@pytest.mark.optionalhook
+def pytest_html_results_table_header(cells):
+    cells.insert(-1, html.th('Start', class_='sortable time', col='time'))
+    cells.append(html.th('Logs'))
+
+@pytest.mark.optionalhook
+def pytest_html_results_table_row(report, cells):
+    cells.insert(-1, html.td('%.3f' % report._start, class_='col-time'))
+    cells.append(html.td('No loggies captured.'))
+
+@pytest.mark.optionalhook
+def pytest_html_results_table_html(report, data):
+    for handler in report._handlers:
+        filename = getattr(handler, 'baseFilename', None)
+        if filename:
+            handler.flush()
+            try:
+                text = open(filename).read()
+            except IOError:
+                continue
+            data[0].append(html.div(text.strip()))
+
+@pytest.mark.hookwrapper
+def pytest_runtest_makereport(item, call):
+    pytest_html = item.config.pluginmanager.getplugin('html')
+
+    if not hasattr(pytest_html, '_start'):
+        pytest_html._start = call.start
+
+    outcome = yield
+    report = outcome.get_result()
+    extra = getattr(report, 'extra', [])
+    report._start = call.start - pytest_html._start
+    report._handlers = item._logger.handlers
+    if report.when == 'call':
+        # always add url to report
+        extra.append(pytest_html.extras.url('http://www.google.com/'))
+        extra.append(pytest_html.extras.json({'name': 'pytest'}))
+        extra.append(pytest_html.extras.text('Add some simple Text'))
+        extra.append(pytest_html.extras.text('some string', name='Different title'))
+        report.extra = extra
+
 def pytest_addoption(parser):
     parser.addoption('--count', type='int', metavar='COUNT',
                      help='Run each test the specified number of times')
