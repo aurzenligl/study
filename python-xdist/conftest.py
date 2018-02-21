@@ -22,7 +22,7 @@ def rfix(request):
     return do_the_long_thing()
 
 @pytest.fixture(scope='session')
-def sfix(rfix):
+def sfix(rfix, request):
     put('SFIX.testrun')
     yield
     put('SFIX.~testrun')
@@ -52,6 +52,10 @@ def pytest_logger_config(logger_config):
     logger_config.set_log_option_default('setup')
 
 def pytest_runtest_protocol(item, nextitem):
+    if 'testinit' in dir(item.config):
+        return
+    item.config.testinit = True
+
     session = item.session
     slaveinput = getattr(session.config, 'slaveinput', {})
     put('HOOK.pytest_runtest_protocol %s' % slaveinput)

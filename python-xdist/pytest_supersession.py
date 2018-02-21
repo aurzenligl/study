@@ -1,6 +1,7 @@
 import inspect
 import pytest
 import Pyro4
+from itertools import count
 from queue import Queue, Empty
 from threading import Thread, Event
 from decorator import decorator
@@ -8,7 +9,9 @@ from decorator import decorator
 def pytest_configure_node(node):
     if 'pyro' not in dir(node.config):
         setup_pyro(node.config)
+        node.config.slave_count = count(1)
     node.slaveinput['uri'] = node.config.pyro_uri
+    node.slaveinput['index'] = next(node.config.slave_count)
 
 def pytest_unconfigure(config):
     pyro = getattr(config, 'pyro', None)
@@ -83,7 +86,7 @@ def supersession_fixture(orig, *args):
                     proxy.set(res)
                     return res
                 except Exception as ex:
-                    proxy.set_exception(ex)
+                    proxy.set_exception(str(ex))
                     raise
             try:
                 return proxy.get()
