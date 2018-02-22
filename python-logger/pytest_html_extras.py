@@ -2,16 +2,31 @@ import os
 import pytest
 from py.xml import html
 
+# I have to do it this way because there is no way to deduce
+# pytest state from cells list in pytest_html_results_table_header hook.
+class IsThis:
+    xdist_run = False
+
 @pytest.mark.optionalhook
 def pytest_html_results_table_header(cells):
     cells.pop()
     cells.insert(-1, html.th('Markers', class_='sortable'))
+
+    if IsThis.xdist_run:
+        cells.insert(-1, html.th('Worker', class_='sortable'))
+
     cells.insert(-1, html.th('Start', class_='sortable time', col='time'))
 
 @pytest.mark.optionalhook
 def pytest_html_results_table_row(report, cells):
     cells.pop()
     cells.insert(-1, html.td(' '.join(report._extras['markers']) or '~ none ~'))
+
+    node = getattr(report, 'node', None)
+    if node:
+        IsThis.xdist_run = True
+        cells.insert(-1, html.td(node.slaveinfo['id']))
+
     cells.insert(-1, html.td('%.2f' % report._extras['start'], class_='col-time'))
 
 @pytest.mark.optionalhook
