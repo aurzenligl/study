@@ -1,4 +1,3 @@
-Bjarne Stroustrup The C++ Programming Language (4th Edition)
 http://en.wikipedia.org/wiki/C%2B%2B14
 http://www.drdobbs.com/cpp/the-c14-standard-what-you-need-to-know/240169034
 https://github.com/isocpp/CppCoreGuidelines/blob/master/CppCoreGuidelines.md
@@ -61,7 +60,7 @@ __OK__ CppCon 2015: Fedor Pikus “C++ Metaprogramming: Journey from simple to i
 __OK__ CppCon 2015: Kate Gregory “Stop Teaching C" https://www.youtube.com/watch?v=YnWhqhNdYyk
 __OK__ CppCon 2015: Nicolas Guillemot & Sean Middleditch “Birth of Study Group 14..." https://www.youtube.com/watch?v=0tFxdreVx6s
 __OK__ CppCon 2015: Barbara Geller & Ansel Sermersheim “CopperSpice: A Pure C++ GUI Library" https://www.youtube.com/watch?v=LIiwBNvTllk
-CppCon 2015: Moderator: Chandler Carruth "Technical Specifications & C++17" https://www.youtube.com/watch?v=p1fqdl6sLMY
+__OK__ CppCon 2015: Moderator: Chandler Carruth "Technical Specifications & C++17" https://www.youtube.com/watch?v=p1fqdl6sLMY
 
 __OK__ Marshall Cline FAQ
 __OK__ Bjorn Karlsson: safe Bool idiom
@@ -153,4 +152,4 @@ __OK__ CPPCON2015 Alexandrescu Declarative: https://www.youtube.com/watch?v=WjTr
 __OK__ CPPCON2015 Grill the Committee: https://www.youtube.com/watch?v=PqU_ot4BlNQ
 __OK__ CPPCON2015 Chandler Carruth Tuning C++: https://www.youtube.com/watch?v=nXaxk27zwlk
 __OK__ CPPCON2015 Bjarne Stroustrup: https://www.youtube.com/watch?v=1OEu9C51K2A
-
+__OK__ Bjarne Stroustrup The C++ Programming Language (4th Edition)
