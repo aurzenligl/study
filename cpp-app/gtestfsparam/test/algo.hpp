@@ -22,4 +22,10 @@ struct TestAlgo : public testing::TestWithParam<std::string>
     }
 };
 
+#define TEST_ALGO(test_case_name, test_name, vector_pattern) \
+    INSTANTIATE_TEST_CASE_P(, \
+                            test_case_name, \
+                            testing::ValuesIn(glob_test_dir(vector_pattern))); \
+    TEST_P(test_case_name, test_name)
+
 #endif /* CPP_APP_GTESTFSPARAM_TEST_ALGO_HPP_ */
