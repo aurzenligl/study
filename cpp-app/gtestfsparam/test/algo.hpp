@@ -2,23 +2,17 @@
 #define CPP_APP_GTESTFSPARAM_TEST_ALGO_HPP_
 
 #include <gtest/gtest.h>
-#include <fstream>
 #include "fsutils.hpp"
 
-template <typename Fixture>
-struct TestAlgo : public testing::TestWithParam<std::string>
-{
-    TestAlgo()
-    {
-        const std::string& path = TestAlgo::GetParam();
-        std::fstream f(path);
-        if (!f)
-        {
-            throw std::runtime_error("file \'" + path + "\' not found");
-        }
+void read_vector(const std::string& path, int* input, int* expected);
 
+template <typename Fixture>
+struct test_algo : public testing::TestWithParam<std::string>
+{
+    test_algo()
+    {
         Fixture& fixture = *static_cast<Fixture*>(this);
-        f >> fixture.input >> fixture.expected;
+        read_vector(test_algo::GetParam(), &fixture.input, &fixture.expected);
     }
 };
 
