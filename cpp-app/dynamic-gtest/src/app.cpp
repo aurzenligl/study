@@ -3,6 +3,11 @@
 namespace app
 {
 
+int square(int x)
+{
+    return x*x;
+}
+
 int foo(int x)
 {
     return x;

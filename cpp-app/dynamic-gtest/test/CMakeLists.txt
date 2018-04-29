@@ -39,6 +39,3 @@ endfunction()
 
 ut_test(test_foo foo/test_foo.cpp)
 target_link_libraries(test_foo libapp)
-
-ut_test(test_bar bar/test_bar.cpp)
-target_link_libraries(test_bar libapp)
