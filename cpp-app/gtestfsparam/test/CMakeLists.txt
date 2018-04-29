@@ -25,7 +25,7 @@ include_directories(
     ${CMAKE_SOURCE_DIR}/test
 )
 
-add_library(gmain STATIC main.cpp)
+add_library(gmain STATIC main.cpp fsutils.cpp)
 
 function(ut_test name)
     add_executable(${name} ${ARGN})
