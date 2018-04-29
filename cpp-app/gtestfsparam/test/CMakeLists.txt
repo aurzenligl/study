@@ -22,6 +22,7 @@ include(CTest)
 include_directories(
     ${GTEST_INCLUDE_DIRS}
     ${CMAKE_SOURCE_DIR}/src
+    ${CMAKE_SOURCE_DIR}/test
 )
 
 add_library(gmain STATIC main.cpp)
