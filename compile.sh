@@ -1,4 +1,4 @@
 #!/bin/bash
 
-cd cpp-app/dynamic-gtest/build
+cd cpp-app/gtestfsparam/build
 ninja ut-build && ./test_foo
