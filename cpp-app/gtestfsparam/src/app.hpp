@@ -4,7 +4,6 @@
 namespace app
 {
 
-int square(int x);
 int foo(int x);
 int bar(int x);
 
