@@ -4,13 +4,16 @@ OPTIM="-O2 -g -DNDEBUG"
 WRN="-Wall -Werror"
 STD="-std=c++11"
 
-[ "$GOLD" ] || GOLD="-fuse-ld=gold"
+[ "$LINKER" ] || LINKER="-fuse-ld=gold"
 [ "$CXX" ] || CXX="g++"
+
+#CXX="g++-5"
+#LINKER="-fuse-ld=lld"
 
 mkdir -p build
 
 $CXX $OPTIM $WRN -fPIC $STD -o build/odr.cpp.o -c odr.cpp
-$CXX $OPTIM -fPIC -shared -o build/libodr.so build/odr.cpp.o $GOLD -lpthread
+$CXX $OPTIM -fPIC -shared -o build/libodr.so build/odr.cpp.o $LINKER -lpthread
 # without pthread linking it works
 # without linking with gold it works
 # with clang it works
