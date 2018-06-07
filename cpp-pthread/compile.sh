@@ -4,7 +4,7 @@ OPTIM="-O2 -g -DNDEBUG"
 WRN="-Wall -Werror"
 STD="-std=c++11"
 
-GOLD="-fuse-ld=gold"
+[ "$GOLD" ] || GOLD="-fuse-ld=gold"
 [ "$CXX" ] || CXX="g++"
 
 mkdir -p build
