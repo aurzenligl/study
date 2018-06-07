@@ -1,16 +1,19 @@
 #!/bin/bash
 
-# g++ -Wall -Werror -std=c++14 -Og *.cpp
-
-[ "$CXX" ] || CXX=g++
+OPTIM="-O2 -g -DNDEBUG"
+WRN="-Wall -Werror"
+STD="-std=c++11"
 
 GOLD="-fuse-ld=gold"
-#GOLD="" without gold linker it works
+[ "$CXX" ] || CXX="g++"
 
 mkdir -p build
 
-$CXX -Dodr_EXPORTS -I. -fdiagnostics-color $GOLD -O2 -g -DNDEBUG -fPIC   -Wall -fPIC -Werror -std=gnu++11 -o build/odr.cpp.o -c odr.cpp
-$CXX -fPIC -fdiagnostics-color $GOLD -O2 -g -DNDEBUG  -shared -Wl,-soname,libodr.so -o build/libodr.so build/odr.cpp.o  -lpthread
+$CXX $OPTIM $WRN -fPIC $STD -o build/odr.cpp.o -c odr.cpp
+$CXX $OPTIM -fPIC -shared -o build/libodr.so build/odr.cpp.o $GOLD -lpthread
+# without pthread linking it works
+# without linking with gold it works
+# with clang it works
 
-$CXX -I. -fdiagnostics-color $GOLD -O2 -g -DNDEBUG   -Wall -fPIC -Werror -std=gnu++11 -o build/test.cpp.o -c test.cpp
-$CXX -fdiagnostics-color $GOLD -O2 -g -DNDEBUG  build/test.cpp.o -rdynamic build/libodr.so -pthread -lpthread -Wl,-rpath,build
+$CXX $OPTIM $WRN -fPIC $STD -o build/test.cpp.o -c test.cpp
+$CXX $OPTIM build/test.cpp.o -rdynamic build/libodr.so -pthread -lpthread -Wl,-rpath,build
