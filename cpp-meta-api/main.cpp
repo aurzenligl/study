@@ -1,6 +1,5 @@
 #include <type_traits>
 #include <iostream>
-#include <tr2/type_traits>
 
 // since name has to be hardcoded when checking for type members,
 // we need to prepare macros to automatically generate those for different names
