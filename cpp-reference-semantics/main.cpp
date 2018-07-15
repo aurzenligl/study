@@ -4,8 +4,8 @@ struct XConst;
 
 struct X {
   X(){}
-  X(const X&){}
-  X& operator=(const X&){ return *this; }
+  X(X&){}
+  X& operator=(X&){ return *this; }
   X(X&&) {};
   X& operator=(X&&) { return *this; }
   ~X(){}
@@ -47,6 +47,11 @@ X gen_x() {
   return x;
 }
 
+struct holder_x {
+  operator X& () { return x; }
+  X x;
+};
+
 void X_to_X(X x) {
   X cpyctor(x);
   X cpyassign; cpyassign = x;
@@ -61,11 +66,14 @@ void X_to_XConst(X x) {
   { X tomove = x; XConst moveassign; moveassign = std::move(tomove); }
 }
 
-void XConst_to_XConst(XConst x) {
-  XConst cpyctor(x);
-  XConst cpyassign; cpyassign = x;
-  { XConst tomove = x; XConst movector(std::move(tomove)); }
-  { XConst tomove = x; XConst moveassign; moveassign = std::move(tomove); }
+void XRef_to_X(X& x) {
+  X y = x;
+  X z = std::move(x);
+}
+
+void XRef_to_XConst(X& x) {
+  XConst y = x;
+  XConst z = std::move(x);
 }
 
 void XConst_to_X(XConst x) {
@@ -75,6 +83,25 @@ void XConst_to_X(XConst x) {
   { XConst tomove = x; X movector(std::move(tomove)); }  // error: no matching function for call to ‘X::X(std::remove_reference<XConst&>::type)’
   { XConst tomove = x; X moveassign; moveassign = std::move(tomove); }  // error: no match for ‘operator=’ (operand types are ‘X’ and ‘std::remove_reference<XConst&>::type {aka XConst}’)
 #endif
+}
+
+void XConst_to_XConst(XConst x) {
+  XConst cpyctor(x);
+  XConst cpyassign; cpyassign = x;
+  { XConst tomove = x; XConst movector(std::move(tomove)); }
+  { XConst tomove = x; XConst moveassign; moveassign = std::move(tomove); }
+}
+
+void XConstRef_to_X(const X& x) {
+#if ILLEGAL
+  X y = x;  // error: binding 'const X' to reference of type 'X&' discards qualifiers
+  X z = std::move(x);  // error: binding 'std::remove_reference<const X&>::type {aka const X}' to reference of type 'X&&' discards qualifiers
+#endif
+}
+
+void XConstRef_to_XConst(const X& x) {
+  XConst y = x;
+  XConst z = std::move(x);
 }
 
 void X_clone(X x) {
@@ -88,10 +115,19 @@ void XClone_clone(XConst x) {
 }
 
 int main() {
+  // mutable X
   X_to_X(gen_x());
   X_to_XConst(gen_x());
+  XRef_to_X(holder_x());
+  XRef_to_XConst(holder_x());
+
+  // read-only XConst
+  XConst_to_X(gen_x());  // compile-time error
   XConst_to_XConst(gen_x());
-  XConst_to_X(gen_x());
+  XConstRef_to_X(holder_x());  // compile-time error
+  XConstRef_to_XConst(holder_x());
+
+  // deep-copy
   X_clone(gen_x());
   XClone_clone(gen_x());
 }
