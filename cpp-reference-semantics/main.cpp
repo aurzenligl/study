@@ -82,7 +82,7 @@ void access_XConst(const X& x) {
   // assigning temporary to const& prolongs the lifetime of temporary,
   // which is _exactly_ what we need to hold ownership of data for as long
   // as it's needed, not just until expression `x.Child()` is evaluated.
-  const X& z = x.Child();
+  const X& z = x.Child(); (void)z;
   accept_XConstRef(x.Child());
 }
 
