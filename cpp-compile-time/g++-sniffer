@@ -18,7 +18,9 @@ def time_str(name):
     return wall + '\n\n' + stats
 
 def cmd_str():
-    return ' '.join(sys.argv)
+    curdir = os.path.abspath(os.curdir)
+    cmd = ' '.join(sys.argv).replace('"', '\\"')
+    return '(cd %s && %s)\n' % (curdir, cmd)
 
 sys.argv[0] = '/usr/bin/g++'
 root_dir = pypath('/tmp/gcclog').ensure_dir()
