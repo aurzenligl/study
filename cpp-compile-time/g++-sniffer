@@ -6,6 +6,10 @@ import resource
 import subprocess
 from py.path import local as pypath
 
+def find_output():
+    pairs = [a for a in zip(sys.argv, sys.argv[1:])]
+    return next(p[1] for p in pairs if p[0] == '-o')
+
 def time_str(name):
     attrs = ['ru_utime', 'ru_stime', 'ru_maxrss', 'ru_ixrss', 'ru_idrss']
     info = resource.getrusage(resource.RUSAGE_CHILDREN)
@@ -18,17 +22,17 @@ def cmd_str():
 
 sys.argv[0] = '/usr/bin/g++'
 root_dir = pypath('/tmp/gcclog').ensure_dir()
+output = find_output()
 
 if '-c' in sys.argv:
     gee_dir = pypath.make_numbered_dir(prefix='compile-', rootdir=root_dir, keep=0)
     cplt = subprocess.run(sys.argv)
     gee_dir.join('stat').write('\n'.join([time_str(sys.argv[-1]), cmd_str()]))
 else:
-    gee_dir = pypath.make_numbered_dir(prefix='unknown-', rootdir=root_dir, keep=0)
+    gee_dir = pypath.make_numbered_dir(prefix='link-', rootdir=root_dir, keep=0)
     cplt = subprocess.run(sys.argv)
-    gee_dir.join('stat').write('\n'.join([cmd_str()]))
+    gee_dir.join('stat').write('\n'.join([time_str(output), cmd_str()]))
 
 sys.exit(cplt.returncode)
 
 # TODO: if compiling add list of includes
-# TODO: add linking stats
