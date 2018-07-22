@@ -22,6 +22,14 @@ def cmd_str():
     cmd = ' '.join(sys.argv).replace('"', '\\"')
     return '(cd %s && %s)\n' % (curdir, cmd)
 
+def parse_includes(preproc):
+    includes = set()
+    for line in filter(lambda x: x.startswith('#'), preproc.decode().splitlines()):
+        if 'include' in line:
+            include = line.split()[2].strip('"')
+            includes.add(include)
+    return ''.join(['%s\n' % x for x in sorted(includes)])
+
 sys.argv[0] = '/usr/bin/g++'
 root_dir = pypath('/tmp/gcclog').ensure_dir()
 output = find_output()
@@ -30,11 +38,13 @@ if '-c' in sys.argv:
     gee_dir = pypath.make_numbered_dir(prefix='compile-', rootdir=root_dir, keep=0)
     cplt = subprocess.run(sys.argv)
     gee_dir.join('stat').write('\n'.join([time_str(sys.argv[-1]), cmd_str()]))
+
+    sys.argv = [a.replace(output, '/dev/stdout') for a in sys.argv] + ['-E']
+    includes_cplt = subprocess.run(sys.argv, stdout=subprocess.PIPE)
+    gee_dir.join('include').write('\n'.join([parse_includes(includes_cplt.stdout)]))
 else:
     gee_dir = pypath.make_numbered_dir(prefix='link-', rootdir=root_dir, keep=0)
     cplt = subprocess.run(sys.argv)
     gee_dir.join('stat').write('\n'.join([time_str(output), cmd_str()]))
 
 sys.exit(cplt.returncode)
-
-# TODO: if compiling add list of includes
