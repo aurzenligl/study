@@ -83,8 +83,14 @@ def filename(path):
 def ustime(path):
     return float(path.join('stat').read().splitlines()[0].split()[1])
 
+def htime(path):
+    return float(path.join('stat').read().splitlines()[3].split()[1])
+
 def maxrss(path):
     return int(next(l for l in path.join('stat').read().splitlines() if l.startswith('ru_maxrss')).split()[1])
+
+def hratio(path):
+    return htime(path) / ustime(path)
 
 def parse_options():
     parser = argparse.ArgumentParser()
@@ -94,7 +100,7 @@ def parse_options():
 
 if __name__ == "__main__":
     def usage():
-        print("stat <logdir> [table|group|dist] [ustime|maxrss]")
+        print("stat <logdir> [table|group|dist] [ustime|htime|maxrss|hratio]")
         sys.exit(1)
 
     def pop_arg(args):
@@ -104,7 +110,7 @@ if __name__ == "__main__":
 
     def to_paths(arg):
         def compile_in_leaf(x):
-            return str(x).rsplit('/', 1)[1].startswith('compile-')
+            return str(x).rsplit('/', 1)[1].startswith('compile-') and 'current' not in str(x)
 
         if not os.path.isdir(arg):
             usage()
@@ -114,7 +120,7 @@ if __name__ == "__main__":
     def to_quals(args):
         if not args:
             usage()
-        opers = [ustime, maxrss]
+        opers = [ustime, htime, maxrss, hratio]
         return [next(x for x in opers if x.__code__.co_name == arg) for arg in args]
 
     def to_oper(arg):
