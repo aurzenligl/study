@@ -1,10 +1,17 @@
+./parse <logdir> [table||dist] [time|htime|maxrss|ratio]
+
+./parse logd dist ratio
+./parse logd list ratio htime time
+./parse logd table ratio htime time
+
 simple compile-time
 ----------------------------------
 show sorted file-time listing
 show sorted memory-consumption listing
-draw compile-time distributions for j1 and j4
-draw memory-consumption distributions for j1 and j4
+draw compile-time distributions for j4
+draw memory-consumption distributions for j4
 https://seaborn.pydata.org/generated/seaborn.distplot.html
+show breakdown by group: mean + num-of-files-in-group
 
 full vs header-only compile-time
 ----------------------------------
