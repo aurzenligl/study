@@ -2,26 +2,60 @@
 
 import os
 import sys
+import argparse
+import numpy as np
 from py.path import local as pypath
 
-def listing(paths, quals):
-    records = [[filename(p)] + [q(p) for q in quals] for p in paths]
-    records = sorted(records, key=lambda x: x[1], reverse=True)
+class Float(float):
+    def __new__(cls, value):
+       return super().__new__(cls, value)
+    def __str__(self):
+        return '%.3f' % float(self)
 
+def floatize(records):
+    return [[Float(e) if isinstance(e, float) else e for e in r] for r in records]
+
+def print_table(records):
     lens = [max(len(str(r[i])) for r in records) for i in range(len(records[0]))]
     maybe_minus = [('-' if isinstance(r, str) else '') for r in records[0]]
     fmt = ' '.join('%' + m + str(l) + 's' for l, m in zip(lens, maybe_minus))
 
-    records.insert(0, ['filename'] + [q.__code__.co_name for q in quals])
-    records.insert(1, ['-' * l for l in lens])
+    records.insert(0, ['-' * l for l in lens])
+    records.insert(0, records.pop(-1))
 
     for r in records:
         print(fmt % tuple(r))
 
-def table(paths, quals):
-    pass
+def table(paths, quals, **kw):
+    records = [[filename(p)] + [q(p) for q in quals] for p in paths]
+    records = floatize(sorted(records, key=lambda x: x[1], reverse=True))
+    records.append(['filename'] + [q.__code__.co_name for q in quals])
+    print_table(records)
 
-def dist(paths, quals):
+def group(paths, quals, **kw):
+    def bucketize(records):
+        buckets = {}
+        for r in records:
+            if r[0].startswith(kw['prefix']):
+                groupname = r[0].split(kw['prefix'])[1].split('/')[0]
+                buckets.setdefault(groupname, []).append(r[1:])
+        return buckets
+
+    def recordize(buckets):
+        records = []
+        for name, b in buckets.items():
+            count = len(b)
+            means = np.mean(np.array(b).T, 1)
+            records.append([name, count] + list(means))
+        return records
+
+    records = [[filename(p)] + [q(p) for q in quals] for p in paths]
+    records = recordize(bucketize(records))
+    records = floatize(sorted(records, key=lambda x: x[2], reverse=True))
+    records.append(['group', 'file-count'] + ['mean-' + q.__code__.co_name for q in quals])
+    print_table(records)
+
+def dist(paths, quals, **kw):
     pass
 
 def filename(path):
@@ -33,9 +67,15 @@ def ustime(path):
 def maxrss(path):
     return int(next(l for l in path.join('stat').read().splitlines() if l.startswith('ru_maxrss')).split()[1])
 
+def parse_options():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('input', nargs = '*')
+    parser.add_argument('--prefix', help = 'for group option')
+    return parser.parse_args()
+
 if __name__ == "__main__":
     def usage():
-        print("stat <logdir> [list|table|dist] [ustime|maxrss]")
+        print("stat <logdir> [table|group|dist] [ustime|maxrss]")
         sys.exit(1)
 
     def pop_arg(args):
@@ -59,12 +99,13 @@ if __name__ == "__main__":
         return [next(x for x in opers if x.__code__.co_name == arg) for arg in args]
 
     def to_oper(arg):
-        opers = [listing, table, dist]
+        opers = [table, group, dist]
         return next(x for x in opers if x.__code__.co_name == arg)
 
-    args = sys.argv[1:]
+    opts = parse_options()
+    args = opts.input
+
     paths = to_paths(pop_arg(args))
     oper = to_oper(pop_arg(args))
     quals = to_quals(args)
-
-    oper(paths, quals)
+    oper(paths, quals, prefix=opts.prefix)
