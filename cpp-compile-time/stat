@@ -68,8 +68,8 @@ def dist(paths, quals, **kw):
 
     sns.distplot(values, kde=False)
 
-    plt.title("Compilation Time Histogram")
-    plt.xlabel("compilation time (s)")
+    plt.title("%s histogram" % quals[0].__code__.co_name)
+    plt.xlabel(quals[0].__code__.co_name)
     plt.ylabel("file count")
 
     fig = plt.gcf()
