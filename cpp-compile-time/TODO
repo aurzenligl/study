@@ -1,0 +1,19 @@
+simple compile-time
+----------------------------------
+show sorted file-time listing
+show sorted memory-consumption listing
+draw compile-time distributions for j1 and j4
+draw memory-consumption distributions for j1 and j4
+https://seaborn.pydata.org/generated/seaborn.distplot.html
+
+full vs header-only compile-time
+----------------------------------
+show sorted by ratio file-time-header_only_time listing
+draw 50 worst and 50 least offenders
+https://seaborn.pydata.org/examples/horizontal_barplot.html
+
+single header compile-time
+----------------------------------
+list all included headers
+compile them one by one with sniffing
+show sorted include_file-time-users listing
