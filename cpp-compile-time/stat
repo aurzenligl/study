@@ -56,7 +56,26 @@ def group(paths, quals, **kw):
     print_table(records)
 
 def dist(paths, quals, **kw):
-    pass
+    records = [[filename(p)] + [q(p) for q in quals] for p in paths]
+    values = [r[1] for r in records]
+
+    import matplotlib.pyplot as plt
+    import numpy as np
+    import seaborn as sns
+
+    sns.set_style("whitegrid")
+    sns.set_color_codes("muted")
+
+    sns.distplot(values, kde=False)
+
+    plt.title("Compilation Time Histogram")
+    plt.xlabel("compilation time (s)")
+    plt.ylabel("file count")
+
+    fig = plt.gcf()
+    sns.despine(left=True, bottom=True)
+    plt.show()
+
 
 def filename(path):
     return path.join('stat').read().splitlines()[0].split()[0]
