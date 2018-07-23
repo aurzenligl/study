@@ -8,13 +8,11 @@ def listing(paths, quals):
     records = [[filename(p)] + [q(p) for q in quals] for p in paths]
     records = sorted(records, key=lambda x: x[1], reverse=True)
 
-    records.insert(0, ['filename'] + [q.__code__.co_name for q in quals])
-
     lens = [max(len(str(r[i])) for r in records) for i in range(len(records[0]))]
-
-    maybe_minus = [('-' if isinstance(r, str) else '') for r in records[1]]
+    maybe_minus = [('-' if isinstance(r, str) else '') for r in records[0]]
     fmt = ' '.join('%' + m + str(l) + 's' for l, m in zip(lens, maybe_minus))
 
+    records.insert(0, ['filename'] + [q.__code__.co_name for q in quals])
     records.insert(1, ['-' * l for l in lens])
 
     for r in records:
@@ -29,7 +27,7 @@ def dist(paths, quals):
 def filename(path):
     return path.join('stat').read().splitlines()[0].split()[0]
 
-def atime(path):
+def ustime(path):
     return float(path.join('stat').read().splitlines()[0].split()[1])
 
 def maxrss(path):
@@ -37,7 +35,7 @@ def maxrss(path):
 
 if __name__ == "__main__":
     def usage():
-        print("stat <logdir> [list|table|dist] [atime|maxrss]")
+        print("stat <logdir> [list|table|dist] [ustime|maxrss]")
         sys.exit(1)
 
     def pop_arg(args):
@@ -57,7 +55,7 @@ if __name__ == "__main__":
     def to_quals(args):
         if not args:
             usage()
-        opers = [atime, maxrss]
+        opers = [ustime, maxrss]
         return [next(x for x in opers if x.__code__.co_name == arg) for arg in args]
 
     def to_oper(arg):
