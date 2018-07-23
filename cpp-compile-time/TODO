@@ -9,8 +9,7 @@ https://seaborn.pydata.org/generated/seaborn.distplot.html
 full vs header-only compile-time
 ----------------------------------
 show sorted by ratio file-time-header_only_time listing
-draw 50 worst and 50 least offenders
-https://seaborn.pydata.org/examples/horizontal_barplot.html
+draw ratio distributions
 
 single header compile-time
 ----------------------------------
