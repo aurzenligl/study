@@ -1,0 +1,72 @@
+#!/usr/bin/env python3
+
+import os
+import sys
+from py.path import local as pypath
+
+def listing(paths, quals):
+    records = [[filename(p)] + [q(p) for q in quals] for p in paths]
+    records = sorted(records, key=lambda x: x[1], reverse=True)
+
+    records.insert(0, ['filename'] + [q.__code__.co_name for q in quals])
+
+    lens = [max(len(str(r[i])) for r in records) for i in range(len(records[0]))]
+
+    maybe_minus = [('-' if isinstance(r, str) else '') for r in records[1]]
+    fmt = ' '.join('%' + m + str(l) + 's' for l, m in zip(lens, maybe_minus))
+
+    records.insert(1, ['-' * l for l in lens])
+
+    for r in records:
+        print(fmt % tuple(r))
+
+def table(paths, quals):
+    pass
+
+def dist(paths, quals):
+    pass
+
+def filename(path):
+    return path.join('stat').read().splitlines()[0].split()[0]
+
+def atime(path):
+    return float(path.join('stat').read().splitlines()[0].split()[1])
+
+def maxrss(path):
+    return int(next(l for l in path.join('stat').read().splitlines() if l.startswith('ru_maxrss')).split()[1])
+
+if __name__ == "__main__":
+    def usage():
+        print("stat <logdir> [list|table|dist] [atime|maxrss]")
+        sys.exit(1)
+
+    def pop_arg(args):
+        if not args:
+            usage()
+        return args.pop(0)
+
+    def to_paths(arg):
+        def compile_in_leaf(x):
+            return str(x).rsplit('/', 1)[1].startswith('compile-')
+
+        if not os.path.isdir(arg):
+            usage()
+        logdir = pypath(arg)
+        return [x for x in logdir.listdir() if x.isdir() and compile_in_leaf(x)]
+
+    def to_quals(args):
+        if not args:
+            usage()
+        opers = [atime, maxrss]
+        return [next(x for x in opers if x.__code__.co_name == arg) for arg in args]
+
+    def to_oper(arg):
+        opers = [listing, table, dist]
+        return next(x for x in opers if x.__code__.co_name == arg)
+
+    args = sys.argv[1:]
+    paths = to_paths(pop_arg(args))
+    oper = to_oper(pop_arg(args))
+    quals = to_quals(args)
+
+    oper(paths, quals)
