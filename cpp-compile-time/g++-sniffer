@@ -12,7 +12,7 @@ def find_output():
 
 def to_hdronly(filename):
     newname = filename.rsplit('.cpp', 1)[0] + '.hdronly.cpp'
-    open(newname, 'w').write('\n'.join(tuple(filter(lambda line: '#include' in line, open(filename).read().splitlines()))))
+    open(newname, 'w').write('\n'.join(tuple(filter(lambda line: '#include' in line, open(filename, encoding='utf-8').read().splitlines()))))
     return newname
 
 class time_child(object):
