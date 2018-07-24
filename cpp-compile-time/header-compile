@@ -1,0 +1,49 @@
+#!/usr/bin/env python3
+
+import os
+import sys
+import resource
+import subprocess
+from py.path import local as pypath
+
+def use_count(hdr):
+    def compile_in_leaf(x):
+        return str(x).rsplit('/', 1)[1].startswith('compile-') and 'current' not in str(x)
+
+    includelogs = [x.join('include').read() for x in pypath().listdir() if x.isdir() and compile_in_leaf(x)]
+    paths = list(filter(lambda x: hdr in x, includelogs))
+    fullpath = next(x for y in paths for x in y.splitlines() if hdr in x)
+    return len(paths), fullpath
+
+class time_child(object):
+    def __init__(self, name):
+        self.name = name
+    def __enter__(self):
+        self.start = resource.getrusage(resource.RUSAGE_CHILDREN)
+        return self
+    def __exit__(self, *args):
+        def diff_info(i1, i2):
+            sutime = (i2.ru_utime + i2.ru_stime) - (i1.ru_utime + i1.ru_stime)
+            maxrss = i2.ru_maxrss
+            return sutime, maxrss
+
+        end = resource.getrusage(resource.RUSAGE_CHILDREN)
+        sutime, maxrss = diff_info(self.start, end)
+        self.sutime = sutime
+
+        lines = ['%s %.3f' % (self.name, sutime)] + [] + ['maxrss %s' % maxrss]
+        self.text = ''.join(l + '\n' for l in lines)
+        return False
+
+headers = open('3rd_party_headers').read().splitlines()
+
+out = open('o', 'w')
+for header in headers:
+    with open('x.cpp', 'w') as f:
+        f.write('#include <%s>' % header)
+    with time_child(header) as t:
+        subprocess.run(['sh', 'build'])
+    count, fullpath = use_count(header)
+    output = '%s %s %s' % (fullpath, count, t.sutime)
+    print(output)
+    out.write(output + '\n')

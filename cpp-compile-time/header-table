@@ -1,0 +1,22 @@
+#!/usr/bin/env python3
+
+import sys
+from texttable import Texttable
+
+rows = []
+for line in open(sys.argv[1]).read().splitlines():
+    name, count, time = line.strip().split()
+    count = int(count)
+    time = float(time)
+    rows.append([name, time, count, time*count])
+rows = sorted(rows, key=lambda x: x[1], reverse=True)
+maxname = max([len(r[0]) for r in rows])
+
+rows.insert(0, ['name', 'time', 'count', 'time*count'])
+
+t = Texttable()
+t.set_deco(Texttable.HEADER)
+t.set_cols_align(['l', 'r', 'r', 'r'])
+t.set_cols_width([maxname, 8, 8, 10])
+t.add_rows(rows)
+print(t.draw())
