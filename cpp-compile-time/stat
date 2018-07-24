@@ -28,12 +28,14 @@ def print_table(records):
 
 def total(paths, quals, **kw):
     records = [[q(p) for q in quals] for p in paths]
-    records = list(filter(lambda r: r[0] >= kw.get('threshold', 0), records))
+    records = list(filter(lambda r: r[0] >= kw['threshold'], records))
     sums = list(np.sum(np.array(records).T, 1))
     print(' '.join([str(s) for s in sums]))
 
 def table(paths, quals, **kw):
     records = [[filename(p)] + [q(p) for q in quals] for p in paths]
+    records = list(filter(lambda r: r[kw['key']+1] >= kw['threshold'], records))
+
     records = floatize(sorted(records, key=lambda x: x[1], reverse=True))
     records.append(['filename'] + [q.__code__.co_name for q in quals])
     print_table(records)
@@ -56,6 +58,7 @@ def group(paths, quals, **kw):
         return records
 
     records = [[filename(p)] + [q(p) for q in quals] for p in paths]
+    records = list(filter(lambda r: r[kw['key']+1] >= kw['threshold'], records))
     records = recordize(bucketize(records))
     records = floatize(sorted(records, key=lambda x: x[2], reverse=True))
     records.append(['group', 'file-count'] + ['mean-' + q.__code__.co_name for q in quals])
@@ -63,6 +66,7 @@ def group(paths, quals, **kw):
 
 def dist(paths, quals, **kw):
     records = [[filename(p)] + [q(p) for q in quals] for p in paths]
+    records = list(filter(lambda r: r[kw['key']+1] >= kw['threshold'], records))
     values = [r[1] for r in records]
 
     import matplotlib.pyplot as plt
