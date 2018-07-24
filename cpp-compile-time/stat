@@ -26,6 +26,12 @@ def print_table(records):
     for r in records:
         print(fmt % tuple(r))
 
+def total(paths, quals, **kw):
+    records = [[q(p) for q in quals] for p in paths]
+    records = list(filter(lambda r: r[0] >= kw.get('threshold', 0), records))
+    sums = list(np.sum(np.array(records).T, 1))
+    print(' '.join([str(s) for s in sums]))
+
 def table(paths, quals, **kw):
     records = [[filename(p)] + [q(p) for q in quals] for p in paths]
     records = floatize(sorted(records, key=lambda x: x[1], reverse=True))
@@ -96,11 +102,13 @@ def parse_options():
     parser = argparse.ArgumentParser()
     parser.add_argument('input', nargs = '*')
     parser.add_argument('--prefix', help = 'for group option')
+    parser.add_argument('--threshold', type=float, default=0, help = 'filter records')
+    parser.add_argument('--key', type=int, default=0, help = 'element to filter')
     return parser.parse_args()
 
 if __name__ == "__main__":
     def usage():
-        print("stat <logdir> [table|group|dist] [ustime|htime|maxrss|hratio]")
+        print("stat <logdir> [total|table|group|dist] [ustime|htime|maxrss|hratio]")
         sys.exit(1)
 
     def pop_arg(args):
@@ -124,7 +132,7 @@ if __name__ == "__main__":
         return [next(x for x in opers if x.__code__.co_name == arg) for arg in args]
 
     def to_oper(arg):
-        opers = [table, group, dist]
+        opers = [total, table, group, dist]
         return next(x for x in opers if x.__code__.co_name == arg)
 
     opts = parse_options()
@@ -133,4 +141,4 @@ if __name__ == "__main__":
     paths = to_paths(pop_arg(args))
     oper = to_oper(pop_arg(args))
     quals = to_quals(args)
-    oper(paths, quals, prefix=opts.prefix)
+    oper(paths, quals, prefix=opts.prefix, threshold=opts.threshold, key=opts.key)
