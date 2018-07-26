@@ -18,7 +18,7 @@ void FooImpl(U&& u, _ = _()) { std::cout << "shared" << '\n'; }
 
 template <typename T, typename U = T>
 void Foo(U&& u) {
-	FooImpl<T>(std::forward<U>(u));
+  FooImpl<T>(std::forward<U>(u));
 }
 
 struct X{};
