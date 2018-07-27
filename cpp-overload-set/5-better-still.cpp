@@ -7,7 +7,7 @@ struct EnableIfSharedPointersConvert : std::enable_if<std::is_convertible<std::s
 {};
 
 template <typename T>
-void Foo(const T&) { std::cout << "value" << '\n'; }
+void Foo(const T& = T()) { std::cout << "value" << '\n'; }
 
 template <typename T, typename MaybeT, typename = typename EnableIfSharedPointersConvert<MaybeT, T>::type>
 void Foo(std::shared_ptr<MaybeT> m) { std::shared_ptr<T> t(std::move(m)); std::cout << "shptr" << '\n'; }
@@ -24,6 +24,7 @@ int main() {
 
   // finally! all use cases seem to work.
 
+  Foo<X>();  // value
   Foo<X>({});  // value
   Foo<X>(1);  // value
   Foo<X>(X());  // value
