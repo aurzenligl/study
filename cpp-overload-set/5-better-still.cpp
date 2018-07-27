@@ -3,17 +3,17 @@
 #include <type_traits>
 
 template <typename From, typename To>
-struct EnableIfPointersConvert : std::enable_if<std::is_convertible<std::shared_ptr<From>, std::shared_ptr<To>>::value>
+struct EnableIfSharedPointersConvert : std::enable_if<std::is_convertible<std::shared_ptr<From>, std::shared_ptr<To>>::value>
 {};
 
 template <typename T>
 void Foo(const T&) { std::cout << "value" << '\n'; }
 
-template <typename T, typename MaybeT, typename = typename EnableIfPointersConvert<MaybeT, T>::type>
-void Foo(std::shared_ptr<MaybeT>) { std::cout << "shptr" << '\n'; }
+template <typename T, typename MaybeT, typename = typename EnableIfSharedPointersConvert<MaybeT, T>::type>
+void Foo(std::shared_ptr<MaybeT> m) { std::shared_ptr<T> t(std::move(m)); std::cout << "shptr" << '\n'; }
 
 struct B { virtual void f() = 0; };
-struct X : B { void f() override {} };
+struct X : B { X(int = 0) {} void f() override {} };
 using XPtr = std::shared_ptr<X>;
 
 int main() {
@@ -22,7 +22,10 @@ int main() {
   const X &cref = X();
   const XPtr& shcref = std::make_shared<X>();
 
+  // finally! all use cases seem to work.
+
   Foo<X>({});  // value
+  Foo<X>(1);  // value
   Foo<X>(X());  // value
   Foo<X>(ref);  // value
   Foo<X>(cref);  // value
