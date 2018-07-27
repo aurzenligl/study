@@ -38,6 +38,7 @@ int main() {
   Foo<B>(shref);  // shared
   Foo<B>(shcref);  // shared  
 
+  Foo<XPtr>();  // value
   Foo<XPtr>({});  // value
   Foo<XPtr>(std::make_shared<X>());  // value
   Foo<XPtr>(XPtr());  // value
