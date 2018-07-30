@@ -1,0 +1,13 @@
+<package format="2">
+  <name>bar</name>
+  <version>2.4.8</version>
+  <description>
+  This package has super cow powers and uses foo capability.
+  </description>
+  <maintainer email="foo-dev@gmail.com">Footor Foobarian</maintainer>
+  <license>MIT</license>
+
+  <buildtool_depend>catkin</buildtool_depend>
+  <build_depend>foo</build_depend>
+  <exec_depend>foo</exec_depend>
+</package>
