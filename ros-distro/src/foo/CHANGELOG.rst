@@ -2,7 +2,7 @@
 Changelog for package foo
 ^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+2.0.0 (2018-07-30)
+------------------
 * changelog
 * Contributors: Krzysztof Laskowski
