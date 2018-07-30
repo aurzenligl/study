@@ -17,9 +17,8 @@ catkin_package(
 
 include_directories(
   include
-  ${catkin_INCLUDE_DIRS}
 )
-add_library(${PROJECT_NAME}
+add_library(foo
   src/foo.cpp
 )
 
@@ -27,12 +26,12 @@ add_library(${PROJECT_NAME}
 ## Install ##
 #############
 
-install(TARGETS ${PROJECT_NAME}
+install(TARGETS foo
   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
-install(DIRECTORY include/${PROJECT_NAME}/
+install(DIRECTORY include/foo/
   DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
   FILES_MATCHING PATTERN "*.h"
 )

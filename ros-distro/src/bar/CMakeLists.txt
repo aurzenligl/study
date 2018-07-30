@@ -7,6 +7,8 @@ find_package(catkin REQUIRED COMPONENTS foo)
 ## catkin specific configuration ##
 ###################################
 catkin_package(
+  SKIP_CMAKE_CONFIG_GENERATION
+  SKIP_PKG_CONFIG_GENERATION
 )
 
 ###########
@@ -17,9 +19,9 @@ include_directories(
   ${catkin_INCLUDE_DIRS}
 )
 
-add_executable(${PROJECT_NAME}_main src/bar.cpp)
-set_target_properties(${PROJECT_NAME}_main PROPERTIES OUTPUT_NAME bar PREFIX "")
-target_link_libraries(${PROJECT_NAME}_main
+add_executable(bar_main src/bar.cpp)
+set_target_properties(bar_main PROPERTIES OUTPUT_NAME bar)
+target_link_libraries(bar_main
   ${catkin_LIBRARIES}
 )
 
@@ -27,8 +29,9 @@ target_link_libraries(${PROJECT_NAME}_main
 ## Install ##
 #############
 
-install(TARGETS ${PROJECT_NAME}_main
+install(TARGETS bar_main
   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-  RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+  RUNTIME DESTINATION bin
+  # TODO: why bin is not the default, what does this break?
 )
