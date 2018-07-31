@@ -1,10 +1,16 @@
-#include <foo/foo.h>
-#include <string>
+#include <bar/bar.h>
 
-int main(int argc, char** argv) {
-    if (argc > 1) {
-        printf("%d\n", foo::square(std::stoi(argv[1])));
-        return 0;
+#include <vector>
+#include <foo/foo.h>
+
+namespace bar {
+
+int process(const std::vector<int>& x) {
+    int result = 0;
+    for (auto y : x) {
+        result += foo::square(y);
     }
-    return 1;
+    return result;
 }
+
+}  // namespace bar
