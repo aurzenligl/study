@@ -18,8 +18,10 @@ call () {
   fi
 }
 
+rosdeplist="/etc/ros/rosdep/sources.list.d/90-package-workspace.list"
 rulefile=$(mktemp -p /tmp/ --suffix .yaml)
-trap "rm -f ${rulefile}" EXIT
+sudo sh -c "echo yaml file://${rulefile} > ${rosdeplist}"
+trap "{ rm -f ${rulefile}; sudo rm -f ${rosdeplist}; }" EXIT
 
 workspace_packages=$(call catkin_topological_order)
 
@@ -28,9 +30,6 @@ while read line; do
     echo "${package}:" >> ${rulefile}
     echo "  ubuntu: [ros-kinetic-${package}]" >> ${rulefile}
 done < <(echo "$workspace_packages")
-
-sudo sh -c "echo yaml file://${rulefile} > /etc/ros/rosdep/sources.list.d/90-package-workspace.list"
-trap "{ rm -f ${rulefile}; sudo rm -f /etc/ros/rosdep/sources.list.d/90-package-workspace.list; }" EXIT
 
 call "rosdep update"
 
