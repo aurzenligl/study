@@ -27,14 +27,16 @@ workspace_packages=$(call catkin_topological_order)
 
 while read line; do
     read -r package path <<<$(echo $line)
+    canonical_package=$(echo ${package} | tr '_' '-')
     echo "${package}:" >> ${rulefile}
-    echo "  ubuntu: [ros-kinetic-${package}]" >> ${rulefile}
+    echo "  ubuntu: [ros-kinetic-${canonical_package}]" >> ${rulefile}
 done < <(echo "$workspace_packages")
 
 call "rosdep update"
 
 while read line; do
     read -r package path <<<$(echo $line)
+    canonical_package=$(echo ${package} | tr '_' '-')
     pushd $path > /dev/null
 
     call "rm -rf debian"
@@ -42,7 +44,7 @@ while read line; do
     sed -i 's/dh $@/dh $@ --parallel/' debian/rules
     call "debuild -rfakeroot -i -us -uc -b -j`nproc`"
     call "fakeroot debian/rules binary"
-    deb=$(readlink -f ../ros-kinetic-${package}_*.deb)
+    deb=$(readlink -f ../ros-kinetic-${canonical_package}_*.deb)
     debs="${deb} ${debs}"
     call "sudo dpkg -i $deb"
 
