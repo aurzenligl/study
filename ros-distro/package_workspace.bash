@@ -39,6 +39,8 @@ while read line; do
 
     call "rm -rf debian"
     call "bloom-generate rosdebian"
+    sed -i 's/dh $@/dh $@ --parallel/' debian/rules
+    call "debuild -rfakeroot -i -us -uc -b -j`nproc`"
     call "fakeroot debian/rules binary"
     deb=$(readlink -f ../ros-kinetic-${package}_*.deb)
     debs="${deb} ${debs}"
