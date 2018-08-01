@@ -4,4 +4,5 @@ install/
 src/CMakeLists.txt
 src/*/debian/
 src/*/obj-x86_64-linux-gnu/
+src/*.deb
 .catkin_workspace
