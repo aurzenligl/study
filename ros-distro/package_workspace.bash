@@ -23,7 +23,7 @@ rulefile=$(mktemp -p /tmp/ --suffix .yaml)
 sudo sh -c "echo yaml file://${rulefile} > ${rosdeplist}"
 trap "{ rm -f ${rulefile}; sudo rm -f ${rosdeplist}; }" EXIT
 
-workspace_packages=$(call catkin_topological_order)
+workspace_packages=$(call catkin_topological_order) || exit
 
 while read line; do
     read -r package path <<<$(echo $line)
