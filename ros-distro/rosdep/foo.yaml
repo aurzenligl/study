@@ -1,0 +1,6 @@
+foo:
+  ubuntu: [ros-kinetic-foo]
+bar:
+  ubuntu: [ros-kinetic-bar]
+arx:
+  ubuntu: [ros-kinetic-arx]
