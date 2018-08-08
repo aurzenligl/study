@@ -1,4 +1,2 @@
-debian-legacy-based/
-debian-pcl-based/
-mongo-cxx-driver-r3.3.1/
-mongo-cxx-driver_3.3.1.orig.tar.gz
+mongo-cxx-driver-r*/
+r*.orig.tar.gz
