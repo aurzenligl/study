@@ -12,3 +12,8 @@ DEB_HOST_ARCH_BITS ?= $(shell dpkg-architecture -qDEB_HOST_ARCH_BITS)
 
 %:
 	dh  $@ --parallel -v --builddirectory=build
+
+override_dh_auto_configure:
+	dh_auto_configure -- \
+		-DCMAKE_BUILD_TYPE=Release \
+		-DBSONCXX_POLY_USE_MNMLSTC=1
