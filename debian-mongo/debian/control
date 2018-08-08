@@ -1,0 +1,27 @@
+Source: mongo-cxx-driver
+Priority: optional
+Maintainer: Krzysztof Laskowski <krzysztof.laskowski@aeolusbot.com>
+Build-Depends: debhelper (>=9)
+Standards-Version: 3.9.6
+Section: libs
+Homepage: https://mongodb.github.io/mongo-cxx-driver/
+
+Package: mongo-cxx-driver-dev
+Section: libdevel
+Architecture: any
+Depends: mongo-cxx-driver mongo-cxx-mnmlstc-core (= ${binary:Version}), ${misc:Depends}
+Description: MongoDB C++ Driver (development)
+ This package provides C++ development files to interact with MongoDB.
+
+Package: mongo-cxx-driver
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}
+Description: MongoDB C++ Driver (runtime)
+ This package provides C++ driver for MongoDB.
+
+Package: mongo-cxx-mnmlstc-core
+Architecture: any
+Multi-Arch: same
+Depends: ${misc:Depends}, ${shlibs:Depends}
+Description: MongoDB C++ Driver Support Library
+ This package provides build-time utilities for MongoDB C++ Driver.
