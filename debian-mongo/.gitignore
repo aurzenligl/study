@@ -1,2 +1,3 @@
 mongo-cxx-driver-r*/
-r*.orig.tar.gz
+r*.tar.gz
+*.build
