@@ -2,4 +2,5 @@
 usr/include/*
 usr/lib/*/pkgconfig/*
 usr/share/pcl*/*.cmake usr/lib/${DEB_HOST_MULTIARCH}/cmake/pcl/
+usr/share/pcl*/Modules/*.cmake usr/lib/${DEB_HOST_MULTIARCH}/cmake/pcl/Modules/
 usr/lib/*/libpcl_*.so
