@@ -16,12 +16,7 @@ ifneq (,$(filter $(DEB_BUILD_ARCH),mips mipsel))
 	CXXFLAGS+=--param ggc-min-expand=20
 endif
 
-ifeq ($(DEB_HOST_ARCH),amd64)
-	export DEB_BUILD_OPTIONS=parallel=2
-endif
-ifeq ($(DEB_HOST_ARCH),arm64)
-	export DEB_BUILD_OPTIONS=parallel=2
-endif
+export DEB_BUILD_OPTIONS=parallel=$(shell nproc)
 
 BUILD_DOC = $(if $(shell dh_listpackages | grep libpcl-doc),-DWITH_DOCS=ON)
 
@@ -101,7 +96,7 @@ override_dh_installchangelogs:
 
 
 %:
-	dh  $@ --builddirectory=build
+	dh  $@ --parallel --builddirectory=build
 
 
 get-orig-source:
