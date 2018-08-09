@@ -1,3 +1,9 @@
+pcl (1.8.1dev1-1) xenial; urgency=medium
+
+  * packaging newest PCL
+
+ -- Krzysztof Laskowski <krzysztof.laskowski@aeolusbot.com>  Thu, 09 Aug 2018 20:01:05 +0000
+
 pcl (1.8.1+dfsg1-2ubuntu1) artful; urgency=medium
 
   * Limit parallel builds to 2 on amd64 and arm64
