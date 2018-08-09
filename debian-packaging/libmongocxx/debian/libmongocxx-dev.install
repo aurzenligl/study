@@ -1,0 +1,8 @@
+usr/include/bsoncxx/*
+usr/include/mongocxx/*
+usr/lib/cmake/*
+usr/lib/pkgconfig/*
+usr/lib/libbsoncxx.a
+usr/lib/libbsoncxx.so
+usr/lib/libmongocxx.a
+usr/lib/libmongocxx.so
