@@ -5,9 +5,9 @@ export DEB_BUILD_MAINT_OPTIONS=hardening=+all,-pie
 
 DEB_BUILD_ARCH     ?= $(shell dpkg-architecture -qDEB_BUILD_ARCH)
 
-# Multiarch.
+# # Multiarch.
 DEB_HOST_MULTIARCH ?= $(shell dpkg-architecture -qDEB_HOST_MULTIARCH)
-# Num bits
+# # Num bits
 DEB_HOST_ARCH_BITS ?= $(shell dpkg-architecture -qDEB_HOST_ARCH_BITS)
 
 %:
@@ -15,5 +15,12 @@ DEB_HOST_ARCH_BITS ?= $(shell dpkg-architecture -qDEB_HOST_ARCH_BITS)
 
 override_dh_auto_configure:
 	dh_auto_configure -- \
+	    -DBSONCXX_POLY_USE_MNMLSTC=1 \
 		-DCMAKE_BUILD_TYPE=Release \
-		-DBSONCXX_POLY_USE_MNMLSTC=1
+		-DCMAKE_INSTALL_PREFIX=install/usr  # needed to install EP_mnmlstc_core headers correctly
+		# DESTDIR is passed only to make install command, but not in installation of external project,
+		# done in non-install target
+
+override_dh_auto_install:
+	cd build && make install AM_UPDATE_INFO_DIR=no
+	cp -r build/install debian/tmp

@@ -1,2 +1,2 @@
-usr/lib/libbsoncxx.so.*
-usr/lib/libmongocxx.so.*
+usr/lib/libbsoncxx.so.3*
+usr/lib/libmongocxx.so.3*
