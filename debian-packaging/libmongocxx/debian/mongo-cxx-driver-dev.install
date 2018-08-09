@@ -12,6 +12,7 @@ usr/include/bsoncxx/v_noabi/bsoncxx/*.hpp
 usr/include/mongocxx/*
 usr/lib/cmake/*
 usr/lib/pkgconfig/*
-usr/lib/*.a
-usr/lib/*.so
-usr/lib/*.so._noabi
+usr/lib/libbsoncxx.a
+usr/lib/libbsoncxx.so
+usr/lib/libmongocxx.a
+usr/lib/libmongocxx.so
