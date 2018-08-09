@@ -1,6 +1,6 @@
 Source: libmongoc
 Priority: optional
-Maintainer: A. Jesse Jiryu Davis <jesse@mongodb.com>
+Maintainer: Krzysztof Laskowski <krzysztof.laskowski@aeolusbot.com>
 Build-Depends: debhelper (>= 9),
                dh-autoreconf,
                libssl-dev,
