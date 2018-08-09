@@ -1,0 +1,109 @@
+#!/usr/bin/make -f
+
+# Hardening.
+export DEB_BUILD_MAINT_OPTIONS=hardening=+all
+
+CPPFLAGS:=$(shell dpkg-buildflags --get CPPFLAGS)
+CFLAGS:=$(shell dpkg-buildflags --get CFLAGS)
+CXXFLAGS:=$(shell dpkg-buildflags --get CXXFLAGS)
+LDFLAGS:=$(shell dpkg-buildflags --get LDFLAGS) -Wl,--as-needed
+
+CFLAGS+=$(CPPFLAGS)
+CXXFLAGS+=$(CPPFLAGS)
+
+DEB_BUILD_ARCH     ?= $(shell dpkg-architecture -qDEB_BUILD_ARCH)
+ifneq (,$(filter $(DEB_BUILD_ARCH),mips mipsel))
+	CXXFLAGS+=--param ggc-min-expand=20
+endif
+
+ifeq ($(DEB_HOST_ARCH),amd64)
+	export DEB_BUILD_OPTIONS=parallel=2
+endif
+ifeq ($(DEB_HOST_ARCH),arm64)
+	export DEB_BUILD_OPTIONS=parallel=2
+endif
+
+BUILD_DOC = $(if $(shell dh_listpackages | grep libpcl-doc),-DWITH_DOCS=ON)
+
+# Multiarch.
+DEB_HOST_MULTIARCH ?= $(shell dpkg-architecture -qDEB_HOST_MULTIARCH)
+
+.PHONY: override_dh_auto_configure \
+	override_dh_install \
+	override_dh_installchangelogs
+
+override_dh_auto_configure:
+	dh_auto_configure -- 						\
+	-DLIB_INSTALL_DIR:STRING="lib/$(DEB_HOST_MULTIARCH)"		\
+	-DCMAKE_SKIP_RPATH=ON						\
+	-DBUILD_TESTS=OFF -DBUILD_apps=ON -DBUILD_common=ON		\
+	-DBUILD_examples=ON -DBUILD_features=ON -DBUILD_filters=ON	\
+	-DBUILD_geometry=ON -DBUILD_global_tests=OFF -DBUILD_io=ON	\
+	-DBUILD_kdtree=ON -DBUILD_keypoints=ON -DBUILD_octree=ON	\
+	-DBUILD_registration=ON -DBUILD_sample_consensus=ON		\
+	-DBUILD_search=ON -DBUILD_segmentation=ON -DBUILD_surface=ON	\
+	-DBUILD_tools=ON -DBUILD_tracking=ON -DBUILD_visualization=ON   \
+	-DBUILD_apps_cloud_composer=OFF -DBUILD_apps_modeler=ON            \
+	-DBUILD_apps_point_cloud_editor=ON -DBUILD_apps_in_hand_scanner=ON \
+	$(BUILD_DOC)
+
+override_dh_install:
+	@for i in pcl_concatenate_points_pcd pcl_grabcut_2d \
+		pcl_elch pcl_dinast_grabber pcl_hdl_grabber \
+		pcl_icp pcl_icp2d pcl_lum pcl_manual_registration pcl_match_linemod_template \
+		pcl_multiscale_feature_persistence_example pcl_ndt2d pcl_ndt3d pcl_ni_agast \
+		pcl_ni_linemod pcl_ni_susan pcl_nn_classification_example \
+		pcl_obj_rec_ransac_hash_table pcl_openni_grabber_depth_example \
+		pcl_openni_grabber_example pcl_openni_mobile_server \
+		pcl_openni_organized_multi_plane_segmentation \
+		pcl_openni_passthrough pcl_openni_shift_to_depth_conversion \
+		pcl_openni_voxel_grid pcl_organized_segmentation_demo pcl_outofcore_print \
+		pcl_outofcore_process pcl_pcd_image_viewer \
+		pcl_pcd_organized_multi_plane_segmentation pcl_pcd_video_player \
+		pcl_point_cloud_editor pcl_pyramid_surface_matching pcl_radius_filter \
+		pcl_statistical_multiscale_interest_region_extraction_example \
+		pcl_registration_visualizer pcl_surfel_smoothing_test \
+		pcl_timed_trigger_test pcl_viewer pcl_virtual_scanner \
+		pcl_voxel_grid_occlusion_estimation pcl_compute_hausdorff \
+		pcl_generate pcl_grid_min pcl_in_hand_scanner pcl_local_max \
+		pcl_morph pcl_ni_trajkovic pcl_obj2pcd pcl_offline_integration 	\
+		pcl_openni_klt pcl_progressive_morphological_filter \
+		pcl_converter pcl_crf_segmentation pcl_face_trainer pcl_fs_face_detector \
+		pcl_ni_brisk pcl_obj2ply pcl_openni_face_detector \
+		pcl_openni_organized_edge_detection pcl_outofcore_viewer \
+		pcl_pcd_introduce_nan pcl_pcd_organized_edge_detection \
+		pcl_stereo_ground_segmentation pcl_train_unary_classifier \
+		pcl_unary_classifier_segment pcl_vlp_viewer pcl_openni2_viewer \
+		pcl_openni_organized_multi_plane_segmentation; do \
+	cmd="dh_link -p pcl-tools usr/share/man/man1/pcl_pointclouds.1 usr/share/man/man1/$$i.1"; \
+	echo $$cmd; $$cmd; \
+	done
+		
+	dh_install --list-missing
+
+#override_dh_shlibdeps:
+#	dh_shlibdeps -v -Xusr/bin/pcl_* -Lpcl-tools -l:$(CURDIR)/debian/usr/lib/${DEB_HOST_MULTIARCH}/cloud_composer_plugins: -ppcl --- -xpcl-tools -v
+
+override_dh_installchangelogs:
+	dh_installchangelogs -plibpcl-common1.8 CHANGES.md
+	# Creating dh_links to share the same file
+	@for i in libpcl-dev libpcl1.8 libpcl-apps1.8 \
+		libpcl-features1.8 libpcl-filters1.8 libpcl-io1.8 libpcl-kdtree1.8 \
+		libpcl-keypoints1.8 libpcl-octree1.8 libpcl-outofcore1.8 libpcl-people1.8 \
+		libpcl-recognition1.8 libpcl-registration1.8 libpcl-sample-consensus1.8 \
+		libpcl-search1.8 libpcl-segmentation1.8 libpcl-stereo1.8 \
+		libpcl-surface1.8 libpcl-tracking1.8 libpcl-visualization1.8 \
+		pcl-tools libpcl-doc; do \
+	cmd="dh_link -p$$i usr/share/doc/libpcl-common1.8/changelog.gz usr/share/doc/$$i/changelog.gz"; \
+	echo $$cmd; $$cmd; \
+	done
+	dh_installchangelogs
+
+
+%:
+	dh  $@ --builddirectory=build
+
+
+get-orig-source:
+	uscan --verbose --force-download --repack --compress xz
+

@@ -1,0 +1,5 @@
+#! /usr/bin/dh-exec
+usr/include/*
+usr/lib/*/pkgconfig/*
+usr/share/pcl*/*.cmake usr/lib/${DEB_HOST_MULTIARCH}/cmake/pcl/
+usr/lib/*/libpcl_*.so

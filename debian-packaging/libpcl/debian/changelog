@@ -1,0 +1,208 @@
+pcl (1.8.1+dfsg1-2ubuntu1) artful; urgency=medium
+
+  * Limit parallel builds to 2 on amd64 and arm64
+    (they go OOM)
+
+ -- Gianfranco Costamagna <locutusofborg@debian.org>  Fri, 18 Aug 2017 23:22:16 +0200
+
+pcl (1.8.1+dfsg1-2) unstable; urgency=medium
+
+  * Add patch for PCL_ROOT
+
+ -- Jochen Sprickerhof <jspricke@debian.org>  Fri, 18 Aug 2017 11:31:07 +0200
+
+pcl (1.8.1+dfsg1-1ubuntu1) artful; urgency=medium
+
+  * Limit parallel builds to 2 on amd64 and arm64
+    (they go OOM)
+
+ -- Gianfranco Costamagna <locutusofborg@debian.org>  Wed, 16 Aug 2017 17:37:22 +0200
+
+pcl (1.8.1+dfsg1-1) unstable; urgency=medium
+
+  * Update watch file
+  * Remove excluded files with fixed license
+  * New upstream version 1.8.1+dfsg1
+  * Update copyright
+  * Remove patches, applied upstream
+
+ -- Jochen Sprickerhof <jspricke@debian.org>  Sun, 13 Aug 2017 17:59:39 +0200
+
+pcl (1.8.0+dfsg1-6) unstable; urgency=medium
+
+  * Upload to unstable.
+
+ -- Jochen Sprickerhof <jspricke@debian.org>  Wed, 28 Jun 2017 05:59:17 +0200
+
+pcl (1.8.0+dfsg1-5) experimental; urgency=medium
+
+  * Disable QT on arm again
+  * Enable parallel on all architectures again (Closes: #846520)
+  * Enable PIE.
+    Thanks to Adrian Bunk (Closes: #865652)
+  * Bump policy and debhelper versions
+
+ -- Jochen Sprickerhof <jspricke@debian.org>  Sat, 24 Jun 2017 11:12:20 +0200
+
+pcl (1.8.0+dfsg1-4) experimental; urgency=medium
+
+  * Add patch for arm build failures.
+    Thanks to Gianfranco Costamagna
+  * Enable QT on arm again
+
+ -- Jochen Sprickerhof <jspricke@debian.org>  Sat, 17 Sep 2016 12:37:25 +0200
+
+pcl (1.8.0+dfsg1-3) unstable; urgency=medium
+
+  * Disable QT on arm (Closes: #835292)
+
+ -- Jochen Sprickerhof <jspricke@debian.org>  Sun, 04 Sep 2016 09:30:23 +0200
+
+pcl (1.8.0+dfsg1-2) unstable; urgency=medium
+
+  * Remove superfluous libpcl1.8 package
+  * Add patch for empty 2d lib
+
+ -- Jochen Sprickerhof <jspricke@debian.org>  Mon, 22 Aug 2016 07:46:30 +0200
+
+pcl (1.8.0+dfsg1-1) experimental; urgency=medium
+
+  * Imported Upstream version 1.8.0+dfsg1
+  * Rebase patches
+  * Add patch for removed non free code
+  * Reworked debian/ files
+  * Add patch for privacy-breach-logo
+
+ -- Jochen Sprickerhof <jspricke@debian.org>  Tue, 16 Aug 2016 19:25:49 +0200
+
+pcl (1.7.2-14) unstable; urgency=medium
+
+  * Add patch for gcc6 (Closes: #812015)
+  * Move pcl-tools to section science.
+
+ -- Jochen Sprickerhof <debian@jochen.sprickerhof.de>  Sat, 23 Jan 2016 19:30:45 +0100
+
+pcl (1.7.2-13) unstable; urgency=medium
+
+  * Fix dependencies
+  * Add patch to fix compilation error if no QVTK is found
+
+ -- Jochen Sprickerhof <debian@jochen.sprickerhof.de>  Fri, 16 Oct 2015 17:07:50 +0200
+
+pcl (1.7.2-12) unstable; urgency=medium
+
+  * Fix syntax in rules file
+  * libvtk6-qt-dev is not available on arm
+
+ -- Jochen Sprickerhof <debian@jochen.sprickerhof.de>  Sun, 11 Oct 2015 16:56:06 +0200
+
+pcl (1.7.2-11) unstable; urgency=medium
+
+  [ Leopold Palomo-Avellaneda ]
+  * Add parallel build in some Archs (!=32 bits).
+    Closes: #799218
+
+  [ Jochen Sprickerhof ]
+  * Add patch for Eigen build error
+  * Switch to VTK6 (Closes: #798171).
+
+ -- Jochen Sprickerhof <debian@jochen.sprickerhof.de>  Sat, 10 Oct 2015 23:51:16 +0200
+
+pcl (1.7.2-10) unstable; urgency=medium
+
+  * Fix an other FTBFS on ppc64el
+
+ -- Jochen Sprickerhof <debian@jochen.sprickerhof.de>  Tue, 01 Sep 2015 09:41:28 +0200
+
+pcl (1.7.2-9) unstable; urgency=medium
+
+  * Add patches for FTBFS with gcc5 (closes #795525)
+  * Fix FTBFS on ppc64el, thanks to ChriSopht in #eigen
+  * Add mips* as supported OpenNI architectures
+
+ -- Jochen Sprickerhof <debian@jochen.sprickerhof.de>  Mon, 17 Aug 2015 12:05:12 +0200
+
+pcl (1.7.2-8) unstable; urgency=medium
+
+  * Appy ggc-min-expand+disable-WITH_DOCS.diff (Closes: #780582), Thanks Dejan
+    Latinovic.
+  * Update architectures on libopenni-dev dependency
+
+ -- Jochen Sprickerhof <debian@jochen.sprickerhof.de>  Tue, 09 Jun 2015 10:55:56 +0200
+
+pcl (1.7.2-7) unstable; urgency=medium
+
+  * Added patch to solve sometimes FTBFS. Patch proposed by
+    James Cowgill (thanks!!!). Closes: #779183
+
+ -- Leopold Palomo-Avellaneda <leo@alaxarxa.net>  Wed, 25 Feb 2015 23:12:50 +0100
+
+pcl (1.7.2-6) unstable; urgency=medium
+
+  [ Jochen Sprickerhof ]
+  * Remove --parallel from dh to fix build on i386 buildd.
+
+ -- Leopold Palomo-Avellaneda <leo@alaxarxa.net>  Tue, 02 Dec 2014 08:29:43 +0100
+
+pcl (1.7.2-5) unstable; urgency=medium
+
+  [Leopold Palomo-Avellaneda]
+  * Reverted Multi-arch field for libpcl-apps1.7.
+
+ -- Leopold Palomo-Avellaneda <leo@alaxarxa.net>  Thu, 27 Nov 2014 18:14:40 +0100
+
+pcl (1.7.2-4) unstable; urgency=medium
+
+  [Leopold Palomo-Avellaneda]
+  * Added missing Multi-arch field for libpcl-apps1.7.
+  * Removing Multi-Arch of libpcl-dev. Closes: #770503
+
+ -- Leopold Palomo-Avellaneda <leo@alaxarxa.net>  Mon, 24 Nov 2014 12:27:06 +0100
+
+pcl (1.7.2-3) unstable; urgency=medium
+
+  [ Jochen Sprickerhof ]
+  * Change openni-dev to libopenni, Closes: #768953
+  * Build without OpenNI when it's not available. It opens
+    the number of architectures where it could be built. Closes: #769883
+  * Fix PCLConfig.cmake (patch taken from Fedora). Closes: #770029
+
+ -- Leopold Palomo-Avellaneda <leo@alaxarxa.net>  Tue, 11 Nov 2014 15:34:43 +0100
+
+pcl (1.7.2-2) unstable; urgency=medium
+
+  [Leopold Palomo-Avellaneda]
+  * Change install place for cmake files. Closes: #766685
+  * Added dh-exec (>=0.3) dependecy.
+
+ -- Leopold Palomo-Avellaneda <leo@alaxarxa.net>  Sun, 26 Oct 2014 09:46:18 +0100
+
+pcl (1.7.2-1) unstable; urgency=medium
+
+  [Thomas Moulard]
+  * Initial debianization.
+
+  [Leopold Palomo-Avellaneda]
+  * Initial release. (Closes: #703579)
+  * Worked from the initial debianization from Thomas Moulard.
+    Jochen Sprickerhof and myself added as uploaders.
+  * Added libvtk5-qt4-dev, libopenni-sensor-primesense-dev, python-vtk,
+    libvtk5-qt4-dev, libqt4-opengl-dev, python-sphinx, libusb-1.0-0-dev build
+    dependencies.
+  * Deleted pkg-kde-tools dependency.
+  * Relaxed boost dependencies.
+  * Added some applications to be build: app_modeler, app_point_cloud_editor,
+    in_hand_scanner in rules.
+  * Renamed libpcl-tools to pcl-tools.
+  * Added manpages ...
+  * Added libjs-jquery dependency to calm lintian.
+
+  [Jochen Sprickerhof]
+  * Fix license file.
+  * Clean up debian/rules.
+  * Update Standards-Version (no changes).
+  * Fix hidden dependencies with glut and OpenGL of pcl-tools.
+  * Cosmetic changes.
+
+ -- Leopold Palomo-Avellaneda <leo@alaxarxa.net>  Mon, 06 Oct 2014 09:30:55 +0200
+

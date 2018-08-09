@@ -1,0 +1,9 @@
+Document: pcl
+Title: PCL C++ API reference
+Author: the PCL team
+Abstract: Describe the PCL library C++ API.
+Section: Programming/C++
+
+Format: HTML
+Index: /usr/share/doc/libpcl-doc/html/index.html
+Files: /usr/share/doc/libpcl-doc/html/*

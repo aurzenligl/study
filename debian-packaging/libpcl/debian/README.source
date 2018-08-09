@@ -1,0 +1,10 @@
+BinNMU after new upload
+-----------------------
+
+PCL is often used as a header only library, so dependent packages don't get a
+binary dependency on it. Please request a BinNMU for all dependent package [1]
+with every new upload, so they get updated as well.
+
+[1] grep-dctrl -FBuild-Depends libpcl-dev -sPackage /var/lib/apt/lists/*Sources
+
+ -- Jochen Sprickerhof <jspricke@debian.org>  Mon, 22 Aug 2016 07:54:51 +0200

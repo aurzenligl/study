@@ -1,0 +1,23 @@
+#!/bin/sh
+
+set -e
+
+ARCH=`dpkg-architecture -qDEB_BUILD_ARCH`
+V=1.6
+
+PKGS="libpcl-common libpcl-features libpcl-filters"
+PKGS="${PKGS} libpcl-geometry libpcl-io"
+PKGS="${PKGS} libpcl-io-ply libpcl-kdtree"
+PKGS="${PKGS} libpcl-keypoints libpcl-octree"
+PKGS="${PKGS} libpcl-registration libpcl-sample-consensus"
+PKGS="${PKGS} libpcl-search libpcl-segmentation"
+PKGS="${PKGS} libpcl-surface libpcl-tracking"
+PKGS="${PKGS} libpcl-visualization"
+
+for pkg in ${PKGS}; do
+    f=`echo ${pkg} | sed 's|-|_|g'`
+    pkgkde-gensymbols -p${pkg}${V} -v${V} -Osymbols-${pkg}.${ARCH} \
+	-edebian/${pkg}${V}/usr/lib/*/${f}.so.${V}
+    pkgkde-symbolshelper create -o debian/${pkg}${V}.symbols -v ${V} \
+	symbols-${pkg}.${ARCH}
+done
