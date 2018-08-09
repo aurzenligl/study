@@ -9,7 +9,7 @@ Homepage: https://mongodb.github.io/mongo-cxx-driver/
 Package: mongo-cxx-driver-dev
 Section: libdevel
 Architecture: any
-Depends: mongo-cxx-driver mongo-cxx-mnmlstc-core (= ${binary:Version}), ${misc:Depends}
+Depends: mongo-cxx-driver, mongo-cxx-mnmlstc-core (= ${binary:Version}), ${misc:Depends}
 Description: MongoDB C++ Driver (development)
  This package provides C++ development files to interact with MongoDB.
 
