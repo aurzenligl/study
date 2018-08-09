@@ -1,14 +1,7 @@
 #!/usr/bin/make -f
 
 # Hardening.
-export DEB_BUILD_MAINT_OPTIONS=hardening=+all,-pie
-
-DEB_BUILD_ARCH     ?= $(shell dpkg-architecture -qDEB_BUILD_ARCH)
-
-# # Multiarch.
-DEB_HOST_MULTIARCH ?= $(shell dpkg-architecture -qDEB_HOST_MULTIARCH)
-# # Num bits
-DEB_HOST_ARCH_BITS ?= $(shell dpkg-architecture -qDEB_HOST_ARCH_BITS)
+export DEB_BUILD_MAINT_OPTIONS=hardening=+all
 
 %:
 	dh  $@ --parallel -v --builddirectory=build
