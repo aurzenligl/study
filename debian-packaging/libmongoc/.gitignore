@@ -1,3 +1,5 @@
-mongo-c-driver-*/
+mongo-c-driver/
 *.tar.gz
 *.build
+*.changes
+*.deb
