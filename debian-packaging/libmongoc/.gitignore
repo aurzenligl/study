@@ -1,0 +1,3 @@
+mongo-c-driver-*/
+*.tar.gz
+*.build
