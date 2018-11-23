@@ -1,32 +1,22 @@
 #include "x.h"
-#include <string>
-#include <stdexcept>
-#include <unordered_map>
 
-static std::unordered_map<std::string, int> vars{
-    {"One_some_suffix", 1},
-    {"Two_some_suffix", 2},
-};
-
-namespace some {
-namespace nested {
-namespace ns {
-
-std::string KindStr(Kind kind)
-{
-    if (kind == One) return "One";
-    if (kind == Two) return "Two";
-    throw std::runtime_error("unknown kind");
+template<> std::string Get<tag::Abc>() {
+    return "";
 }
 
-int GetInt(Kind kind) {
-    return vars[KindStr(kind) + "_some_suffix"];
+template<> void Set<tag::Abc>(const std::string &x) {
 }
 
-void SetInt(Kind kind, int x) {
-    vars[KindStr(kind) + "_some_suffix"] = x;
+template<> std::string Get<tag::Def>(const std::string &arg) {
+    return "";
 }
 
+template<> void Set<tag::Def>(const std::string &arg, const std::string &x) {
 }
+
+template<> int Get<tag::Ghi>(const std::string &arg1, const int &arg2) {
+    return 42;
 }
+
+template<> void Set<tag::Ghi>(const std::string &arg1, const int &arg2, const int &x) {
 }
