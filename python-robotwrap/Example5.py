@@ -27,7 +27,7 @@ def _declassify(fun, args):
         met = getattr(args[0], fun.__name__, None)
         if met:
             wrap = getattr(met, '__func__', None)
-            if wrap.original is fun:
+            if getattr(wrap, 'original', None) is fun:
                 maybe_cls = args[0]
                 cls = maybe_cls if isclass(maybe_cls) else maybe_cls.__class__
                 return cls, args[1:]
@@ -67,3 +67,12 @@ instance.staticmethod(a1=3)
 instance.classmethod()
 Class.staticmethod(a1=3)
 Class.classmethod()
+
+# # #
+
+class C:
+    def staticmethod(self):
+        pass
+
+Class.staticmethod(C())
+instance.staticmethod(C())
