@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.4)
+cmake_minimum_required(VERSION 3.0)
 project(measured)
 
 set (CMAKE_CXX_STANDARD 17)
@@ -7,7 +7,7 @@ find_package(Boost REQUIRED)
 
 file(GLOB_RECURSE srcs "src/*.cpp")
 
-add_library(measured ${srcs})
+add_library(measured STATIC ${srcs})
 target_link_libraries(measured PUBLIC
     Boost::boost
 )
