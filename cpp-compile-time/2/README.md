@@ -1,21 +1,36 @@
 Requirements
 ---------------
 - g++ compiler with c++17 support (just to have `variant` in stdlib)
+- boost libraries
 
 Usage
 ---------------
 
+Building:
 ```
 git clone git@github.com:aurzenligl/study.git
 cd study/cpp-compile-time/2
 mkdir build
 cd build
 cmake ..
-make
-../print-includes.sh | grep size
-../print-time-table.sh
+make  # generates compilation time statistics
 ```
-outputs
+
+Generated files:
+```
+$ find -name '*time'
+./CMakeFiles/measured.dir/src/std/variant.cpp.o.time
+./CMakeFiles/measured.dir/src/std/memory.cpp.o.time
+./CMakeFiles/measured.dir/src/boost/shared_ptr.hpp.cpp.o.time
+./CMakeFiles/measured.dir/src/boost/variant.hpp.cpp.o.time
+$ find -name '*fstats'
+./CMakeFiles/measured.dir/src/std/memory.cpp.o.fstats
+./CMakeFiles/measured.dir/src/std/variant.cpp.o.fstats
+./CMakeFiles/measured.dir/src/boost/variant.hpp.cpp.o.fstats
+./CMakeFiles/measured.dir/src/boost/shared_ptr.hpp.cpp.o.fstats
+```
+
+Post processing:
 ```
 $ ../print-includes.sh | grep size
 std/variant -> /usr/include/x86_64-linux-gnu/bits/wordsize.h
@@ -46,4 +61,3 @@ $ ../print-time-table.sh
 0.336594  0.161207  ../src/std/memory.cpp
 0.077228  0.07977   ../src/std/variant.cpp
 ```
-
