@@ -15,6 +15,7 @@ add_library(measured STATIC ${srcs})
 target_include_directories(measured PUBLIC
     ${Boost_INCLUDE_DIRS}
     ${PCL_INCLUDE_DIRS}
+    src
 )
 target_link_libraries(measured PUBLIC
     ${Boost_LIBRARIES}
