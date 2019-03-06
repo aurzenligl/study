@@ -1,7 +1,7 @@
-Requirements
+Todo
 ---------------
-- g++ compiler with c++17 support (just to have `variant` in stdlib)
-- boost libraries
+- post process .cpp.o.time files
+- modularize timing all targets
 
 Usage
 ---------------
