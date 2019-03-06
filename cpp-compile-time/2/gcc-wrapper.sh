@@ -3,6 +3,8 @@
 set -e
 
 # extract paths (original and includes)
+srcf=$(readlink -f $(echo "$@" | tr ' ' '\n' | grep -m1 "\.cpp$"))
+base=$(echo "$@" | tr ' ' '\n' | grep -m1 "\.cpp\.o$" | grep -Po ".*(?=\.o)")
 input=$(echo "$@" | tr ' ' '\n' | grep -m1 "\.cpp$")
 output=$(echo "$@" | tr ' ' '\n' | grep -m1 "\.cpp\.o$")
 hinput=$(echo "$output" | sed 's@\(/[^/]*\).cpp.o$@\1.includes.cpp@g')
@@ -16,7 +18,8 @@ hcmd=$(echo "$@" | sed "s@$(echo ${input} | sed 's/\./\\./g')@${hinput}@g" | sed
 hhcmd=$(echo "$@" | sed "s@$(echo ${input} | sed 's/\./\\./g')@${hhinput}@g" | sed "s@${output}@${hhoutput}@g")
 
 # generate cmd file
-echo $cmd > ${output}.cmd
+echo $cmd > ${base}.cmd
+ln -sf $(realpath --relative-to=$(dirname $base) $srcf) $base
 
 # generate includes-only source file
 "$@" -H -E -fdirectives-only 2>&1 >/dev/null | grep -Po "^\. \K.*" | sed -e 's/^\(.*\)/#include "\1"/' > $hinput
@@ -26,3 +29,8 @@ head -1 $hinput | grep "/$(basename $input | cut -f 1 -d '.')\.h[a-z]*\"$" > $hh
 $(which time) -f "%U" -o ${output}.time $cmd
 $(which time) -f "%U" -o ${houtput}.time $hcmd
 $(which time) -f "%U" -o ${hhoutput}.time $hhcmd
+
+# echo $base
+# echo $output
+# echo $houtput
+# echo $hhoutput
