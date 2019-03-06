@@ -22,9 +22,7 @@ target_link_libraries(measured PUBLIC
     ${PCL_LIBRARIES}
 )
 if (STATS)
-    set_property(TARGET measured PROPERTY RULE_LAUNCH_COMPILE
-        ${CMAKE_SOURCE_DIR}/gcc-wrapper.sh
-    )
+    include(cotime)
 endif()
 if (COTIRE)
     set_target_properties(measured PROPERTIES COTIRE_ADD_UNITY_BUILD FALSE)
