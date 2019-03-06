@@ -1,18 +1,28 @@
 #!/bin/bash
 
+set -e
+
 # extract paths (original and includes)
 input=$(echo "$@" | tr ' ' '\n' | grep -m1 "\.cpp$")
 output=$(echo "$@" | tr ' ' '\n' | grep -m1 "\.cpp\.o$")
 hinput=$(echo "$output" | sed 's@\(/[^/]*\).cpp.o$@\1.includes.cpp@g')
 houtput="${hinput}.o"
+hhinput=$(echo "$output" | sed 's@\(/[^/]*\).cpp.o$@\1.header.cpp@g')
+hhoutput="${hhinput}.o"
 
 # set commands (original and includes)
 cmd="$@"
 hcmd=$(echo "$@" | sed "s@$(echo ${input} | sed 's/\./\\./g')@${hinput}@g" | sed "s@${output}@${houtput}@g")
+hhcmd=$(echo "$@" | sed "s@$(echo ${input} | sed 's/\./\\./g')@${hhinput}@g" | sed "s@${output}@${hhoutput}@g")
+
+# generate cmd file
+echo $cmd > ${output}.cmd
 
 # generate includes-only source file
 "$@" -H -E -fdirectives-only 2>&1 >/dev/null | grep -Po "^\. \K.*" | sed -e 's/^\(.*\)/#include "\1"/' > $hinput
+head -1 $hinput | grep "/$(basename $input | cut -f 1 -d '.')\.h[a-z]*\"$" > $hhinput || true
 
 # compile modules (original and includes)
-$cmd -time=${output}.time
-$hcmd -time=${houtput}.time
+$(which time) -f "%U" -o ${output}.time $cmd
+$(which time) -f "%U" -o ${houtput}.time $hcmd
+$(which time) -f "%U" -o ${hhoutput}.time $hhcmd
