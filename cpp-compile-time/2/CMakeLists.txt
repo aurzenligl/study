@@ -1,8 +1,11 @@
 cmake_minimum_required(VERSION 3.0)
 project(measured)
 set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake")
+include(cotire)
 
 option(STATS "Measure compilation time" OFF)
+option(COTIRE "Use precompiled headers" OFF)
 
 find_package(Boost REQUIRED)
 find_package(PCL REQUIRED)
@@ -21,4 +24,8 @@ if (STATS)
     set_property(TARGET measured PROPERTY RULE_LAUNCH_COMPILE
         ${CMAKE_SOURCE_DIR}/gcc-wrapper.sh
     )
+endif()
+if (COTIRE)
+    set_target_properties(measured PROPERTIES COTIRE_ADD_UNITY_BUILD FALSE)
+    cotire(measured)
 endif()
