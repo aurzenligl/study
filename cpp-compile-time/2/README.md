@@ -55,6 +55,10 @@ Post processing. Columns:
 4. [2] to [1] ratio in percents
 5. [3] to [1] ratio in percents
 6. cpp path relative to cwd
+
+These values should theoretically fulfil [3] < [2] < [1] invariant, but due to nondeterministic
+character of user time compiler might take (depending on OS scheduling, memory access, etc.),
+this invariant might not hold and ratios might exceed 100.
 ```
 aurzenligl@dell7510 ~/projects/aeolus/share/study/cpp-compile-time/2/build $ ../print-times.sh 
 6.86  6.71  1.96  97   28   ../src/foo/foo.cpp
