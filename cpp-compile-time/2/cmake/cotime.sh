@@ -24,7 +24,7 @@ echo $cmd > ${base}.cmd
 ln -sf $(realpath --relative-to=$(dirname $base) $srcf) $base
 
 # generate includes-only source file
-"$@" -H -E -fdirectives-only 2>&1 >/dev/null | grep -Po "^\. \K.*" | sed -e 's/^\(.*\)/#include "\1"/' > $hinput
+"$@" -H -E -fdirectives-only 2>&1 >/dev/null | grep -Po "^\. \K.*" | xargs -i readlink -f {} | sed -e 's/^\(.*\)/#include "\1"/' > $hinput
 head -1 $hinput | grep "/$(basename $input | cut -f 1 -d '.')\.h[a-z]*\"$" > $hhinput || true
 
 # compile modules (original and includes)
