@@ -12,52 +12,48 @@ git clone git@github.com:aurzenligl/study.git
 cd study/cpp-compile-time/2
 mkdir build
 cd build
-cmake ..
-make  # generates compilation time statistics
+cmake -GNinja -DSTATS=1 ..
+ninja  # generates compilation time statistics
 ```
 
 Generated files:
 ```
-$ find -name '*time'
-./CMakeFiles/measured.dir/src/std/variant.cpp.o.time
-./CMakeFiles/measured.dir/src/std/memory.cpp.o.time
-./CMakeFiles/measured.dir/src/boost/shared_ptr.hpp.cpp.o.time
-./CMakeFiles/measured.dir/src/boost/variant.hpp.cpp.o.time
-$ find -name '*fstats'
-./CMakeFiles/measured.dir/src/std/memory.cpp.o.fstats
-./CMakeFiles/measured.dir/src/std/variant.cpp.o.fstats
-./CMakeFiles/measured.dir/src/boost/variant.hpp.cpp.o.fstats
-./CMakeFiles/measured.dir/src/boost/shared_ptr.hpp.cpp.o.fstats
+build $ ll ./CMakeFiles/measured.dir/src/foo
+total 512
+drwxrwxr-x 2 aurzenligl aurzenligl   4096 Mar  7 01:56 ./
+drwxrwxr-x 5 aurzenligl aurzenligl   4096 Mar  7 01:56 ../
+lrwxrwxrwx 1 aurzenligl aurzenligl     30 Mar  7 01:56 bar.cpp -> ../../../../../src/foo/bar.cpp
+-rw-rw-r-- 1 aurzenligl aurzenligl   1706 Mar  7 01:56 bar.cpp.cmd
+-rw-rw-r-- 1 aurzenligl aurzenligl  74368 Mar  7 01:56 bar.cpp.o
+-rw-rw-r-- 1 aurzenligl aurzenligl      5 Mar  7 01:56 bar.cpp.o.time
+-rw-rw-r-- 1 aurzenligl aurzenligl     30 Mar  7 01:56 bar.header.cpp
+-rw-rw-r-- 1 aurzenligl aurzenligl   1096 Mar  7 01:56 bar.header.cpp.o
+-rw-rw-r-- 1 aurzenligl aurzenligl    126 Mar  7 01:56 bar.header.cpp.o.d
+-rw-rw-r-- 1 aurzenligl aurzenligl      5 Mar  7 01:56 bar.header.cpp.o.time
+-rw-rw-r-- 1 aurzenligl aurzenligl     64 Mar  7 01:56 bar.includes.cpp
+-rw-rw-r-- 1 aurzenligl aurzenligl   1104 Mar  7 01:56 bar.includes.cpp.o
+-rw-rw-r-- 1 aurzenligl aurzenligl    156 Mar  7 01:56 bar.includes.cpp.o.d
+-rw-rw-r-- 1 aurzenligl aurzenligl      5 Mar  7 01:56 bar.includes.cpp.o.time
+lrwxrwxrwx 1 aurzenligl aurzenligl     30 Mar  7 01:56 foo.cpp -> ../../../../../src/foo/foo.cpp
+-rw-rw-r-- 1 aurzenligl aurzenligl   1706 Mar  7 01:56 foo.cpp.cmd
+-rw-rw-r-- 1 aurzenligl aurzenligl 126800 Mar  7 01:56 foo.cpp.o
+-rw-rw-r-- 1 aurzenligl aurzenligl      5 Mar  7 01:56 foo.cpp.o.time
+-rw-rw-r-- 1 aurzenligl aurzenligl     30 Mar  7 01:56 foo.header.cpp
+-rw-rw-r-- 1 aurzenligl aurzenligl   3712 Mar  7 01:56 foo.header.cpp.o
+-rw-rw-r-- 1 aurzenligl aurzenligl    302 Mar  7 01:56 foo.header.cpp.o.d
+-rw-rw-r-- 1 aurzenligl aurzenligl      5 Mar  7 01:56 foo.header.cpp.o.time
+-rw-rw-r-- 1 aurzenligl aurzenligl    103 Mar  7 01:56 foo.includes.cpp
+-rw-rw-r-- 1 aurzenligl aurzenligl  43256 Mar  7 01:56 foo.includes.cpp.o
+-rw-rw-r-- 1 aurzenligl aurzenligl   2288 Mar  7 01:56 foo.includes.cpp.o.d
+-rw-rw-r-- 1 aurzenligl aurzenligl      5 Mar  7 01:56 foo.includes.cpp.o.time
 ```
 
 Post processing:
 ```
-$ ../print-includes.sh | grep size
-std/variant -> /usr/include/x86_64-linux-gnu/bits/wordsize.h
-std/memory -> /usr/include/x86_64-linux-gnu/bits/typesizes.h
-std/memory -> /usr/include/x86_64-linux-gnu/bits/wordsize.h
-boost/variant.hpp -> /usr/include/boost/mpl/O1_size.hpp
-boost/variant.hpp -> /usr/include/boost/mpl/O1_size_fwd.hpp
-boost/variant.hpp -> /usr/include/boost/mpl/aux_/O1_size_impl.hpp
-boost/variant.hpp -> /usr/include/boost/mpl/aux_/has_size.hpp
-boost/variant.hpp -> /usr/include/boost/mpl/aux_/size_impl.hpp
-boost/variant.hpp -> /usr/include/boost/mpl/list/aux_/O1_size.hpp
-boost/variant.hpp -> /usr/include/boost/mpl/list/aux_/size.hpp
-boost/variant.hpp -> /usr/include/boost/mpl/size.hpp
-boost/variant.hpp -> /usr/include/boost/mpl/size_fwd.hpp
-boost/variant.hpp -> /usr/include/boost/mpl/size_t.hpp
-boost/variant.hpp -> /usr/include/boost/mpl/size_t_fwd.hpp
-boost/variant.hpp -> /usr/include/boost/mpl/sizeof.hpp
-boost/variant.hpp -> /usr/include/boost/preprocessor/array/size.hpp
-boost/variant.hpp -> /usr/include/boost/preprocessor/seq/size.hpp
-boost/variant.hpp -> /usr/include/boost/preprocessor/variadic/size.hpp
-boost/variant.hpp -> /usr/include/x86_64-linux-gnu/bits/typesizes.h
-boost/variant.hpp -> /usr/include/x86_64-linux-gnu/bits/wordsize.h
-boost/shared_ptr.hpp -> /usr/include/x86_64-linux-gnu/bits/typesizes.h
-boost/shared_ptr.hpp -> /usr/include/x86_64-linux-gnu/bits/wordsize.h
-$ ../print-time-table.sh
-0.815919  0.474471  ../src/boost/variant.hpp.cpp
-0.558471  0.397222  ../src/boost/shared_ptr.hpp.cpp
-0.336594  0.161207  ../src/std/memory.cpp
-0.077228  0.07977   ../src/std/variant.cpp
+aurzenligl@dell7510 ~/projects/aeolus/share/study/cpp-compile-time/2/build $ ../print-times.sh 
+6.86  6.71  1.96  97   28   ../src/foo/foo.cpp
+0.71  0.72  0.79  101  111  ../src/boost/variant.hpp.cpp
+0.39  0.43  0.49  110  125  ../src/boost/shared_ptr.hpp.cpp
+0.16  0.16  0.00  100  0    ../src/std/memory.cpp
+0.15  0.11  0.09  73   60   ../src/foo/bar.cpp
 ```
