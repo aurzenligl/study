@@ -2,6 +2,8 @@
 
 set -e
 
+export CCACHE_DISABLE=1
+
 # extract paths (original and includes)
 srcf=$(readlink -f $(echo "$@" | tr ' ' '\n' | grep -m1 "\.cpp$"))
 base=$(echo "$@" | tr ' ' '\n' | grep -m1 "\.cpp\.o$" | grep -Po ".*(?=\.o)")
