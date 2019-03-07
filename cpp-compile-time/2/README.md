@@ -2,6 +2,7 @@ Todo
 ---------------
 - check if time and bc exist (cmake time)
 - allow any include to point to public module header
+- localize cotime.sh better
 
 Usage
 ---------------
