@@ -24,8 +24,8 @@ function record() {
     htime=$(cat $htimef)
     hhtime=$(cat $hhtimef)
 
-    rhtime=$(echo "100 * ${htime} / ${time}" | bc)
-    rhhtime=$(echo "100 * ${hhtime} / ${time}" | bc)
+    rhtime=$(echo "100 * ${htime} / (${time} + 0.000001)" | bc)
+    rhhtime=$(echo "100 * ${hhtime} / (${time} + 0.000001)" | bc)
 
     echo "$time $htime $hhtime $rhtime $rhhtime $srcfr"
 
