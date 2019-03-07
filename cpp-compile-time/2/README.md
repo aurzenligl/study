@@ -1,7 +1,7 @@
 Todo
 ---------------
-- post process .cpp.o.time files
-- modularize timing all targets
+- check if time and bc exist (cmake time)
+- allow any include to point to public module header
 
 Usage
 ---------------
