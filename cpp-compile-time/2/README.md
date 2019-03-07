@@ -48,7 +48,13 @@ lrwxrwxrwx 1 aurzenligl aurzenligl     30 Mar  7 01:56 foo.cpp -> ../../../../..
 -rw-rw-r-- 1 aurzenligl aurzenligl      5 Mar  7 01:56 foo.includes.cpp.o.time
 ```
 
-Post processing:
+Post processing. Columns:
+1. cpp compilation time
+2. includes compilation time
+3. cpp's header compilation time
+4. [2] to [1] ratio in percents
+5. [3] to [1] ratio in percents
+6. cpp path relative to cwd
 ```
 aurzenligl@dell7510 ~/projects/aeolus/share/study/cpp-compile-time/2/build $ ../print-times.sh 
 6.86  6.71  1.96  97   28   ../src/foo/foo.cpp
