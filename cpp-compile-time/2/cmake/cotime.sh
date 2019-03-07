@@ -28,9 +28,9 @@ ln -sf $(realpath --relative-to=$(dirname $base) $srcf) $base
 head -1 $hinput | grep "/$(basename $input | cut -f 1 -d '.')\.h[a-z]*\"$" > $hhinput || true
 
 # compile modules (original and includes)
-$(which time) -f "%U" -o ${output}.time $cmd
-$(which time) -f "%U" -o ${houtput}.time $hcmd
 $(which time) -f "%U" -o ${hhoutput}.time $hhcmd
+$(which time) -f "%U" -o ${houtput}.time $hcmd
+$(which time) -f "%U" -o ${output}.time $cmd
 
 # echo $base
 # echo $output
