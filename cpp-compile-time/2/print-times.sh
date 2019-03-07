@@ -40,4 +40,4 @@ function record() {
 export -f record
 
 modules=$(find $logdir -name '*cpp.o.time' -not -name '*includes.cpp.o.time' -not -name '*header.cpp.o.time')
-echo "$modules" | xargs -i bash -c "record {}" | sort -rnk1 | column -t -s' '
+echo "$modules" | xargs -P0 -i bash -c "record {}" | sort -rnk1 | column -t -s' '
