@@ -70,7 +70,7 @@ def flatten_lines(lines):
 
 def to_path(fun, cls):
     physical_path = fun.__module__.replace('.', '/') + '.py:%s' % fun.__code__.co_firstlineno
-    logical_path = (cls.__name__ + '.' if cls else '') + fun.func_name
+    logical_path = (cls.__name__ + '.' if cls else '') + fun.__name__
     return '%s %s' % (physical_path, logical_path)
 
 def indent(lines):
