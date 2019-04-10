@@ -34,4 +34,4 @@ def start_consumer_thread(pipe, lgr):
 def consume_lines(pipe, lgr):
     with pipe:
         for line in iter(pipe.readline, b''):  #workaround read-ahead bug
-            lgr.info(line.rstrip('\n'))
+            lgr.info(line.rstrip(b'\n'))

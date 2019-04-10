@@ -1,4 +1,4 @@
-from logged import logged
+from .logged import logged
 
 @logged
 def ffoo(a):

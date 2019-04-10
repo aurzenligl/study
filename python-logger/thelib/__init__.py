@@ -1,2 +1,2 @@
-import cfoo
-import fbar
+from . import cfoo
+from . import fbar
