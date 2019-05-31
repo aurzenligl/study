@@ -8,25 +8,24 @@ namespace gazebo {
 
 class ModelPush : public ModelPlugin {
  public:
-  void Load(physics::ModelPtr _parent, sdf::ElementPtr /*sdf*/) {
+  void Load(physics::ModelPtr parent, sdf::ElementPtr /*sdf*/) {
     // Store the pointer to the model
-    this->model = _parent;
+    model_ = parent;
 
-    // Listen to the update event. This event is broadcast every
-    // simulation iteration.
-    this->updateConnection = event::Events::ConnectWorldUpdateBegin(
+    // Listen to the update event. This event is broadcast every simulation iteration.
+    updateConnection_ = event::Events::ConnectWorldUpdateBegin(
         std::bind(&ModelPush::OnUpdate, this));
   }
 
   // Called by the world update start event
   void OnUpdate() {
     // Apply a small linear velocity to the model.
-    this->model->SetLinearVel(ignition::math::Vector3d(.3, 0, 0));
+    model_->SetLinearVel(ignition::math::Vector3d(.3, 0, 0));
   }
 
  private:
-  physics::ModelPtr model;  // Pointer to the model
-  event::ConnectionPtr updateConnection;  // Pointer to the update event connection
+  physics::ModelPtr model_;  // Pointer to the model
+  event::ConnectionPtr updateConnection_;  // Pointer to the update event connection
 };
 
 GZ_REGISTER_MODEL_PLUGIN(ModelPush)  // Register this plugin with the simulator
