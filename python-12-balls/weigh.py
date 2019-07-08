@@ -74,28 +74,29 @@ class Combination:
     def __repr__(self):
         return "Combination(%s)" % ', '.join(["'%s'" % w.choice for w in self.weighs])
 
+def all_weighs_444():
+  perms = set()
+  for p in itertools.product('ab.', repeat=12):
+    p = ''.join(p)
+    if p.count('a') != 4 or p.count('b') != 4:
+      continue
+    if p in perms:
+      continue
+    perms.add(p)
+  return [Weigh(p) for p in sorted(perms)]
 
-x = Weigh('aaaabbbb....')
-y = Weigh('bbbab...aaa.')
+weighs = all_weighs_444()
 
-cb = Combination([x, y])
+val = 24
+comb = None
+for y in weighs:
+    x = Weigh('aaaabbbb....')
+    cb = Combination([x, y])
+    maxhist = cb.maxhist
+    if maxhist < val:
+        val = maxhist
+        comb = cb
 
-cb.analyze()
-
-
-import pdb;pdb.set_trace()
-
-
-# def perms_with_reps():
-#   perms = set()
-#   for p in itertools.product('ab.', repeat=12):
-#     p = ''.join(p)
-#     if not p.count('a') == 4 or not p.count('b') == 4:
-#       continue
-#     if p in perms:
-#       continue
-#     perms.add(p)
-#   return list(perms)
-# x = perms_with_reps()
-# print(len(x))
-# import pdb;pdb.set_trace()
+print(val)
+print(comb)
+comb.analyze()
