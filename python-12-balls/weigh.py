@@ -2,34 +2,57 @@
 
 import itertools
 
-def bit_and(bitsets):
-    x = 2**24 - 1
-    for bs in bitsets:
-        x &= int(bs, 2)
-    x = bin(x)[2:]
-    return '0' * (len(bitsets[0]) - len(x)) + x
+def bitstring(bits, n):
+    text = bin(bits)[2:]
+    return '0' * (n - len(text)) + text
+
+def bitand(bitsets):
+    x = bitsets[0]
+    for bs in bitsets[1:]:
+        x &= bs
+    return x
 
 class Weigh:
     __slots__ = ['choice']
 
+    lt_tr = ''.maketrans('ab.', '100')
+    gt_tr = ''.maketrans('ab.', '010')
+    eq_tr = ''.maketrans('ab.', '001')
+
     def __init__(self, choice):
         self.choice = choice
 
+    @staticmethod
+    def all_444():
+        perms = set()
+        for p in itertools.product('ab.', repeat=12):
+            p = ''.join(p)
+            if p.count('a') != 4 or p.count('b') != 4:
+                continue
+            if p in perms:
+                continue
+            perms.add(p)
+        return [Weigh(p) for p in sorted(perms)]
+
     @property
     def table(self):
-        x = self.choice
-        lt = x.translate(''.maketrans('ab.', '100')) + x.translate(''.maketrans('ab.', '010'))
-        gt = x.translate(''.maketrans('ab.', '010')) + x.translate(''.maketrans('ab.', '100'))
-        eq = x.translate(''.maketrans('ab.', '001')) * 2
+        lt_bits = int(self.choice.translate(self.lt_tr), 2)
+        gt_bits = int(self.choice.translate(self.gt_tr), 2)
+        eq_bits = int(self.choice.translate(self.eq_tr), 2)
+
+        lt = (lt_bits << 12) | gt_bits
+        gt = (gt_bits << 12) | lt_bits
+        eq = (eq_bits << 12) | eq_bits
+
         return lt, gt, eq
 
     def analyze(self):
         table = self.table
         print('  ' + '0123456789ab' * 2)
         print('  ' + '-' * 12 + '+' * 12)
-        print('<', table[0])
-        print('>', table[1])
-        print('=', table[2])
+        print('<', bitstring(table[0], 24))
+        print('>', bitstring(table[1], 24))
+        print('=', bitstring(table[2], 24))
 
     def __repr__(self):
         return "Weigh('%s')" % self.choice
@@ -46,7 +69,7 @@ class Combination:
 
         results = []
         for var in itertools.product(range(3), repeat=len(tables)):
-            res = bit_and([tab[idx] for tab, idx in zip(tables, var)])
+            res = bitand([tab[idx] for tab, idx in zip(tables, var)])
             results.append(res)
         return results
 
@@ -54,7 +77,7 @@ class Combination:
     def hist(self):
         hist = {}
         for res in self.table:
-            found = res.count('1')
+            found = bin(res).count('1')
             hist[found] = hist.get(found, 0) + 1
         return hist
 
@@ -69,34 +92,7 @@ class Combination:
         print(' ' * (n + 1) + '-' * 12 + '+' * 12)
         for sym, tab in zip(itertools.product('<>=', repeat=n), table):
             sym = ''.join(sym)
-            print(sym, tab, tab.count('1'))
+            print(sym, bitstring(tab, 24), bin(tab).count('1'))
 
     def __repr__(self):
         return "Combination(%s)" % ', '.join(["'%s'" % w.choice for w in self.weighs])
-
-def all_weighs_444():
-  perms = set()
-  for p in itertools.product('ab.', repeat=12):
-    p = ''.join(p)
-    if p.count('a') != 4 or p.count('b') != 4:
-      continue
-    if p in perms:
-      continue
-    perms.add(p)
-  return [Weigh(p) for p in sorted(perms)]
-
-weighs = all_weighs_444()
-
-val = 24
-comb = None
-for y in weighs:
-    x = Weigh('aaaabbbb....')
-    cb = Combination([x, y])
-    maxhist = cb.maxhist
-    if maxhist < val:
-        val = maxhist
-        comb = cb
-
-print(val)
-print(comb)
-comb.analyze()
