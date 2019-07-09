@@ -4,9 +4,10 @@ from weigh import Weigh, Combination
 
 winhist = 24
 winners = None
-for y in Weigh.all_444():
+for z in Weigh.all_444():
     x = Weigh('aaaabbbb....')
-    cb = Combination([x, y])
+    y = Weigh('...aaaab.bbb')
+    cb = Combination([x, y, z])
     maxhist = cb.maxhist
     if maxhist == winhist:
         winners.append(cb)
