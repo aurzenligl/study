@@ -1,7 +1,3 @@
-namespace foo {
-
-double Foo(double x, double y) {
-  return x * y;
-}
-
-}
+#include <foo_msgs/Foo.h>
+#include <bar_msgs/Bar.h>
+#include <baz_msgs/Baz.h>

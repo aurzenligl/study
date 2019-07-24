@@ -1,14 +1,13 @@
 <?xml version="1.0"?>
 <package format="2">
-  <name>foo</name>
+  <name>baz_msgs</name>
   <version>0.0.0</version>
-  <description>The foo package</description>
+  <description>The foo msgs package</description>
 
   <maintainer email="aurzenligl@todo.todo">aurzenligl</maintainer>
   <license>TODO</license>
 
   <buildtool_depend>catkin</buildtool_depend>
-  <depend>foo_msgs</depend>
-  <depend>bar_msgs</depend>
-  <depend>baz_msgs</depend>
+  <build_depend>message_generation</build_depend>
+  <exec_depend>message_runtime</exec_depend>
 </package>
