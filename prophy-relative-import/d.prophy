@@ -1,0 +1,5 @@
+#include "b.prophy"
+
+struct D {
+  B b;
+};
