@@ -1,0 +1,21 @@
+<?xml version="1.0"?>
+<package format="2">
+  <name>l</name>
+  <version>1.0.0</version>
+  <description>l</description>
+  <maintainer email="aurzenligl@todo.todo">aurzenligl</maintainer>
+  <license>TODO</license>
+
+  <buildtool_depend>catkin</buildtool_depend>
+  <depend>a</depend>
+  <depend>b</depend>
+  <depend>c</depend>
+  <depend>d</depend>
+  <depend>e</depend>
+  <depend>f</depend>
+  <depend>g</depend>
+  <depend>h</depend>
+  <depend>i</depend>
+  <depend>j</depend>
+  <depend>k</depend>
+</package>

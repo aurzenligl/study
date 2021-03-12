@@ -1,0 +1,13 @@
+<?xml version="1.0"?>
+<package format="2">
+  <name>a</name>
+  <version>1.0.0</version>
+  <description>a</description>
+  <maintainer email="aurzenligl@todo.todo">aurzenligl</maintainer>
+  <license>TODO</license>
+
+  <buildtool_depend>catkin</buildtool_depend>
+  <depend>boost</depend>
+  <depend>libopencv-dev</depend>
+  <depend>libpcl-all-dev</depend>
+</package>
