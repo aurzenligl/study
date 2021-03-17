@@ -1,0 +1,12 @@
+<root>
+    <BehaviorTree>
+        <ReactiveSequence>
+            <BatteryOK/>
+            <Sequence>
+                <SaySomething   message="mission started..." />
+                <MoveBase       goal="1;2;3"/>
+                <SaySomething   message="mission completed!" />
+            </Sequence>
+        </ReactiveSequence>
+    </BehaviorTree>
+</root>
