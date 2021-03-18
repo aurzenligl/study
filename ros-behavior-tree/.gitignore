@@ -3,4 +3,5 @@ devel
 .catkin_workspace
 **/src/CMakeLists.txt
 /BehaviorTree.CPP
+/Groot
 cmake-build-*

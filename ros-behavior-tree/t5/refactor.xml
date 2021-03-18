@@ -1,0 +1,30 @@
+<root main_tree_to_execute = "MainTree">
+
+    <BehaviorTree ID="MainTree">
+        <Fallback>
+            <Sequence>
+                <IsDoorOpen/>
+                <PassThroughDoor/>
+            </Sequence>
+            <SubTree ID="DoorClosed"/>
+            <PassThroughWindow/>
+        </Fallback>
+    </BehaviorTree>
+
+    <BehaviorTree ID="DoorClosed">
+        <Sequence>
+            <IsDoorClosed/>
+            <RetryUntilSuccesful num_attempts="4">
+                <OpenDoor/>
+            </RetryUntilSuccesful>
+            <PassThroughDoor/>
+        </Sequence>
+    </BehaviorTree>
+
+    <BehaviorTree ID="IsDoorClosed">
+        <Inverter>
+            <IsDoorOpen/>
+        </Inverter>
+    </BehaviorTree>
+
+</root>
