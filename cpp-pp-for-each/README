@@ -1,0 +1,12 @@
+```
+aurzenligl@aurzbox:~/projects/study/cpp-pp-for-each$ g++-10 --std=c++20 -E for_each.h | clang-format | grep -v ^#
+struct Foo {
+  const int a;
+  const int b;
+  const int c;
+  const int foo;
+  const int bar;
+  const int baz;
+};
+```
+
