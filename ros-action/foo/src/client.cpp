@@ -1,3 +1,5 @@
+#include <thread>
+
 #include <actionlib/client/simple_action_client.h>
 #include <ros/ros.h>
 
@@ -18,7 +20,15 @@ int main(int argc, char **argv) try {
     goal.dishwasher_id = 42;
     return goal;
   }());
-  client.waitForResult(ros::Duration(5.0));
+
+  if (getenv("CANCEL")) {
+    std::this_thread::sleep_for(std::chrono::milliseconds(200));
+    std::cout << "Cancelling...: " << '\n';
+    client.cancelGoal();
+  }
+
+  bool finished = client.waitForResult(ros::Duration(5.0));
+  std::cout << "Whether goal finished: " << finished << '\n';
 
   if (client.getState() == actionlib::SimpleClientGoalState::SUCCEEDED) {
     std::cout << "The dishes are now clean" << '\n';

@@ -8,22 +8,37 @@ using Server = actionlib::SimpleActionServer<foo::DoDishesAction>;
 
 int main(int argc, char **argv) {
   ros::init(argc, argv, "server");
-  ros::NodeHandle nh;
-  Server server(
-      nh, "do_dishes",
-      [&server](const foo::DoDishesGoalConstPtr &goal) {
-        std::cout << "server.isActive: " << server.isActive() << '\n';
-        std::cout << "server.isNewGoalAvailable: " << server.isNewGoalAvailable() << '\n';
-        std::cout << "server.isPreemptRequested: " << server.isPreemptRequested() << '\n';
 
-        // Do lots of awesome groundbreaking robot stuff here
-        std::cout << "Cleaning dishes..." << '\n';
-        std::this_thread::sleep_for(std::chrono::seconds(2));
-        std::cout << "...and cleaned." << '\n';
-        server.setSucceeded();
-      },
-      false);
+  ros::Timer timer;
+  Server server("do_dishes", false);
+  server.registerGoalCallback([&server, &timer]() {
+    std::cout << "Goal callback... "
+              << "active:" << server.isActive() << ' '
+              << "new_goal:" << server.isNewGoalAvailable() << ' '
+              << "preempt:" << server.isPreemptRequested() << '\n';
+
+    auto goal = server.acceptNewGoal();
+    std::cout << "Cleaning dishes... " << goal->dishwasher_id << '\n';
+    timer = ros::NodeHandle().createTimer(ros::Duration(2.0), [&server](const ros::TimerEvent&) {
+      std::cout << "...and cleaned." << '\n';
+      server.setSucceeded();
+    }, true);
+  });
+  server.registerPreemptCallback([&server, &timer]() {
+    std::cout << "Preempt callback... "
+              << "active:" << server.isActive() << ' '
+              << "new_goal:" << server.isNewGoalAvailable() << ' '
+              << "preempt:" << server.isPreemptRequested() << '\n';
+    timer.stop();
+    server.setPreempted([]() {
+      foo::DoDishesResult r;
+      r.total_dishes_cleaned = 13;
+      return r;
+    }());
+  });
   server.start();
-  ros::spin();
+
+  ros::MultiThreadedSpinner spinner(4);
+  ros::spin(spinner);
   return 0;
 }
