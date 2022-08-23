@@ -48,6 +48,11 @@ target_include_directories(fibonacci_client SYSTEM PUBLIC ${catkin_INCLUDE_DIRS}
 target_link_libraries(fibonacci_client ${catkin_LIBRARIES})
 add_dependencies(fibonacci_client ${catkin_EXPORTED_TARGETS} ${${PROJECT_NAME}_EXPORTED_TARGETS})
 
+add_executable(fibonacci_client_cbs src/fibonacci_client_cbs.cpp)
+target_include_directories(fibonacci_client_cbs SYSTEM PUBLIC ${catkin_INCLUDE_DIRS})
+target_link_libraries(fibonacci_client_cbs ${catkin_LIBRARIES})
+add_dependencies(fibonacci_client_cbs ${catkin_EXPORTED_TARGETS} ${${PROJECT_NAME}_EXPORTED_TARGETS})
+
 add_executable(averaging_server src/averaging_server.cpp)
 target_include_directories(averaging_server SYSTEM PUBLIC ${catkin_INCLUDE_DIRS})
 target_link_libraries(averaging_server ${catkin_LIBRARIES})
