@@ -11,6 +11,7 @@ find_package(catkin REQUIRED COMPONENTS
 )
 
 add_action_files(FILES
+  Averaging.action
   DoDishes.action
   Fibonacci.action
 )
@@ -46,3 +47,13 @@ add_executable(fibonacci_client src/fibonacci_client.cpp)
 target_include_directories(fibonacci_client SYSTEM PUBLIC ${catkin_INCLUDE_DIRS})
 target_link_libraries(fibonacci_client ${catkin_LIBRARIES})
 add_dependencies(fibonacci_client ${catkin_EXPORTED_TARGETS} ${${PROJECT_NAME}_EXPORTED_TARGETS})
+
+add_executable(averaging_server src/averaging_server.cpp)
+target_include_directories(averaging_server SYSTEM PUBLIC ${catkin_INCLUDE_DIRS})
+target_link_libraries(averaging_server ${catkin_LIBRARIES})
+add_dependencies(averaging_server ${catkin_EXPORTED_TARGETS} ${${PROJECT_NAME}_EXPORTED_TARGETS})
+
+add_executable(averaging_client src/averaging_client.cpp)
+target_include_directories(averaging_client SYSTEM PUBLIC ${catkin_INCLUDE_DIRS})
+target_link_libraries(averaging_client ${catkin_LIBRARIES})
+add_dependencies(averaging_client ${catkin_EXPORTED_TARGETS} ${${PROJECT_NAME}_EXPORTED_TARGETS})
