@@ -28,37 +28,27 @@ add_compile_options(
   -Wpedantic
 )
 
+include_directories(SYSTEM ${catkin_INCLUDE_DIRS})
+include_directories(include)
+link_libraries(${catkin_LIBRARIES})
+
 add_executable(server src/server.cpp)
-target_include_directories(server SYSTEM PUBLIC ${catkin_INCLUDE_DIRS})
-target_link_libraries(server ${catkin_LIBRARIES})
 add_dependencies(server ${catkin_EXPORTED_TARGETS} ${${PROJECT_NAME}_EXPORTED_TARGETS})
 
 add_executable(client src/client.cpp)
-target_include_directories(client SYSTEM PUBLIC ${catkin_INCLUDE_DIRS})
-target_link_libraries(client ${catkin_LIBRARIES})
 add_dependencies(client ${catkin_EXPORTED_TARGETS} ${${PROJECT_NAME}_EXPORTED_TARGETS})
 
 add_executable(fibonacci_server src/fibonacci_server.cpp)
-target_include_directories(fibonacci_server SYSTEM PUBLIC ${catkin_INCLUDE_DIRS})
-target_link_libraries(fibonacci_server ${catkin_LIBRARIES})
 add_dependencies(fibonacci_server ${catkin_EXPORTED_TARGETS} ${${PROJECT_NAME}_EXPORTED_TARGETS})
 
 add_executable(fibonacci_client src/fibonacci_client.cpp)
-target_include_directories(fibonacci_client SYSTEM PUBLIC ${catkin_INCLUDE_DIRS})
-target_link_libraries(fibonacci_client ${catkin_LIBRARIES})
 add_dependencies(fibonacci_client ${catkin_EXPORTED_TARGETS} ${${PROJECT_NAME}_EXPORTED_TARGETS})
 
 add_executable(fibonacci_client_cbs src/fibonacci_client_cbs.cpp)
-target_include_directories(fibonacci_client_cbs SYSTEM PUBLIC ${catkin_INCLUDE_DIRS})
-target_link_libraries(fibonacci_client_cbs ${catkin_LIBRARIES})
 add_dependencies(fibonacci_client_cbs ${catkin_EXPORTED_TARGETS} ${${PROJECT_NAME}_EXPORTED_TARGETS})
 
 add_executable(averaging_server src/averaging_server.cpp)
-target_include_directories(averaging_server SYSTEM PUBLIC ${catkin_INCLUDE_DIRS})
-target_link_libraries(averaging_server ${catkin_LIBRARIES})
 add_dependencies(averaging_server ${catkin_EXPORTED_TARGETS} ${${PROJECT_NAME}_EXPORTED_TARGETS})
 
 add_executable(averaging_client src/averaging_client.cpp)
-target_include_directories(averaging_client SYSTEM PUBLIC ${catkin_INCLUDE_DIRS})
-target_link_libraries(averaging_client ${catkin_LIBRARIES})
 add_dependencies(averaging_client ${catkin_EXPORTED_TARGETS} ${${PROJECT_NAME}_EXPORTED_TARGETS})
