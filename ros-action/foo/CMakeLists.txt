@@ -18,12 +18,20 @@ generate_messages(DEPENDENCIES actionlib_msgs)
 
 catkin_package()
 
+set(CMAKE_CXX_STANDARD 17)
+
+add_compile_options(
+  -Wall
+  -Werror
+  -Wpedantic
+)
+
 add_executable(server src/server.cpp)
-target_include_directories(server PUBLIC SYSTEM ${catkin_INCLUDE_DIRS})
+target_include_directories(server SYSTEM PUBLIC ${catkin_INCLUDE_DIRS})
 target_link_libraries(server ${catkin_LIBRARIES})
 add_dependencies(server ${catkin_EXPORTED_TARGETS} ${${PROJECT_NAME}_EXPORTED_TARGETS})
 
 add_executable(client src/client.cpp)
-target_include_directories(client PUBLIC SYSTEM ${catkin_INCLUDE_DIRS})
+target_include_directories(client SYSTEM PUBLIC ${catkin_INCLUDE_DIRS})
 target_link_libraries(client ${catkin_LIBRARIES})
 add_dependencies(client ${catkin_EXPORTED_TARGETS} ${${PROJECT_NAME}_EXPORTED_TARGETS})

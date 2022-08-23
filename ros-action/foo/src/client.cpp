@@ -19,7 +19,9 @@ int main(int argc, char **argv) try {
     foo::DoDishesGoal goal;
     goal.dishwasher_id = 42;
     return goal;
-  }());
+  }(), {}, {}, [](const foo::DoDishesFeedbackConstPtr &feedback) {
+    std::cout << "dishes cleaned at: " << feedback->percent_complete << '\n';
+  });
 
   if (getenv("CANCEL")) {
     std::this_thread::sleep_for(std::chrono::milliseconds(200));

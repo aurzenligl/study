@@ -19,10 +19,20 @@ int main(int argc, char **argv) {
 
     auto goal = server.acceptNewGoal();
     std::cout << "Cleaning dishes... " << goal->dishwasher_id << '\n';
-    timer = ros::NodeHandle().createTimer(ros::Duration(2.0), [&server](const ros::TimerEvent&) {
-      std::cout << "...and cleaned." << '\n';
-      server.setSucceeded();
-    }, true);
+    timer = ros::NodeHandle().createTimer(ros::Duration(0.3), [i = 5, &server, &timer](const ros::TimerEvent&) mutable {
+      if (--i) {
+        std::cout << "cleaning..." << '\n';
+        server.publishFeedback([&]() {
+          foo::DoDishesFeedback f;
+          f.percent_complete = 1 - i/5.;
+          return f;
+        }());
+      } else {
+        std::cout << "...cleaned." << '\n';
+        server.setSucceeded();
+        timer.stop();
+      }
+    });
   });
   server.registerPreemptCallback([&server, &timer]() {
     std::cout << "Preempt callback... "
