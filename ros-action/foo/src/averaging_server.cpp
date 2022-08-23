@@ -1,15 +1,17 @@
 #include <ros/ros.h>
 #include <std_msgs/Float32.h>
-#include <actionlib/server/simple_action_server.h>
+
 #include <foo/AveragingAction.h>
+#include <foo/reject_action_server.h>
 
 class AveragingActionServer {
  public:
-  explicit AveragingActionServer(std::string name) : as_(name, false) {
+  explicit AveragingActionServer(std::string name) : as_(name) {
     ros::NodeHandle nh;
     sub_ = nh.subscribe("/random_number", 1, &AveragingActionServer::OnNumber, this);
-    as_.registerGoalCallback(boost::bind(&AveragingActionServer::OnGoal, this));
-    as_.registerPreemptCallback(boost::bind(&AveragingActionServer::OnPreempt, this));
+    as_.registerGoalCallback([this]() { OnGoal(); });
+    as_.registerPreemptCallback([this]() { OnPreempt(); });
+    as_.registerRejectCallback([this](auto goal) { OnReject(goal); });
     as_.start();
   }
 
@@ -23,6 +25,10 @@ class AveragingActionServer {
   void OnPreempt() {
     ROS_INFO("Preempted");
     as_.setPreempted();
+  }
+
+  void OnReject(const foo::AveragingGoalConstPtr &goal) {
+    ROS_INFO("Rejected");
   }
 
   void OnNumber(const std_msgs::Float32::ConstPtr& msg) {
@@ -41,7 +47,7 @@ class AveragingActionServer {
     feedback.std_dev = sqrt(fabs((sum_sq_/data_count_) - pow(feedback.mean, 2)));
     as_.publishFeedback(feedback);
 
-    if (data_count_ > goal_) {
+    if (data_count_ >= goal_) {
       foo::AveragingResult result;
       result.mean = feedback.mean;
       result.std_dev = feedback.std_dev;
@@ -57,7 +63,7 @@ class AveragingActionServer {
 
  private:
   ros::Subscriber sub_;
-  actionlib::SimpleActionServer<foo::AveragingAction> as_;
+  foo::RejectActionServer<foo::AveragingAction> as_;
   int data_count_, goal_;
   float sum_, sum_sq_;
 };
