@@ -36,44 +36,62 @@ class Timer {
   std::shared_ptr<Impl> impl_;
 };
 
+namespace rob {
+
+// robbing ros::Timer::Impl::timer_handle_: private variable from private class
+std::optional<int32_t> Handle(ros::Timer &t);
+template <typename Ret, Ret ros::Timer::*ImplDp>
+struct HandleAccess {
+  friend std::optional<int32_t> Handle(ros::Timer &t) {
+    return std::invoke(ImplDp, t) ? std::make_optional(std::invoke(ImplDp, t)->timer_handle_) : std::nullopt;
+  }
+};
+template struct HandleAccess<decltype(ros::Timer::impl_), &ros::Timer::impl_>;
+
+// robbing timer's removal_id: calling private method which returns a private type, protected by private mutex
+using TimerManager = ros::TimerManager<ros::Time, ros::Duration, ros::TimerEvent>;
+uint64_t RemovalId(TimerManager &m, int32_t thandle);
+template <typename Info, Info (TimerManager::*FindTimerFp)(int32_t), boost::mutex TimerManager::*MtxDp>
+struct RemovalIdAccess {
+  friend uint64_t RemovalId(TimerManager &m, int32_t thandle) {
+    std::lock_guard lock(std::invoke(MtxDp, m));
+    return (uint64_t)(std::invoke(FindTimerFp, m, thandle).get());
+  }
+};
+template struct RemovalIdAccess<TimerManager::TimerInfoPtr, &TimerManager::findTimer, &TimerManager::timers_mutex_>;
+
+// accessing protected CallbackQueue::getIDInfo: inheriting from class and exposing via using and friend
+struct CallbackQueue : public ros::CallbackQueue {
+  using ros::CallbackQueue::IDInfoPtr;
+  friend IDInfoPtr IdInfo(ros::CallbackQueue &q, uint64_t removal_id) {
+    return std::invoke(&CallbackQueue::getIDInfo, q, removal_id);
+  }
+};
+CallbackQueue::IDInfoPtr IdInfo(ros::CallbackQueue &q, uint64_t removal_id);
+
+}  // namespace rob
+
 struct Timer::Impl {
   Impl(const ros::Timer &timer) : timer(timer) {}
   ~Impl() { blocking_stop(); }
 
   void stop() {
-    // access to: ros::Timer::impl_
-    if (timer.impl_) {
-      int32_t thandle = timer.impl_->timer_handle_;
-      ROS_WARN_STREAM("aaa: " << thandle);
-
-      // rob to access: ros::TimerManager::timers_mutex_
-      // rob to access: ros::TimerManager::TimerInfoPtr
-      // rob to access: ros::TimerManager::findTimer
-      auto &mgr = ros::TimerManager<ros::Time, ros::Duration, ros::TimerEvent>::global();
-      if (auto info = (std::lock_guard(mgr.timers_mutex_), mgr.findTimer(thandle))) {
-        uint64_t removal_id = (uint64_t)info.get();
-        ROS_WARN_STREAM("aaa: " << removal_id);
-
-        // derive to access: ros::CallbackQueue::IDInfoPtr
-        // derive to access: ros::CallbackQueue::getIDInfo
-        ros::CallbackQueue& queue = *ros::getGlobalCallbackQueue();
-        id_info = queue.getIDInfo(removal_id);
+    if (auto thandle = rob::Handle(timer)) {
+      using TimerManager = ros::TimerManager<ros::Time, ros::Duration, ros::TimerEvent>;
+      if (auto removal_id = rob::RemovalId(TimerManager::global(), *thandle)) {
+        id_info = rob::IdInfo(*ros::getGlobalCallbackQueue(), removal_id);
       }
     }
-
     (foo::Timeit("timer.stop()"), timer.stop());
   }
 
   void blocking_stop() {
-    ROS_WARN_STREAM("xxx: stopping...");
+    // TODO: check if calling_in_this_thread can help...
     stop();
-    if (id_info) {
-      (foo::Timeit("calling_rw_mutex"), std::lock_guard(id_info->calling_rw_mutex));
-    }
-    ROS_WARN_STREAM("xxx: ...stopped");
+    if (id_info) (foo::Timeit("calling_rw_mutex"), std::lock_guard(id_info->calling_rw_mutex));
   }
 
-  ros::CallbackQueue::IDInfoPtr id_info;
+  rob::CallbackQueue::IDInfoPtr id_info;
   ros::Timer timer;
 };
 
@@ -107,9 +125,10 @@ struct Server {
   }
 
   void Stop() {
-    ROS_WARN_STREAM("xxx: running: " << timer.hasStarted());
+    ROS_WARN_STREAM("xxx: stopping...");
     timer.stop();
     timer = foo::Timer();
+    ROS_WARN_STREAM("xxx: ...stopped");
 
     foo::Timer x = timer;
     foo::Timer y(timer);
