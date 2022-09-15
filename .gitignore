@@ -12,3 +12,4 @@ perf.data*
 __pycache__
 *.pyc
 .idea
+.vscode
