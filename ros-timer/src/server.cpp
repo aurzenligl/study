@@ -21,7 +21,6 @@ class Timer {
   // see ros::Timer for api documentation
   void start();
   void stop();
-  void blocking_stop();
   bool hasPending();
   void setPeriod(const ros::Duration &period, bool reset = true);
   bool hasStarted() const;
@@ -66,32 +65,41 @@ struct CallbackQueue : public ros::CallbackQueue {
   friend IDInfoPtr IdInfo(ros::CallbackQueue &q, uint64_t removal_id) {
     return std::invoke(&CallbackQueue::getIDInfo, q, removal_id);
   }
+  friend uint64_t CallingInThisThread(ros::CallbackQueue &q) {
+    std::invoke(&CallbackQueue::setupTLS, q);
+    return std::invoke(&CallbackQueue::tls_, q)->calling_in_this_thread;
+  }
 };
 CallbackQueue::IDInfoPtr IdInfo(ros::CallbackQueue &q, uint64_t removal_id);
+uint64_t CallingInThisThread(ros::CallbackQueue &q);
 
 }  // namespace rob
 
 struct Timer::Impl {
   Impl(const ros::Timer &timer) : timer(timer) {}
-  ~Impl() { blocking_stop(); }
+  ~Impl() { stop(); }
 
   void stop() {
+    if (!timer.hasStarted()) {
+      return;
+    }
+
+    rob::CallbackQueue::IDInfoPtr id_info;
     if (auto thandle = rob::Handle(timer)) {
-      using TimerManager = ros::TimerManager<ros::Time, ros::Duration, ros::TimerEvent>;
-      if (auto removal_id = rob::RemovalId(TimerManager::global(), *thandle)) {
+      if (auto removal_id = rob::RemovalId(rob::TimerManager::global(), *thandle)) {
         id_info = rob::IdInfo(*ros::getGlobalCallbackQueue(), removal_id);
       }
     }
+
     (foo::Timeit("timer.stop()"), timer.stop());
+
+    if (id_info) {
+      if (id_info->id != rob::CallingInThisThread(*ros::getGlobalCallbackQueue())) {
+        (foo::Timeit("calling_rw_mutex"), std::lock_guard(id_info->calling_rw_mutex));
+      }
+    }
   }
 
-  void blocking_stop() {
-    // TODO: check if calling_in_this_thread can help...
-    stop();
-    if (id_info) (foo::Timeit("calling_rw_mutex"), std::lock_guard(id_info->calling_rw_mutex));
-  }
-
-  rob::CallbackQueue::IDInfoPtr id_info;
   ros::Timer timer;
 };
 
@@ -100,7 +108,6 @@ Timer& Timer::operator=(const ros::Timer& rhs) { return *this = Timer(rhs); }
 
 void Timer::start() { if (impl_) impl_->timer.start(); }
 void Timer::stop() { if (impl_) impl_->stop(); }
-void Timer::blocking_stop() { if (impl_) impl_->blocking_stop(); }
 bool Timer::hasPending() { return impl_ ? impl_->timer.hasPending() : false; }
 void Timer::setPeriod(const ros::Duration &period, bool reset) { if (impl_) impl_->timer.setPeriod(period, reset); }
 bool Timer::hasStarted() const { return impl_ ? impl_->timer.hasStarted() : false; }
