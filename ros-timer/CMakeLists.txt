@@ -21,5 +21,8 @@ include_directories(SYSTEM ${catkin_INCLUDE_DIRS})
 include_directories(include)
 link_libraries(${catkin_LIBRARIES})
 
-add_executable(server src/server.cpp)
+add_executable(server
+  src/blocking_timer.cpp
+  src/server.cpp
+)
 add_dependencies(server ${catkin_EXPORTED_TARGETS} ${${PROJECT_NAME}_EXPORTED_TARGETS})

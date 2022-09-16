@@ -4,6 +4,8 @@
 
 #include <ros/ros.h>
 
+#define TIMEIT(expr) (foo::Timeit(#expr), expr)
+
 namespace foo {
 
 class Timeit {
