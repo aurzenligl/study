@@ -13,12 +13,40 @@
 namespace foo {
 
 struct Server {
+  struct DetachableCtx {
+    explicit DetachableCtx(int idx) : idx(idx) {}
+
+    void operator()(const ros::TimerEvent &) {
+      ROS_WARN_STREAM("xxx: DetachableCtx tic... " << idx);
+      std::this_thread::sleep_for(std::chrono::milliseconds(500));
+      ROS_WARN_STREAM("xxx: DetachableCtx ...toc " << idx);
+    }
+
+    int idx;
+  };
+
+  struct SelfownCtx {
+    SelfownCtx(int idx, int counter) : idx(idx), counter(counter) {}
+
+    void operator()() {
+      ROS_WARN_STREAM("xxx: callback id: " << idx << ", count: " << counter);
+      if (!--counter) {
+        self.stop();
+      }
+    }
+
+    int idx;
+    int counter;
+    ros::Timer self;
+  };
+
   Server() {
     ros::NodeHandle nh;
     timer = nh.createTimer(ros::Duration(0.0), &Server::OnTick, this, false, true);
     srvs = {
       nh.advertiseService("/srv", &Server::OnSrv, this),
       nh.advertiseService("/stop", &Server::OnStop, this),
+      nh.advertiseService("/detachable", &Server::OnDetachable, this),
       nh.advertiseService("/selfown", &Server::OnSelfown, this)
     };
   }
@@ -38,29 +66,19 @@ struct Server {
     return true;
   }
 
-  bool OnSelfown(std_srvs::EmptyRequest &req, std_srvs::EmptyResponse &resp) {
-    struct Context {
-      Context(int idx, int counter) : idx(idx), counter(counter) {}
-
-      void operator()() {
-        ROS_WARN_STREAM("xxx: callback id: " << idx << ", count: " << counter);
-        if (!--counter) {
-          self.stop();
-        }
-      }
-
-      int idx;
-      int counter;
-      ros::Timer self;
-    };
-
+  bool OnDetachable(std_srvs::EmptyRequest &req, std_srvs::EmptyResponse &resp) {
     static int idx = 0;
-    ros::NodeHandle nh;
-    auto ctx = std::make_shared<Context>(idx++, 10);
-    ros::TimerCallback cb = [ctx](auto &) { (*ctx)(); };
-    ctx->self = nh.createTimer(ros::Duration(0.5), cb, false, false);
-    ctx->self.start();
+    detachable_ctx = boost::make_shared<DetachableCtx>(idx++);
+    detachable_timer = ros::NodeHandle().createTimer(ros::Duration(0.0), &DetachableCtx::operator(), detachable_ctx);
+    return true;
+  }
 
+  bool OnSelfown(std_srvs::EmptyRequest &req, std_srvs::EmptyResponse &resp) {
+    static int idx = 0;
+    auto ctx = std::make_shared<SelfownCtx>(idx++, 10);
+    ros::TimerCallback cb = [ctx](auto &) { (*ctx)(); };
+    ctx->self = ros::NodeHandle().createTimer(ros::Duration(0.5), cb, false, false);
+    ctx->self.start();
     return true;
   }
 
@@ -71,6 +89,8 @@ struct Server {
   }
 
   BlockingTimer timer;
+  boost::shared_ptr<DetachableCtx> detachable_ctx;
+  ros::Timer detachable_timer;
   std::vector<ros::ServiceServer> srvs;
 };
 
@@ -87,9 +107,9 @@ int main(int argc, char **argv) {
 #if 1
   std::this_thread::sleep_for(std::chrono::milliseconds(500));
   srv.Stop();
-#else
-  ros::waitForShutdown();
 #endif
+
+  ros::waitForShutdown();
 
   return 0;
 }
