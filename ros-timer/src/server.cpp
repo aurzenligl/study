@@ -5,57 +5,64 @@
 #include <ros/timer_manager.h>
 #include <ros/callback_queue.h>
 #include <std_msgs/Int32.h>
-#include <std_srvs/Trigger.h>
+#include <std_srvs/Empty.h>
 #include <sstream>
 #include <mutex>
 #include <foo/blocking_timer.h>
 
+namespace foo {
+
 struct Server {
   Server() {
     ros::NodeHandle nh;
-    quick_timer1 = nh.createTimer(ros::Duration(0.0), &Server::OnQuickTick, this, false, true);
-    quick_timer2 = nh.createTimer(ros::Duration(0.0), &Server::OnQuickTick, this, false, true);
-    quick_timer3 = nh.createTimer(ros::Duration(0.0), &Server::OnQuickTick, this, false, true);
     timer = nh.createTimer(ros::Duration(0.0), &Server::OnTick, this, false, true);
-    sub = nh.subscribe("/top", 1, &Server::OnTopic, this);
-    srv = nh.advertiseService("/srv", &Server::OnSrv, this);
-    stop = nh.advertiseService("/stop", &Server::OnStop, this);
+    srvs = {
+      nh.advertiseService("/srv", &Server::OnSrv, this),
+      nh.advertiseService("/stop", &Server::OnStop, this),
+      nh.advertiseService("/selfown", &Server::OnSelfown, this)
+    };
   }
 
   void Stop() {
     ROS_WARN_STREAM("xxx: stopping...");
     timer.stop();
-    timer = foo::Timer();
     ROS_WARN_STREAM("xxx: ...stopped");
-
-    foo::Timer x = timer;
-    foo::Timer y(timer);
-    y = x;
-
-    timer < timer;
-    timer == timer;
-    timer != timer;
-    if (timer) {}
   }
 
-  void OnTopic(std_msgs::Int32 x) {
-    ROS_WARN_STREAM("xxx: OnTopic");
-  }
-
-  bool OnSrv(std_srvs::TriggerRequest &req, std_srvs::TriggerResponse &resp) {
-    resp.message = "srv";
-    resp.success = true;
+  bool OnSrv(std_srvs::EmptyRequest &req, std_srvs::EmptyResponse &resp) {
     return true;
   }
 
-  bool OnStop(std_srvs::TriggerRequest &req, std_srvs::TriggerResponse &resp) {
+  bool OnStop(std_srvs::EmptyRequest &req, std_srvs::EmptyResponse &resp) {
     Stop();
-    resp.message = "stop";
-    resp.success = true;
     return true;
   }
 
-  void OnQuickTick(const ros::TimerEvent &event) {}
+  bool OnSelfown(std_srvs::EmptyRequest &req, std_srvs::EmptyResponse &resp) {
+    struct Context {
+      Context(int idx, int counter) : idx(idx), counter(counter) {}
+
+      void operator()() {
+        ROS_WARN_STREAM("xxx: callback id: " << idx << ", count: " << counter);
+        if (!--counter) {
+          self.stop();
+        }
+      }
+
+      int idx;
+      int counter;
+      ros::Timer self;
+    };
+
+    static int idx = 0;
+    ros::NodeHandle nh;
+    auto ctx = std::make_shared<Context>(idx++, 10);
+    ros::TimerCallback cb = [ctx](auto &) { (*ctx)(); };
+    ctx->self = nh.createTimer(ros::Duration(0.5), cb, false, false);
+    ctx->self.start();
+
+    return true;
+  }
 
   void OnTick(const ros::TimerEvent &event) {
     ROS_WARN_STREAM("xxx: OnTick tic...");
@@ -63,15 +70,11 @@ struct Server {
     ROS_WARN_STREAM("xxx: OnTick ...toc");
   }
 
-  std::mutex mtx;
-  ros::Timer quick_timer1;
-  ros::Timer quick_timer2;
-  ros::Timer quick_timer3;
-  foo::Timer timer;
-  ros::Subscriber sub;
-  ros::ServiceServer srv;
-  ros::ServiceServer stop;
+  BlockingTimer timer;
+  std::vector<ros::ServiceServer> srvs;
 };
+
+}  // namespace foo
 
 int main(int argc, char **argv) {
   ros::init(argc, argv, "server");
@@ -79,7 +82,7 @@ int main(int argc, char **argv) {
   ros::AsyncSpinner spinner(2);
   spinner.start();
 
-  Server srv;
+  foo::Server srv;
 
 #if 1
   std::this_thread::sleep_for(std::chrono::milliseconds(500));

@@ -7,11 +7,11 @@
 
 namespace foo {
 
-class Timer {
+class BlockingTimer {
  public:
-  Timer() = default;
-  Timer(const ros::Timer& rhs);
-  Timer& operator=(const ros::Timer& other);
+  BlockingTimer() = default;
+  BlockingTimer(const ros::Timer& rhs);
+  BlockingTimer& operator=(const ros::Timer& other);
 
   // see ros::Timer for api documentation
   void start();
@@ -21,9 +21,9 @@ class Timer {
   bool hasStarted() const;
   bool isValid() const;
   explicit operator bool() const;
-  bool operator<(const Timer& rhs);
-  bool operator==(const Timer& rhs);
-  bool operator!=(const Timer& rhs);
+  bool operator<(const BlockingTimer& rhs);
+  bool operator==(const BlockingTimer& rhs);
+  bool operator!=(const BlockingTimer& rhs);
 
  private:
   struct Impl;

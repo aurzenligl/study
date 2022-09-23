@@ -49,7 +49,7 @@ uint64_t CallingInThisThread(ros::CallbackQueue &q);
 
 namespace foo {
 
-struct Timer::Impl {
+struct BlockingTimer::Impl {
   Impl(const ros::Timer &timer) : timer(timer) {}
   ~Impl() { stop(); }
 
@@ -61,7 +61,7 @@ struct Timer::Impl {
     rob::CallbackQueue::IDInfoPtr id_info;
     if (auto thandle = rob::Handle(timer)) {
       if (auto removal_id = rob::RemovalId(rob::TimerManager::global(), *thandle)) {
-        id_info = rob::IdInfo(*ros::getGlobalCallbackQueue(), removal_id);
+        id_info = TIMEIT(rob::IdInfo(*ros::getGlobalCallbackQueue(), removal_id));
       }
     }
 
@@ -77,49 +77,49 @@ struct Timer::Impl {
   ros::Timer timer;
 };
 
-Timer::Timer(const ros::Timer &rhs) : impl_(std::make_shared<Impl>(rhs)) {}
+BlockingTimer::BlockingTimer(const ros::Timer &rhs) : impl_(std::make_shared<Impl>(rhs)) {}
 
-Timer &Timer::operator=(const ros::Timer &rhs) {
-  return *this = Timer(rhs);
+BlockingTimer &BlockingTimer::operator=(const ros::Timer &rhs) {
+  return *this = BlockingTimer(rhs);
 }
 
-void Timer::start() {
+void BlockingTimer::start() {
   if (impl_) impl_->timer.start();
 }
 
-void Timer::stop() {
+void BlockingTimer::stop() {
   if (impl_) impl_->stop();
 }
 
-bool Timer::hasPending() {
+bool BlockingTimer::hasPending() {
   return impl_ ? impl_->timer.hasPending() : false;
 }
 
-void Timer::setPeriod(const ros::Duration &period, bool reset) {
+void BlockingTimer::setPeriod(const ros::Duration &period, bool reset) {
   if (impl_) impl_->timer.setPeriod(period, reset);
 }
 
-bool Timer::hasStarted() const {
+bool BlockingTimer::hasStarted() const {
   return impl_ ? impl_->timer.hasStarted() : false;
 }
 
-bool Timer::isValid() const {
+bool BlockingTimer::isValid() const {
   return impl_ ? impl_->timer.isValid() : false;
 }
 
-Timer::operator bool() const {
+BlockingTimer::operator bool() const {
   return isValid();
 }
 
-bool Timer::operator<(const Timer &rhs) {
+bool BlockingTimer::operator<(const BlockingTimer &rhs) {
   return impl_ < rhs.impl_;
 }
 
-bool Timer::operator==(const Timer &rhs) {
+bool BlockingTimer::operator==(const BlockingTimer &rhs) {
   return impl_ == rhs.impl_;
 }
 
-bool Timer::operator!=(const Timer &rhs) {
+bool BlockingTimer::operator!=(const BlockingTimer &rhs) {
   return impl_ != rhs.impl_;
 }
 
