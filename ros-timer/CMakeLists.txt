@@ -26,3 +26,8 @@ add_executable(server
   src/server.cpp
 )
 add_dependencies(server ${catkin_EXPORTED_TARGETS} ${${PROJECT_NAME}_EXPORTED_TARGETS})
+
+add_executable(race
+  src/race.cpp
+)
+add_dependencies(race ${catkin_EXPORTED_TARGETS} ${${PROJECT_NAME}_EXPORTED_TARGETS})
