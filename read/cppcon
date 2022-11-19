@@ -1,0 +1,88 @@
+build: google sanitizers
+tony van eerd: standardizing extended integers
+tony van eerd: rebuttal of implementation concerns for bit entanglement
+
+2nd part
+-------------------------------------------------------------------------------------------------
+
+CppCon 2017: Yu Qi “Compile-time reflection, Serialization and ORM”
+https://www.youtube.com/watch?v=WlhoWjrR41A&list=PLHTh1InhhwT6bwIpRk0ZbCA0N2p1taxd6&index=81
+
+CppCon 2017: Lukas Bergdoll “Web | C++” SLIDES FIXED
+https://www.youtube.com/watch?v=l4ZZPrH95mM&list=PLHTh1InhhwT6bwIpRk0ZbCA0N2p1taxd6&index=82
+
+CppCon 2017: Sara Chipps “Building for the Best of Us: Design and Development with Kids in Mind”
+https://www.youtube.com/watch?v=zX0YoCDWGxc&list=PLHTh1InhhwT6bwIpRk0ZbCA0N2p1taxd6&index=83
+
+CppCon 2017: Andrew Sutton “Reflection”
+https://www.youtube.com/watch?v=N2G-Frv1z5Q&list=PLHTh1InhhwT6bwIpRk0ZbCA0N2p1taxd6&index=84
+
+CppCon 2017: Michael Caisse “Practical Patterns with the Networking TS”
+https://www.youtube.com/watch?v=2UC6_rfJuAw&list=PLHTh1InhhwT6bwIpRk0ZbCA0N2p1taxd6&index=85
+
+CppCon 2017: Giuseppe D'Angelo “Effective Qt (2017 edition)”
+https://www.youtube.com/watch?v=uZ68dX1-sVc&list=PLHTh1InhhwT6bwIpRk0ZbCA0N2p1taxd6&index=86
+
+CppCon 2017: Vinnie Falco “Make Classes Great Again! (Using Concepts for Customization Points)”
+https://www.youtube.com/watch?v=WsUnnYEKPnI&list=PLHTh1InhhwT6bwIpRk0ZbCA0N2p1taxd6&index=87
+
+CppCon 2017: Jeffrey Mendelsohn “Reader-Writer Lock versus Mutex - Understanding a Lost Bet”
+https://www.youtube.com/watch?v=KJS3ikoiLso&list=PLHTh1InhhwT6bwIpRk0ZbCA0N2p1taxd6&index=88
+
+CppCon 2017: Hartmut Kaiser “The Asynchronous C++ Parallel Programming Model”
+https://www.youtube.com/watch?v=js-e8xAMd1s&list=PLHTh1InhhwT6bwIpRk0ZbCA0N2p1taxd6&index=89
+
+CppCon 2017: Viktor Kirilov “Mix Tests and Production Code With Doctest...”
+https://www.youtube.com/watch?v=eH1CxEC29l8&list=PLHTh1InhhwT6bwIpRk0ZbCA0N2p1taxd6&index=90
+
+CppCon 2017: Dmitry Panin “Practical Techniques for Improving C++ Build Times”
+https://www.youtube.com/watch?v=h8UoYG4dvH8&list=PLHTh1InhhwT6bwIpRk0ZbCA0N2p1taxd6&index=91
+
+CppCon 2017: Bob Steagall “How to Write a Custom Allocator”
+https://www.youtube.com/watch?v=kSWfushlvB8&list=PLHTh1InhhwT6bwIpRk0ZbCA0N2p1taxd6&index=92
+
+CppCon 2017: Peter Goldsborough “A Tour of Deep Learning With C++”
+https://www.youtube.com/watch?v=Lo1rXJdAJ7w&list=PLHTh1InhhwT6bwIpRk0ZbCA0N2p1taxd6&index=93
+
+CppCon 2017: Tomasz Kapela “C++ and Persistent Memory Technologies, Like Intel's 3D-XPoint”
+https://www.youtube.com/watch?v=mn42HgAjDug&list=PLHTh1InhhwT6bwIpRk0ZbCA0N2p1taxd6&index=94
+
+CppCon 2017: Gor Nishanov “Naked coroutines live (with networking)”
+https://www.youtube.com/watch?v=UL3TtTgt3oU&list=PLHTh1InhhwT6bwIpRk0ZbCA0N2p1taxd6&index=95
+
+CppCon 2017: Diego Franco “LauncherOne rocket with C++ engine”
+https://www.youtube.com/watch?v=kfGPJlcBb7Q&list=PLHTh1InhhwT6bwIpRk0ZbCA0N2p1taxd6&index=96
+
+CppCon 2017: David Sankel “So, you inherited a large code base...”
+https://www.youtube.com/watch?v=B2XtqVZcSdM&list=PLHTh1InhhwT6bwIpRk0ZbCA0N2p1taxd6&index=97
+
+CppCon 2017: Sergey Ignatchenko “Ways to Handle Non-blocking Returns in Message-passing Programs...”
+https://www.youtube.com/watch?v=6lXUrvlMXNU&list=PLHTh1InhhwT6bwIpRk0ZbCA0N2p1taxd6&index=98
+
+CppCon 2017: Phil Nash “The Holy Grail! A Hash Array Mapped Trie for C++”
+https://www.youtube.com/watch?v=imrSQ82dYns&list=PLHTh1InhhwT6bwIpRk0ZbCA0N2p1taxd6&index=99
+
+CppCon 2017: Eddie Elizondo “Optimizing compilation times with Templates”
+https://www.youtube.com/watch?v=NPWQ7xKfIHQ&list=PLHTh1InhhwT6bwIpRk0ZbCA0N2p1taxd6&index=100
+
+1st part
+-------------------------------------------------------------------------------------------------
+
+C++ Weekly - Ep 298 - Detecting ABI Changes With abidiff
+https://www.youtube.com/watch?v=GkB3TgkAN0M
+
+CppCon 2017: Boris Kolpackov “Building C++ Modules”
+https://www.youtube.com/watch?v=E8EbDcLQAoc&list=PLHTh1InhhwT6bwIpRk0ZbCA0N2p1taxd6&index=77
+
+CppCon 2017: Rian Quinn “A Test a Day Keeps Your Manager Away!”
+https://www.youtube.com/watch?v=KdJhQuycD78&list=PLHTh1InhhwT6bwIpRk0ZbCA0N2p1taxd6&index=78
+
+CppCon 2017: Scott Schurr “Type Punning in C++17: Avoiding Pun-defined Behavior”
+https://www.youtube.com/watch?v=sCjZuvtJd-k&list=PLHTh1InhhwT6bwIpRk0ZbCA0N2p1taxd6&index=79
+
+CppCon 2017: Guy Somberg “Game Audio Programming in C++”
+https://www.youtube.com/watch?v=M8Bd7uHH4Yg&list=PLHTh1InhhwT6bwIpRk0ZbCA0N2p1taxd6&index=80
+
+Tony van Eerd: Postmodern C++
+https://www.youtube.com/watch?v=Zx_Tjp9WIII
+
