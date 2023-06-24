@@ -1,23 +1,9 @@
 #!/usr/bin/env python
 
-# TODO: introduce rot
-
-# def rot(x, y, th):
-#     if th == 0:
-#         return x, y
-#     elif th == 1:
-#         return
-
-def repr_occ(o):
-    lines = []
-    for y in reversed(range(5)):
-        lines.append(''.join(o.get((x, y), '.') for x in range(5)))
-    return ''.join(l + '\n' for l in lines)
-
-def print_occs(occs):
-    occs = occs[:]
+def print_boards(boards):
     n = 32
     lines = []
+    occs = [b.occ for b in boards]
     while len(occs) > n:
         for y in reversed(range(5)):
             lines.append(' '.join(''.join(o.get((x, y), '.') for x in range(5)) for o in occs[:n]))
@@ -29,88 +15,108 @@ def print_occs(occs):
             lines.append(' '.join(''.join(o.get((x, y), '.') for x in range(5)) for o in occs))
     print(''.join(l + '\n' for l in lines))
 
-def print_blocks(bls):
-    print_occs([b.occ for b in bls])
-
 class Violation(RuntimeError):
     pass
+
+# TODO: introduce rot
+def rotate(x, y, th):
+    if th == 0:
+        return x, y
+    elif th == 1:
+        return y, -x
+    elif th == 2:
+        return -x, -y
+    elif th == 3:
+        return -y, x
+    else:
+        raise Exception('unexpected theta: %s' % th)
+
+def translate(x1, y1, x2, y2):
+    return x1 + x2, y1 + y2
 
 class Gen:
     @staticmethod
     def a(x, y, th, fn):
         """
-        th0 th1 th2 th3
-        a.. Aa. aaA .a
-        Aaa a.. ..a .a
-            a..     aA
+        a..
+        Aaa
         """
         fn(x, y)
-        if th == 0:
-            fn(x, y + 1)
-            fn(x + 1, y)
-            fn(x + 2, y)
-        elif th == 1:
-            fn(x + 1, y)
-            fn(x, y - 1)
-            fn(x, y - 2)
-        elif th == 2:
-            fn(x + 1, y)
-            fn(x, y - 1)
-            fn(x, y - 2)
-        elif th == 3:
-            fn(x - 1, y)
-            fn(x, y + 1)
-            fn(x, y + 2)
+        fn(*translate(x, y, *rotate(0, 1, th)))
+        fn(*translate(x, y, *rotate(1, 0, th)))
+        fn(*translate(x, y, *rotate(2, 0, th)))
 
-# TODO: class board
+    @staticmethod
+    def b(x, y, th, fn):
+        """
+        ..b
+        Bbb
+        """
+        fn(x, y)
+        fn(*translate(x, y, *rotate(0, 1, th)))
+        fn(*translate(x, y, *rotate(0, 2, th)))
+        fn(*translate(x, y, *rotate(1, 2, th)))
 
-class Block:
-    def __init__(self, x, y, kind, theta):
-        self.x = x
-        self.y = y
-        self.k = kind
-        self.th = theta
+    @staticmethod
+    def c(x, y, th, fn):
+        """
+        .c.
+        Ccc
+        """
+        fn(x, y)
+        fn(*translate(x, y, *rotate(0, 1, th)))
+        fn(*translate(x, y, *rotate(0, 2, th)))
+        fn(*translate(x, y, *rotate(1, 1, th)))
 
-    @property
-    def occ(self):
-        m = {}
+    @staticmethod
+    def d(x, y, th, fn):
+        """
+        ..d
+        Ddd
+        .d.
+        """
+        fn(x, y)
+        fn(*translate(x, y, *rotate(0, 1, th)))
+        fn(*translate(x, y, *rotate(0, 2, th)))
+        fn(*translate(x, y, *rotate(1, 2, th)))
+        fn(*translate(x, y, *rotate(-1, 1, th)))
+
+class Board:
+    def __init__(self):
+        self.occ = {}
+
+    def place_block(self, col, row, theta, kind):
         def pop(x, y):
             if x < 0 or x > 4 or y < 0 or y > 4:
-                raise Violation()
-            m[(x, y)] = self.k
-        getattr(Gen, self.k)(self.x, self.y, self.th, pop)
-        return m
-
-    def __bool__(self):
-        try:
-            self.occ
-            return True
-        except Violation:
-            return False
+                raise Violation('out of bounds')
+            if (x, y) in self.occ:
+                raise Violation('collision with something')
+            self.occ[(x, y)] = kind
+        getattr(Gen, kind)(col, row, theta, pop)
 
     def __repr__(self):
-        try:
-            o = self.occ
-            lines = []
-            for y in reversed(range(5)):
-                lines.append(''.join(o.get((x, y), '.') for x in range(5)))
-            return ''.join(l + '\n' for l in lines)
-        except Violation:
-            return '+---+\n|vio|\n|lat|\n|ion|\n+---+\n'
+        lines = []
+        for y in reversed(range(5)):
+            lines.append(''.join(self.occ.get((x, y), '.') for x in range(5)))
+        return ''.join(l + '\n' for l in lines)
 
-
-bls = [Block(x, y, 'a', t) for x in range(5) for y in range(5) for t in range(4)]
-valid = [b for b in bls if b]
-print_blocks(valid)
+placements = [(x, y, t) for x in range(5) for y in range(5) for t in range(4)]
 
 v = []
-for x in range(5):
-    for y in range(5):
-        for t in range(4):
-            a = Block(x, y, 'a', t)
-            if a:
-                v.append(a)
-print_blocks(v)
+for p1 in placements:
+    for p2 in placements:
+        for p3 in placements:
+            for p4 in placements:
+                try:
+                    a = Board()
+                    a.place_block(*p1, 'a')
+                    a.place_block(*p2, 'b')
+                    a.place_block(*p3, 'c')
+                    a.place_block(*p4, 'd')
+                    v.append(a)
+                except Violation as e:
+                    pass
+print_boards(v)
 
 # print(a)
 
