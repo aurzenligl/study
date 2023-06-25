@@ -132,6 +132,11 @@ catboard.place_cat(0, 1)
 catboard.place_cat(2, 3)
 catboard.place_cat(4, 3)
 catboard.place_cat(4, 0)
+start_board = catboard.clone()
+start_board.place_block(3, 4, 2, 'a')
+start_board.place_block(0, 0, 0, 'b')
+start_board.place_block(1, 1, 3, 'c')
+start_board.place_block(3, 0, 3, 'd')
 for p1 in placements:
     a = catboard.clone()
     if a.place_block(*p1, 'a'):
@@ -158,7 +163,7 @@ for i, s in enumerate(sols):
             if s.one_block_diff(t):
                 g.add_edge(s, t)
 
-start = next(s for s in sols if str(s) == '+aaa.\n' + '.c+a+\n' + 'ccdd.\n' + '+cbdd\n' + 'bbbd+\n')
+start = next(s for s in sols if s.occ == start_board.occ)
 finish = next(s for s in sols if '+' not in str(s))
 shortest_path = nx.shortest_path(g, start, finish)
 connected_boards = nx.node_connected_component(g, start)
