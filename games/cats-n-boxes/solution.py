@@ -18,7 +18,6 @@ def print_boards(boards):
 class Violation(RuntimeError):
     pass
 
-# TODO: introduce rot
 def rotate(x, y, th):
     if th == 0:
         return x, y
@@ -107,6 +106,12 @@ class Board:
         except Violation:
             return False
 
+    def one_block_diff(self, other):
+        diffs = 0
+        for a, b in zip(self.history, other.history):
+            diffs += a != b
+        return diffs == 1
+
     def clone(self):
         return Board(self.occ, self.history)
 
@@ -118,16 +123,17 @@ class Board:
 
 placements = [(x, y, t) for x in range(5) for y in range(5) for t in range(4)]
 
-vs = []
-x = Board()
-x.place_cat(0, 4)
-x.place_cat(0, 1)
-x.place_cat(2, 3)
-x.place_cat(4, 3)
-x.place_cat(4, 0)
-print(x)
+### calculate all boards ###
+
+sols = []
+catboard = Board()
+catboard.place_cat(0, 4)
+catboard.place_cat(0, 1)
+catboard.place_cat(2, 3)
+catboard.place_cat(4, 3)
+catboard.place_cat(4, 0)
 for p1 in placements:
-    a = x.clone()
+    a = catboard.clone()
     if a.place_block(*p1, 'a'):
         for p2 in placements:
             b = a.clone()
@@ -138,33 +144,58 @@ for p1 in placements:
                         for p4 in placements:
                             d = c.clone()
                             if d.place_block(*p4, 'd'):
-                                vs.append(d)
-print_boards(vs)
-print(f'solutions: {len(vs)}')
+                                sols.append(d)
+### shortest path ###
+
+import networkx as nx
+
+g = nx.Graph()
+for i, s in enumerate(sols):
+    g.add_node(s)
+for i, s in enumerate(sols):
+    for j, t in enumerate(sols):
+        if j > i:
+            if s.one_block_diff(t):
+                g.add_edge(s, t)
+
+start = next(s for s in sols if str(s) == '+aaa.\n' + '.c+a+\n' + 'ccdd.\n' + '+cbdd\n' + 'bbbd+\n')
+finish = next(s for s in sols if '+' not in str(s))
+shortest_path = nx.shortest_path(g, start, finish)
+
+print_boards(sols)
+print(f'boards: {len(sols)}')
+print(f'start board index: {sols.index(start)}')
+print(f'finish board index: {sols.index(finish)}')
+print(f'shortest path length: {len(shortest_path)}')
 print()
+print_boards([catboard, start, finish])
 
-for v in vs[:5] + vs[90:92]:
-    print(v.history)
-    print(v)
+### dotting ###
 
-# import graphviz
-# dot = graphviz.Digraph(comment='The Round Table')
+import graphviz
+dot = graphviz.Graph(comment='The Round Table', engine='neato', graph_attr=dict(overlap='false', sep='+15'))
 
-# dot.node('A', '''\
-# +aaa.
-# .b+a+
-# bbdd.
-# +bcdd
-# ccCd+
-# ''', fontname='monospace')
+for i, s in enumerate(sols):
+    kw = {}
+    if s in shortest_path:
+        kw['color'] = 'blue'
+        kw['penwidth'] = '5'
+    if s is start:
+        kw['color'] = 'red'
+        kw['penwidth'] = '5'
+    if s is finish:
+        kw['color'] = 'green'
+        kw['penwidth'] = '5'
+    dot.node(str(i), str(s), fontname='monospace', **kw)
 
-# dot.node('B', 'Sir Bedevere the Wise')
-# dot.node('L', '', image='/home/aurzenligl/img.png')
-# dot.edges(['AB', 'AL'])
-# dot.edge('B', 'L', constraint='false')
+for i, s in enumerate(sols):
+    for j, t in enumerate(sols):
+        if j > i:
+            if s.one_block_diff(t):
+                kw = {}
+                if s in shortest_path and t in shortest_path:
+                    kw['color'] = 'blue'
+                    kw['penwidth'] = '5'
+                dot.edge(str(i), str(j), **kw)
 
-# dot.render('doctest-output/round-table.gv').replace('\\', '/')
-
-# print(dot.source)
-#import pdb;pdb.set_trace()
-#dot
+dot.render('solution.gv')
