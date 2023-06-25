@@ -1,5 +1,7 @@
 #!/usr/bin/env python
 
+import sys
+
 def print_boards(boards):
     n = 32
     lines = []
@@ -121,22 +123,71 @@ class Board:
             lines.append(''.join(self.occ.get((x, y), '.') for x in range(5)))
         return ''.join(l + '\n' for l in lines)
 
-placements = [(x, y, t) for x in range(5) for y in range(5) for t in range(4)]
+### problems ###
+
+# TODO: parser from textfile
+
+def problem_57():
+    catboard = Board()
+    catboard.place_cat(0, 1)
+    catboard.place_cat(2, 3)
+    catboard.place_cat(2, 4)
+    catboard.place_cat(3, 0)
+    catboard.place_cat(4, 3)
+    startboard = catboard.clone()
+    startboard.place_block(4, 1, 2, 'a')
+    startboard.place_block(3, 4, 1, 'b')
+    startboard.place_block(0, 0, 0, 'c')
+    startboard.place_block(1, 4, 1, 'd')
+    return catboard, startboard
+
+def problem_58():
+    catboard = Board()
+    catboard.place_cat(0, 1)
+    catboard.place_cat(3, 0)
+    catboard.place_cat(3, 1)
+    catboard.place_cat(3, 4)
+    catboard.place_cat(4, 3)
+    startboard = catboard.clone()
+    startboard.place_block(0, 4, 1, 'a')
+    startboard.place_block(4, 0, 3, 'b')
+    startboard.place_block(2, 0, 3, 'c')
+    startboard.place_block(3, 3, 2, 'd')
+    return catboard, startboard
+
+def problem_59():
+    catboard = Board()
+    catboard.place_cat(0, 1)
+    catboard.place_cat(2, 0)
+    catboard.place_cat(2, 2)
+    catboard.place_cat(3, 4)
+    catboard.place_cat(4, 1)
+    startboard = catboard.clone()
+    startboard.place_block(4, 3, 2, 'a')
+    startboard.place_block(3, 2, 1, 'b')
+    startboard.place_block(2, 4, 2, 'c')
+    startboard.place_block(1, 0, 3, 'd')
+    return catboard, startboard
+
+def problem_60():
+    catboard = Board()
+    catboard.place_cat(0, 4)
+    catboard.place_cat(0, 1)
+    catboard.place_cat(2, 3)
+    catboard.place_cat(4, 3)
+    catboard.place_cat(4, 0)
+    startboard = catboard.clone()
+    startboard.place_block(3, 4, 2, 'a')
+    startboard.place_block(0, 0, 0, 'b')
+    startboard.place_block(1, 1, 3, 'c')
+    startboard.place_block(3, 0, 3, 'd')
+    return catboard, startboard
 
 ### calculate all boards ###
 
 sols = []
-catboard = Board()
-catboard.place_cat(0, 4)
-catboard.place_cat(0, 1)
-catboard.place_cat(2, 3)
-catboard.place_cat(4, 3)
-catboard.place_cat(4, 0)
-start_board = catboard.clone()
-start_board.place_block(3, 4, 2, 'a')
-start_board.place_block(0, 0, 0, 'b')
-start_board.place_block(1, 1, 3, 'c')
-start_board.place_block(3, 0, 3, 'd')
+catboard, startboard = globals()['problem_' + sys.argv[1]]()
+placements = [(x, y, t) for x in range(5) for y in range(5) for t in range(4)]
 for p1 in placements:
     a = catboard.clone()
     if a.place_block(*p1, 'a'):
@@ -150,6 +201,7 @@ for p1 in placements:
                             d = c.clone()
                             if d.place_block(*p4, 'd'):
                                 sols.append(d)
+
 ### shortest path ###
 
 import networkx as nx
@@ -163,16 +215,15 @@ for i, s in enumerate(sols):
             if s.one_block_diff(t):
                 g.add_edge(s, t)
 
-start = next(s for s in sols if s.occ == start_board.occ)
+start = next(s for s in sols if s.occ == startboard.occ)
 finish = next(s for s in sols if '+' not in str(s))
 shortest_path = nx.shortest_path(g, start, finish)
 connected_boards = nx.node_connected_component(g, start)
 
 print_boards(sols)
 print(f'boards: {len(sols)}')
-print(f'start board index: {sols.index(start)}')
-print(f'finish board index: {sols.index(finish)}')
-print(f'shortest path length: {len(shortest_path)}')
+print(f'connected boards: {len(connected_boards)}')
+print(f'shortest path boards: {len(shortest_path)} ({sols.index(start)} -> {sols.index(finish)})')
 print()
 print_boards([catboard, start, finish])
 
