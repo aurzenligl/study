@@ -161,6 +161,7 @@ for i, s in enumerate(sols):
 start = next(s for s in sols if str(s) == '+aaa.\n' + '.c+a+\n' + 'ccdd.\n' + '+cbdd\n' + 'bbbd+\n')
 finish = next(s for s in sols if '+' not in str(s))
 shortest_path = nx.shortest_path(g, start, finish)
+connected_boards = nx.node_connected_component(g, start)
 
 print_boards(sols)
 print(f'boards: {len(sols)}')
@@ -186,7 +187,8 @@ for i, s in enumerate(sols):
     if s is finish:
         kw['color'] = 'green'
         kw['penwidth'] = '5'
-    dot.node(str(i), str(s), fontname='monospace', **kw)
+    if s in connected_boards:
+        dot.node(str(i), str(s), fontname='monospace', **kw)
 
 for i, s in enumerate(sols):
     for j, t in enumerate(sols):
@@ -196,6 +198,7 @@ for i, s in enumerate(sols):
                 if s in shortest_path and t in shortest_path:
                     kw['color'] = 'blue'
                     kw['penwidth'] = '5'
-                dot.edge(str(i), str(j), **kw)
+                if s in connected_boards:
+                    dot.edge(str(i), str(j), **kw)
 
 dot.render('solution.gv')
