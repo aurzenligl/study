@@ -230,7 +230,7 @@ print_boards([catboard, start, finish])
 ### dotting ###
 
 import graphviz
-dot = graphviz.Graph(comment='The Round Table', engine='neato', graph_attr=dict(overlap='false', sep='+15'))
+dot = graphviz.Graph(engine='neato', graph_attr=dict(overlap='false', sep='+15'))
 
 for i, s in enumerate(sols):
     kw = {}
@@ -244,7 +244,7 @@ for i, s in enumerate(sols):
         kw['color'] = 'green'
         kw['penwidth'] = '5'
     if s in connected_boards:
-        dot.node(str(i), str(s), fontname='monospace', **kw)
+        dot.node(str(i), str(s), shape='box', fontname='monospace', **kw)
 
 for i, s in enumerate(sols):
     for j, t in enumerate(sols):
