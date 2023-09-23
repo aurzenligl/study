@@ -1,6 +1,46 @@
 #!/usr/bin/env python
 
 import sys
+from pathlib import Path
+
+def parse_from_file(fname: Path):
+    lines = fname.read_text().strip().splitlines()
+    assert len(lines) == 5, f'expected 5 lines, got {len(lines)}'
+    for i, line in enumerate(lines):
+        assert len(line) == 5, f'expected line {i} to have length 5, got {len(line)}'
+    for x in range(5):
+        for y in range(5):
+            assert lines[y][x] in 'abcd+.', f'expected characters from set "abcd+.", got "{lines[y][x]}"'
+
+    def expected_block(kind):
+        return ''.join(c if c in kind + '\n' else '.' for c in ''.join(l + '\n' for l in lines))
+
+    def filtered_block(board, kind):
+        return ''.join(c if c in kind + '\n' else '.' for c in str(board))
+
+    def deduce_cats(board: Board):
+        for y, l in enumerate(reversed(lines)):
+            for x in range(5):
+                if l[x] == '+':
+                    board.place_cat(x, y)
+        return board
+
+    def deduce_block(board: Board, kind: str):
+        exp = expected_block(kind)
+        placements = [(x, y, t) for x in range(5) for y in range(5) for t in range(4)]
+        for p in placements:
+            b = board.clone()
+            if b.place_block(*p, kind):
+                if exp == filtered_block(b, kind):
+                    return b
+        raise Violation(f'block "{kind}" not found')
+
+    catboard = deduce_cats(Board())
+    startboard = catboard.clone()
+    for kind in 'abcd':
+        startboard = deduce_block(startboard, kind)
+
+    return catboard, startboard
 
 def print_boards(boards):
     n = 32
@@ -125,68 +165,12 @@ class Board:
 
 ### problems ###
 
-# TODO: parser from textfile
-
-def problem_57():
-    catboard = Board()
-    catboard.place_cat(0, 1)
-    catboard.place_cat(2, 3)
-    catboard.place_cat(2, 4)
-    catboard.place_cat(3, 0)
-    catboard.place_cat(4, 3)
-    startboard = catboard.clone()
-    startboard.place_block(4, 1, 2, 'a')
-    startboard.place_block(3, 4, 1, 'b')
-    startboard.place_block(0, 0, 0, 'c')
-    startboard.place_block(1, 4, 1, 'd')
-    return catboard, startboard
-
-def problem_58():
-    catboard = Board()
-    catboard.place_cat(0, 1)
-    catboard.place_cat(3, 0)
-    catboard.place_cat(3, 1)
-    catboard.place_cat(3, 4)
-    catboard.place_cat(4, 3)
-    startboard = catboard.clone()
-    startboard.place_block(0, 4, 1, 'a')
-    startboard.place_block(4, 0, 3, 'b')
-    startboard.place_block(2, 0, 3, 'c')
-    startboard.place_block(3, 3, 2, 'd')
-    return catboard, startboard
-
-def problem_59():
-    catboard = Board()
-    catboard.place_cat(0, 1)
-    catboard.place_cat(2, 0)
-    catboard.place_cat(2, 2)
-    catboard.place_cat(3, 4)
-    catboard.place_cat(4, 1)
-    startboard = catboard.clone()
-    startboard.place_block(4, 3, 2, 'a')
-    startboard.place_block(3, 2, 1, 'b')
-    startboard.place_block(2, 4, 2, 'c')
-    startboard.place_block(1, 0, 3, 'd')
-    return catboard, startboard
-
-def problem_60():
-    catboard = Board()
-    catboard.place_cat(0, 4)
-    catboard.place_cat(0, 1)
-    catboard.place_cat(2, 3)
-    catboard.place_cat(4, 3)
-    catboard.place_cat(4, 0)
-    startboard = catboard.clone()
-    startboard.place_block(3, 4, 2, 'a')
-    startboard.place_block(0, 0, 0, 'b')
-    startboard.place_block(1, 1, 3, 'c')
-    startboard.place_block(3, 0, 3, 'd')
-    return catboard, startboard
+fname = Path(__file__).with_name('problem') / sys.argv[1]
+catboard, startboard = parse_from_file(fname)
 
 ### calculate all boards ###
 
 sols = []
-catboard, startboard = globals()['problem_' + sys.argv[1]]()
 placements = [(x, y, t) for x in range(5) for y in range(5) for t in range(4)]
 for p1 in placements:
     a = catboard.clone()
@@ -225,7 +209,7 @@ print(f'boards: {len(sols)}')
 print(f'connected boards: {len(connected_boards)}')
 print(f'shortest path boards: {len(shortest_path)} ({sols.index(start)} -> {sols.index(finish)})')
 print()
-print_boards([catboard, start, finish])
+print_boards(shortest_path)
 
 ### dotting ###
 
@@ -235,13 +219,13 @@ dot = graphviz.Graph(engine='neato', graph_attr=dict(overlap='false', sep='+15')
 for i, s in enumerate(sols):
     kw = {}
     if s in shortest_path:
-        kw['color'] = 'blue'
+        kw['color'] = kw['fontcolor'] = 'blue'
         kw['penwidth'] = '5'
     if s is start:
-        kw['color'] = 'red'
+        kw['color'] = kw['fontcolor'] = 'red'
         kw['penwidth'] = '5'
     if s is finish:
-        kw['color'] = 'green'
+        kw['color'] = kw['fontcolor'] = 'darkgreen'
         kw['penwidth'] = '5'
     if s in connected_boards:
         dot.node(str(i), str(s), shape='box', fontname='monospace', **kw)
