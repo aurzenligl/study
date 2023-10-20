@@ -17,6 +17,10 @@ do
     fi
     if [[ `echo $state | grep 'key\[11\]=down'` ]]; then
         echo -n 2
+        ./atk-shoot.py
+    fi
+    if [[ `echo $state | grep 'key\[12\]=down'` ]]; then
+        echo -n 3
         ./cast-shock.py
     fi
 done
