@@ -6,15 +6,17 @@ winid=`xdotool search --onlyvisible --name "Legend of Grimrock"`
 while true;
 do
     active=`xdotool getactivewindow`
-    ctrl=`xinput --query-state 'SIGMACHIP USB Keyboard' | grep -Po 'key\[10\]=\K.*'`
-    if [[ $active = $winid && $ctrl = "down" ]]; then
+    if [[ $active != $winid ]]; then
+        continue
+    fi
+
+    state=`xinput --query-state 'SIGMACHIP USB Keyboard'`
+    if [[ `echo $state | grep 'key\[10\]=down'` ]]; then
         echo -n 1
-        eval `xdotool getmouselocation --shell`
-        xdotool \
-            mousemove 1530 850 \
-            click --repeat 15 --delay 3 3 \
-            mousemove 1750 850 \
-            click --repeat 15 --delay 3 3 \
-            mousemove $X $Y
+        ./atk-melee.py
+    fi
+    if [[ `echo $state | grep 'key\[11\]=down'` ]]; then
+        echo -n 2
+        ./cast-shock.py
     fi
 done
