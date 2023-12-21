@@ -18,15 +18,16 @@ def get_libs(path: str):
             libs[fn] = path + '/' + fn
     return libs
 
-# LD_LIBRARY_PATH
-
 @functools.lru_cache
-def get_ldlibrarypaths():
-    paths = []
+def get_libs_ldlibrarypath():
+    libs = {}
     for path in os.getenv('LD_LIBRARY_PATH').split(':'):
-        if os.path.isdir(path):
-            paths.append(path)
-    return paths
+        if not os.path.isdir(path):
+            continue
+        for fn in os.listdir(path):
+            if fn.startswith('lib') and '.so' in fn:
+                libs[fn] = path + '/' + fn
+    return libs
 
 @functools.lru_cache
 def get_libs_global():
@@ -43,22 +44,15 @@ def get_libs_global():
 @functools.lru_cache
 def from_rpath(elf, name):
     for path in elf_rpaths(elf):
-        for fn in os.listdir(path):
-            if fn == name:
-                return f'{path}/{fn}'
+        return get_libs(path).get(name)
 
 @functools.lru_cache
 def from_runpath(elf, name):
     for path in elf_runpaths(elf):
-        for fn in os.listdir(path):
-            if fn == name:
-                return f'{path}/{fn}'
+        return get_libs(path).get(name)
 
 def from_ldlibrarypath(name):
-    for path in get_ldlibrarypaths():
-        for fn in os.listdir(path):
-            if fn == name:
-                return f'{path}/{fn}'
+    return get_libs_ldlibrarypath().get(name)
 
 def from_ldconfig(name):
     return get_libs_global().get(name)
@@ -119,99 +113,3 @@ def dig(path: str):
             dig(dep)
 
 dig(path)
-
-
-
-
-# queue = [path]
-# visited = set()
-# while queue:
-#     p = queue.pop(0)
-#     if p in visited:
-#         continue
-#     print(f'dig: {p}')
-#     visited.add(p)
-#     deps = resolve_deps(p)
-#     for d in deps:
-#         queue.append(d)
-#         print(f'    dep: {d}')
-
-
-
-
-
-
-
-
-
-    # for d in deps:
-    #     dig(d, visited)
-
-# dig(path, visited)
-
-# import pdb;pdb.set_trace()
-
-# for x in libs:
-#     print('[libs]', x, libs[x])
-
-# TODO: read runpath tag
-# TODO: get all needed libs
-
-
-
-# runpath(elf)
-
-        # print(tag)
-        # tag.runpath
-        # import pdb;pdb.set_trace()
-
-    # print(tag.entry.d_tag)
-    # print(tag)
-    # print(type(tag))
-
-
-# DT_RUNPATH
-# DT_NEEDED
-# DT_NEEDED
-# DT_NEEDED
-# DT_NEEDED
-# DT_NEEDED
-# DT_NEEDED
-# DT_NEEDED
-# DT_NEEDED
-# DT_NEEDED
-
-
-# from ctypes.util import find_library
-# print(find_library('roscpp'))
-# print(find_library('aeolus_core_portable'))
-
-
-
-# print(find_library('jpeg.so'))
-
-# for a in x.iter_sections():
-#     # import pdb;pdb.set_trace()
-#     print('section', '|', a.name, '|', a)
-#     # if a.name == '.dynamic':
-#     #     import pdb;pdb.set_trace()
-#     #     pass
-
-# elftools.elf.dynamic.DynamicSection
-
-# for a in x.iter_segments():
-#     pass
-#     # import pdb;pdb.set_trace()
-#     # print('section', '|', a.name, '|', a)
-
-# ".dynamic"
-
-# for section in elf.iter_sections():
-#     if isinstance(section, DynamicSection):
-#         print(section.name)
-#         print('XXXXXXX')
-#         for tag in section.iter_tags():
-#             print(tag)
-#             # print(tag.entry.d_tag, tag.needed)
-
-# # import pdb;pdb.set_trace()
