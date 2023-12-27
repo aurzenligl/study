@@ -8,28 +8,39 @@ class Point(pag.Point):
     def __rmul__(self, rhs):
         return Point(self.x * rhs, self.y * rhs)
 
-def slot(char, slot):
-    y, x = divmod(char, 2)
-    return origin + cdx * x + cdy * y + sdx * slot + sc
+class Char:
+    def __init__(self, char):
+        y, x = divmod(char, 2)
+        self.char = char
+        self.origin = origin + cdx * x + cdy * y
 
-def rune(char, rune):
-    y, x = divmod(char, 2)
-    j, i = divmod(rune, 3)
-    return origin + cdx * x + cdy * y + rdx * i + rdy * j + rc
+    def slot(self, slot):
+        return self.origin + sdx * slot + sc
 
-def cast(char):
-    y, x = divmod(char, 2)
-    return origin + cdx * x + cdy * y + cstc
+    def rune(self, rune):
+        j, i = divmod(rune, 3)
+        return self.origin + rdx * i + rdy * j + rc
 
-def cancel(char):
-    y, x = divmod(char, 2)
-    return origin + cdx * x + cdy * y + cncc
+    def cast(self):
+        return self.origin + cstc
+
+    def cancel(self):
+        return self.origin + cncc
 
 def rclick(pt):
     pag.moveTo(pt)
     pag.mouseDown(pt, button=pag.RIGHT)
     pag.mouseUp(pt, button=pag.RIGHT)
 
+def rdrag(pts):
+    pag.moveTo(pts[0])
+    pag.mouseDown(pts[0], button=pag.RIGHT)
+    for pt in pts:
+        pag.moveTo(pt)
+        pag.moveTo(pt)
+    pag.mouseUp(pts[-1], button=pag.RIGHT)
+
+pag.PAUSE = 0.017
 origin = Point(1493, 742)
 cdx = Point(206, 0)  # char dx
 cdy = Point(0, 200)  # char dy
