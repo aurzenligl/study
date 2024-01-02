@@ -109,6 +109,7 @@ def dig(path: str):
     visited.add(path)
     print(f'dig: {path}')
     for dep in resolve_deps(path):
+        print(f'    dep: {path} -> {dep}')
         if dep not in visited:
             dig(dep)
 
