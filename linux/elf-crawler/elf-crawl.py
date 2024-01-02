@@ -21,7 +21,7 @@ def get_libs(path: str):
 @functools.lru_cache
 def get_libs_ldlibrarypath():
     libs = {}
-    for path in os.getenv('LD_LIBRARY_PATH').split(':'):
+    for path in reversed(os.getenv('LD_LIBRARY_PATH').split(':')):
         if not os.path.isdir(path):
             continue
         for fn in os.listdir(path):
@@ -43,12 +43,12 @@ def get_libs_global():
 
 @functools.lru_cache
 def from_rpath(elf, name):
-    for path in elf_rpaths(elf):
+    for path in reversed(elf_rpaths(elf)):
         return get_libs(path).get(name)
 
 @functools.lru_cache
 def from_runpath(elf, name):
-    for path in elf_runpaths(elf):
+    for path in reversed(elf_runpaths(elf)):
         return get_libs(path).get(name)
 
 def from_ldlibrarypath(name):
