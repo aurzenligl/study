@@ -3,14 +3,14 @@ import sys
 # 🟩 [g]reen, grass
 # 🟨 [f]ield
 # 🟦 [w]ater
-# ⬛ [b]lack, water-train-station
+# ⬛ [s]tation
 # 🏠 [h]ouse
-# 🌲 [d]endros
-# 🌊 [r]iver
-# 🚂 [t]rain
+# 🌲 [t]ree
+# 🌊 ri[v]er
+# 🚂 [r]ail
 # ❓ [q]uestion
 
-symbol_by_letter = dict(g='🟩', f='🟨', w='🟦', b='⬛', h='🏠', d='🌲', r='🌊', t='🚂', q='❓')
+symbol_by_letter = dict(g='🟩', f='🟨', w='🟦', s='⬛', h='🏠', t='🌲', v='🌊', r='🚂', q='❓')
 
 class ExprError(Exception):
     pass
@@ -39,6 +39,10 @@ class Expr:
             if e != p:
                 return False
         return True
+
+    @property
+    def globs(self):
+        return self.pattern.count('❓')
 
     def __repr__(self):
         return f'Expr("{self.pattern}", "{self.extra}")'

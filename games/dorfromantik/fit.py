@@ -22,11 +22,12 @@ for e in exprs:
 
 if fit6:
     print('--')
-    for f in fit6:
-        print(f'[6] {f.pattern} {f.extra}')
+    for f in sorted(fit6, key=lambda e: e.globs):
+        print(f'[6.{f.globs}] {f.pattern} {f.extra}')
 if fit5:
     print('--')
-    for f in fit5:
-        print(f'[5] {f.pattern} {f.extra}')
+    for f in sorted(fit5, key=lambda e: e.globs):
+        if f.globs == 0:
+            print(f'[5.{f.globs}] {f.pattern} {f.extra}')
 if not fit6 + fit5:
     print('-- no matches --')
