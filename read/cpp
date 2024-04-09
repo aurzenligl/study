@@ -1,3 +1,8 @@
+conan
+meson
+https://clang.llvm.org/docs/ThreadSafetyAnalysis.html
+https://ig.ft.com/generative-ai/
+
 http://en.wikipedia.org/wiki/C%2B%2B14
 http://www.drdobbs.com/cpp/the-c14-standard-what-you-need-to-know/240169034
 https://github.com/isocpp/CppCoreGuidelines/blob/master/CppCoreGuidelines.md
@@ -87,7 +92,7 @@ __OK__ Technical Report on C++ Performance
 __OK__ Does Test-Driven Development Really Improve Software Design Quali
 __OK__ http://herbsutter.com/welcome-to-the-jungle/
 __OK__ http://herbsutter.com/gotw/_102/
-__OK__ Sean Parent: Value Semantics and Concepts-based Polymorphism 
+__OK__ Sean Parent: Value Semantics and Concepts-based Polymorphism
 __OK__ Alexandrescu's Three Optimization Tips for C++
 __OK__ Herb Sutter's C++ and Beyond 2012: C++ Concurrency
 __OK__ Effective C++ Third Edition
@@ -130,7 +135,7 @@ __OK__ http://www.informit.com/articles/printerfriendly/1407357
 __OK__ https://channel9.msdn.com/Events/GoingNative/2013
 __OK__ Eric Niebler Ranges https://www.youtube.com/watch?v=8yV2ONeWXyI
 __OK__ https://www.youtube.com/watch?v=PVYdHDm0q6Y
-__OK__ https://akrzemi1.wordpress.com/2011/05/06/compile-time-computations/ 
+__OK__ https://akrzemi1.wordpress.com/2011/05/06/compile-time-computations/
 __OK__ https://github.com/boostcon/cppnow_presentations_2015
 __OK__ http://channel9.msdn.com/Events/CPP/C-PP-Con-2014
 __OK__ CPPCON2014 Scott Meyers: Type Deduction and Why You Care
