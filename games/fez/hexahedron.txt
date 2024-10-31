@@ -1,0 +1,62 @@
+alpha-1
+--------------
+> b2r3r0v0b2r3e2t3a1b1  b0a1e2v0t2
+> a2  e3a2t0t0  b3r3  t2a1a0t3
+> b2a2  b0b2r3t3r3  b2a1e3  v0t3r3  t2a1a0
+
+alpha-2
+--------------
+> v1a1r3v3  e3t3a1b1v1
+> a2b1  a3v0v3r3  v3a1v2r3b0b2a2b1v1
+> v3a1v2r3a1b1r3  b2r3t3r3  e1a0v3b0
+> b3a0b0  a2  e2a1  b1r3r3e2
+> t3a1a0b0a2b1r3  e0t3a1a3r3e2a0t3r3
+> v3a1  b0b2a2v3  a2v3  e1a0v3b0  v0
+
+alpha-3
+--------------
+> a3t0r3v0b1  a0e0  b0b2r3  v2r3v3v3
+> v1a1a2b1v1  b0a1  b2v0a0r3  b0a1
+> v1a1  e3t3a1b1v1  t2a1a0  v0t3r3
+> a2t1  v3a1v2r3b0b2a2b1v1  e2a1r3v3
+
+alpha-4
+--------------
+> e3a2b0b2  t2a1a0t3  b2r3v0e2
+> v0b1e2  e3b2v0b0  a2v3  e3t3a1b1v1
+> e3b2v0b0  a2  v0v2  v3v0t2a2b1v1
+> a0b1e2r3t3v3b0v0b1e2
+> a3v0b1  t2a1a0  r3a0r3b1
+> b2r3t2  e3v0a2b0  v0  v2a2b1a0b0r3
+
+alpha-5
+--------------
+> t2a1a0t3  v2a2b1e2  b3t0a1e3b1
+> e0t3r3e0v0t3r3  b0a1  b2v0a0r3
+> e3r3t0t0  e2a1  b0b2a2v3  b0b2a2b1v1
+> b2r3t3r3  b1a1e3  v2a2v1b2b0  v0v3
+> a1b2  e3r3t0t0  t2a1a0  v0t3r3
+
+beta-1
+--------------
+> t1t3r3r3  b2v0b0
+> a3t0a0b3  r3b1e1a1t2  t2a1a0t3
+> e3r3t0a3a1v2r3  b0a1  b0b2r3
+> v0t0t0  t3a2v1b2b0
+
+beta-2
+--------------
+> v0a1r2  t1t3a1v2  a1a0r3t3  b2r3t3r3
+> b3a0b0  r3a0r3t3t2b0b2a2b1v1  t0a1a1r2v3
+> a1t1  t2a1a0t3  e3r3a2t3e2  b2r3v0e2
+> b1a1b0  e3a1t3r2  b3r3a3v0a0v3r3
+> v2v0t2b3r3  b0b2a2v3  e3a1a0t0e2
+> a2  r2a2b1e2  a1t1  b0b2a1a0v1b2b0
+
+beta-3
+--------------
+> b0a1  v2r3r3b0  t2a1a0
+> b1a1e3  a2b0  e3v0v3  a0r3t3t2  b1a2a3r3
+> t2a1a0  a3v0b1  v1a1  b2a1v2r3
+> b0b2v0b1r2v3  t1a1t3  b0b2r3  b2v0b1e2
+
