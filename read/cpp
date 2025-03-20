@@ -1,3 +1,6 @@
+https://cppinsights.io/ - Clang-Based Source to Source Transformation
+https://godbolt.org/ - Compiler Explorer
+
 conan
 meson
 https://clang.llvm.org/docs/ThreadSafetyAnalysis.html
