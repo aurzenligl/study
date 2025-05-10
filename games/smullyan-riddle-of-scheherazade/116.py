@@ -4,21 +4,21 @@ import sys
 
 def princess(value: str):
 
-    # rule 1:
+    # rule one:
     if value.startswith('1') and value.endswith('2'):
         return value[1:-1]
 
-    # rule 2:
+    # rule two: 3 duplicates
     # princess(x) = y  =>  princess('3' + x) = y + y
     if value.startswith('3'):
         return princess(value[1:]) * 2
 
-    # rule 3:
+    # rule three: 4 reverses
     # princess(x) = y  =>  princess('4' + x) = y[::-1]
     if value.startswith('4'):
         return princess(value[1:])[::-1]
 
-    # rule 4:
+    # rule four: 5 lchops
     # princess(x) = y  =>  princess('5' + x) = y[1:], when len(y) >= 2
     if value.startswith('5'):
         y = princess(value[1:])
@@ -26,7 +26,7 @@ def princess(value: str):
             raise Exception('princess cannot subtract digit from number with less than two digits')
         return y[1:]
 
-    # rule 5:
+    # rule five: 6 prefixes 1, 7 prefixes 2
     # princess(x) = y  =>  princess('6' + x) = '1' + y
     # princess(x) = y  =>  princess('7' + x) = '2' + y
     if value.startswith('6'):
@@ -38,3 +38,13 @@ def princess(value: str):
 
 value = sys.argv[1]
 print(princess(value))
+
+# input:  k 1 456 2
+# output: 456 1 456 2
+# k = 474536
+
+# k1x2 -> x1x2
+# 474536 1 333 2 -> 333 1 333 2
+
+# k1k2 -> k1k2
+# 474536 1 474536 2 -> 474536 1 474536 2
