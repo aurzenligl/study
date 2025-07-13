@@ -9,37 +9,37 @@ from typing import List
 
 
 # https://en.wikipedia.org/wiki/Letter_frequency
-PAT = re.compile('[01]+')
+PAT = re.compile('[01]{6}:[01]{5}:[01]')
+PAT3 = re.compile('[01]{6}:[01]{5}:[01]')
+PAT2 = re.compile('[01]{6}:[01]{5}')
+PAT1 = re.compile('[01]{6}')
 
 
 @dataclass
-class Bar:
-    top: str
-    bottom: str
+class Char:
+    innie: str
+    outie: str
+    dot: str
+    tail: str
 
 
 def cmd_count(path: Path):
     lines = path.read_text().splitlines()
-    bars: List[Bar] = []
-    while lines:
-        line = lines.pop(0)
-        if not line.strip():
-            continue
-        top, bottom = line.strip(), lines.pop(0).strip()
-        assert PAT.sub('?', top) == PAT.sub('?', bottom), f'{top} != {bottom}'
-        bars.append(Bar(top, bottom))
     gramhist = {}
-    def check_one_side(side):
-        grams = []
-        for b in bars:
-            grams += PAT.findall(getattr(b, side))
-        for g in grams:
-            assert len(g) == 7
-        for g in grams:
-            v = side[0] + g
+    chars = []
+    for line in lines:
+        parts = line.split()
+        for part in parts:
+            if char := parse_character(part):
+                chars.append(char)
+    for char in chars:
+        innie, outie, dot = char
+        v = f'i{innie}'
+        if v != 'i000000':
             gramhist[v] = gramhist.get(v, 0) + 1
-    check_one_side('top')
-    check_one_side('bottom')
+        v = f'o{outie}'
+        if v != 'o00000':
+            gramhist[v] = gramhist.get(v, 0) + 1
     total = sum(gramhist.values())
     for code, count in sorted(gramhist.items(), key=lambda k: -k[1]):
         print(f'{code} = {count/total*100:5.2f}%')
@@ -47,38 +47,44 @@ def cmd_count(path: Path):
 
 def cmd_substitute(path: Path, subs: List[str]):
     lines = path.read_text().splitlines()
-    bars: List[Bar] = []
-    while lines:
-        line = lines.pop(0)
-        if not line.strip():
-            continue
-        top, bottom = line.strip(), lines.pop(0).strip()
-        assert PAT.sub('?', top) == PAT.sub('?', bottom), f'{top} != {bottom}'
-        bars.append(Bar(top, bottom))
 
+    isubs = {'000000': ''}
+    osubs = {'00000': ''}
     for s in subs:
         sidecode, letter = s.split(':')
         shortside, code = sidecode[0], sidecode[1:]
-        assert len(code) == 7
-        side = {'t': 'top', 'b': 'bottom'}[shortside]
+        if shortside == 'i':
+            assert len(code) == 6
+            isubs[code] = letter
+        elif shortside == 'o':
+            assert len(code) == 5
+            osubs[code] = letter
 
-        for b in bars:
-            v = getattr(b, side)
-            x = re.sub(code, letter, v)
-            setattr(b, side, x)
+    outlines = []
+    for line in lines:
+        outparts = []
+        parts = line.split()
+        for part in parts:
 
-    for b in bars:
-        b.top = re.sub('0000000', ' ', b.top)
-        b.bottom = re.sub('0000000', ' ', b.bottom)
+            if char := parse_character(part):
+                innie, outie, dot = char
+                i = isubs.get(innie, '_')
+                o = osubs.get(outie, '_')
+                d = "'" if dot == '1' else ''
+                outparts.append(f'{o}{i}{d}')
+            else:
+                outparts.append(part)
+        outlines.append(' '.join(outparts))
+    print(''.join(x + '\n' for x in outlines))
 
-    for b in bars:
-        b.top = PAT.sub('_', b.top)
-        b.bottom = PAT.sub('_', b.bottom)
 
-    for b in bars:
-        print(b.top)
-        print(b.bottom)
-        print()
+def parse_character(v: str):
+    if PAT3.match(v):
+        return v.split(':')
+    if PAT2.match(v):
+        return v.split(':') + ['0']
+    if PAT1.match(v):
+        return [v, '00000', '0']
 
 
 def parse_opts():
@@ -103,13 +109,4 @@ if __name__ == '__main__':
     main()
 
 
-# ./tuniclang.py tuniclang.txt -s b0000010:e -s t0000011:e -s b0100100:a -s t0100100:a -s t1100100:o -s b1001000:r -s b0100010:t
-
-# frequency hint
-# -s t0000011:e -s b0000010:e
-
-# "a" hint
-# -s t0100100:a -s b0100100:a
-
-# "hero or a fool" hint:
-# -s t1100100:o -s b1001000:r
+# o11000:a
