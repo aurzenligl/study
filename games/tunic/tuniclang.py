@@ -98,13 +98,13 @@ def cmd_substitute(path: Path, subs: List[str], unders: List[str], raw: bool):
                         outparts[-1] = outparts[-1] + f'{o}{i}'
                     else:
                         outparts.append(f'{o}{i}')
-                    rawparts.append(f'{outie}:{innie}')
+                    rawparts.append(f"{outie if '1' in outie else ''}:{innie if '1' in innie else ''}".strip(':'))
                 else:
                     if last_part_was_a_char:
                         outparts[-1] = outparts[-1] + f'{i}{o}'
                     else:
                         outparts.append(f'{i}{o}')
-                    rawparts.append(f'{innie}:{outie}')
+                    rawparts.append(f"{innie if '1' in innie else ''}:{outie if '1' in outie else ''}".strip(':'))
                 last_part_was_a_char = True
             else:
                 outparts.append(part)
