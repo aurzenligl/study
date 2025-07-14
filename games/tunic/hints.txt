@@ -32,10 +32,109 @@ o 01000 = i ?
 # ./tuniclang.py tuniclang.txt -so00000: -si000000: -so11000:a -si010111:s -so01000:i -so00101:u
 # ./tuniclang.py tuniclang.txt -so00000: -si000000: -so11000:a           -so00101:0 -si010111:1 -si011001:2
 
-
-
-# vowels:
-#
-
 # consonants: t/s/n ?
 # -si010111:1 -si011001:2
+
+
+# -so11000:1 -so00011:2 -so01111:3 -so10111:4 -so11100:5 -so11110:6
+# ./tuniclang.py tuniclang.txt -so11000:e -si001101:n -si010111:d -si100010:p -so11111:o -si010101:d -so00111:e -si101111:sh -so01111:i -si010010:l -si010101:d
+
+# let's be more methodical
+# -----------------------------------
+
+# s.12: [SH I] [L] [D]
+# -si101111:sh -so01111:i -si010010:l -si010101:d
+
+# s.12: [P OU] [SH E] [N]
+# -si100010:p -so11111:ou -si101111:sh -so11000:e -si001101:n
+
+# s.3: [L Y] [V] [D]
+# -so00011:y -si011001:v
+
+# s.3: [Ł Y] [TH Y] [N]
+# -si101000:ł -si111010:thXXX
+
+# s.3: _n d
+# -so11100:e
+
+# s.3: oup _n d
+# -so00111:e
+
+# s.3: _i _ łi n
+# -si010001:b -si101010:t
+
+# s.3: _ou li
+# -si010011:h
+
+# s.3: _y ti | pe ly _
+# -si110110:s
+
+# s.3: _i el yt i
+# -si110010:r
+
+# s.3: ri p l_ s
+# -so01000:ei
+
+# s.3: _ rei t
+# -si100011:g
+
+# s.3: sei _ ry d
+# -si110001:k
+
+# s.3: _ei
+# -si010111:th
+
+# s.3: en d_ s t_ d
+# -so10111:er -so00110:u
+
+# s.3: p_ e
+# -so00001:au
+
+# s.3: b ry _
+# -si111111:ng
+
+# s.3: nei _e
+# -si001010:cz
+
+# s.3: t r_ th
+# -so11110:u
+
+# s.3: th_ (should be "there")
+# -so00101:ee
+
+# s.3: s_ t | pau er
+# -so01100:o
+
+# s.3: s pei sy _
+# -si011011:s
+
+# s.3: _ei bu l d
+# -si100110:f
+
+# _u (meaning: "you")
+# -si011010:j
+
+# e r_ v d (meaning: "arrived")
+# -so10000:ai
+
+# t re _er (meaning: "treasure")
+# -si111101:ż
+
+# _ (meaning: "or")
+# -so11101:or
+
+# h_ (meaning: "here")
+# -so01101:ere
+
+# ły s de _ (meaning: "wisdom")
+# -si000101:m
+
+# sYY ko fe gai (meaning: "sarcophagi")
+# -so11011:ar
+
+# k_ l (meaning: "coil")
+# -so00010:oi
+
+# ./tuniclang.py tuniclang.txt -si101111:sh -so01111:i -si010010:l -si010101:d -si100010:p -so11111:ou -si101111:sh -so11000:e -si001101:n -so00011:y -si011001:v -si101000:ł -si111010:th -so11100:e -so00111:e -si010001:b -si101010:t -si010011:h -si110110:s -si110010:r -so01000:ei -si100011:g -si110001:k -si010111:th -so10111:er -so00110:u -si111111:ng -so00001:au -si001010:cz -so11110:u -so00101:ee -so01100:o -si011011:s -si100110:f -si011010:j -so10000:ai -si111101:ż -so11101:or -so01101:ere -si000101:m -so11011:ar -so00010:oi
+# ./tuniclang.py tuniclang.txt -si101111:sh -so01111:i -si010010:l -si010101:d -si100010:p -so11111:ou -si101111:sh -so11000:e -si001101:n -so00011:y -si011001:v -si101000:ł -si111010:th -so11100:e -so00111:e -si010001:b -si101010:t -si010011:h -si110110:s -si110010:r -so01000:ei -si100011:g -si110001:k -si010111:th -so10111:er -so00110:u -si111111:ng -so00001:au -si001010:cz -so11110:u
+# ./tuniclang.py tuniclang.txt -si101111:sh -so01111:i -si010010:l -si010101:d -si100010:p -so11111:ou -si101111:sh -so11000:e -si001101:n -so00011:y -si011001:v -si101000:ł -si111010:th -so11100:e -so00111:e -si010001:b -si101010:t -si010011:h -si110110:s -si110010:r -so01000:ei -si100011:g -si110001:k -si010111:th -so10111:er -so00110:u -si111111:ng -so00001:au -si001010:cz -so11110:u -so00101:ee -si100110:XX -so11011:YY

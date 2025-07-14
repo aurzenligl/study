@@ -71,7 +71,10 @@ def cmd_substitute(path: Path, subs: List[str]):
                 i = isubs.get(innie, '_')
                 o = osubs.get(outie, '_')
                 d = "'" if dot == '1' else ''
-                outparts.append(f'{o}{i}{d}')
+                if dot == '1':
+                    outparts.append(f'{o}{i}')
+                else:
+                    outparts.append(f'{i}{o}')
             else:
                 outparts.append(part)
         outlines.append(' '.join(outparts))
