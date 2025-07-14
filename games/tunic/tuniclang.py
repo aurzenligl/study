@@ -3,6 +3,7 @@
 import argparse
 import re
 import sys
+from colorama import Fore
 from dataclasses import dataclass
 from pathlib import Path
 from typing import List
@@ -45,7 +46,7 @@ def cmd_count(path: Path):
         print(f'{code} = {count/total*100:5.2f}%')
 
 
-def cmd_substitute(path: Path, subs: List[str]):
+def cmd_substitute(path: Path, subs: List[str], unders: List[str], raw: bool):
     lines = path.read_text().splitlines()
 
     isubs = {'000000': ''}
@@ -60,24 +61,58 @@ def cmd_substitute(path: Path, subs: List[str]):
             assert len(code) == 5
             osubs[code] = letter
 
+    iunders = set()
+    ounders = set()
+    for u in unders:
+        shortside, code = u[0], u[1:]
+        if shortside == 'i':
+            assert len(code) == 6
+            iunders.add(code)
+        elif shortside == 'o':
+            assert len(code) == 5
+            ounders.add(code)
+
     outlines = []
     for line in lines:
+        last_part_was_a_char = False
         outparts = []
+        rawparts = []
         parts = line.split()
         for part in parts:
-
             if char := parse_character(part):
                 innie, outie, dot = char
-                i = isubs.get(innie, '_')
-                o = osubs.get(outie, '_')
-                d = "'" if dot == '1' else ''
+
+                i0, i1 = Fore.GREEN, Fore.RESET
+                if innie in iunders:
+                    i0, i1 = Fore.RED, Fore.RESET
+
+                o0, o1 = Fore.LIGHTGREEN_EX, Fore.RESET
+                if outie in ounders:
+                    o0, o1 = Fore.LIGHTRED_EX, Fore.RESET
+
+                i = i0 + isubs.get(innie, '_') + i1
+                o = o0 + osubs.get(outie, '_') + o1
+
                 if dot == '1':
-                    outparts.append(f'{o}{i}')
+                    if last_part_was_a_char:
+                        outparts[-1] = outparts[-1] + f'{o}{i}'
+                    else:
+                        outparts.append(f'{o}{i}')
+                    rawparts.append(f'{outie}:{innie}')
                 else:
-                    outparts.append(f'{i}{o}')
+                    if last_part_was_a_char:
+                        outparts[-1] = outparts[-1] + f'{i}{o}'
+                    else:
+                        outparts.append(f'{i}{o}')
+                    rawparts.append(f'{innie}:{outie}')
+                last_part_was_a_char = True
             else:
                 outparts.append(part)
+                rawparts.append(part)
+                last_part_was_a_char = False
         outlines.append(' '.join(outparts))
+        if raw:
+            outlines.append(' '.join(rawparts))
     print(''.join(x + '\n' for x in outlines))
 
 
@@ -94,7 +129,9 @@ def parse_opts():
     parser = argparse.ArgumentParser(prog='tuniclang-hacker')
     parser.add_argument('filename')
     parser.add_argument('-c', '--count', action='store_true')
+    parser.add_argument('-r', '--raw', action='store_true')
     parser.add_argument('-s', '--substitute', metavar='TUNICCODE:LETTER', action='append')
+    parser.add_argument('-u', '--underscore', metavar='TUNICCODE', action='append')
     return parser.parse_args()
 
 
@@ -103,7 +140,7 @@ def main():
     if opts.count:
         cmd_count(Path(opts.filename))
     elif opts.substitute:
-        cmd_substitute(Path(opts.filename), opts.substitute)
+        cmd_substitute(Path(opts.filename), opts.substitute, opts.underscore or [], opts.raw)
     else:
         sys.exit('error: no operation chosen')
 
