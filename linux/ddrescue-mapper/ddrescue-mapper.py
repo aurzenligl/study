@@ -20,8 +20,11 @@ def get_inode(imgpath, address) -> str:
     proc = subprocess.Popen('debugfs', stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     output = proc.communicate(text.encode())[0].decode()
     proc.wait()
-    inode = output.strip().splitlines()[-2].split('\t')[1]
-    return inode
+    tabulated = output.strip().splitlines()[-2].split('\t')
+    if len(tabulated) == 1:
+        return None
+    else:
+        return tabulated[1]
 
 
 def get_fpath(imgpath, inode) -> str:
@@ -52,7 +55,7 @@ def main():
     fpaths = set()
     for offset in corrupt_offsets:
         inode = get_inode(opts.imgfile, offset)
-        if inode != '<block not found>':
+        if inode and inode != '<block not found>':
             fpath = get_fpath(opts.imgfile, inode)
             fpaths.add(fpath)
             print(fpath)
