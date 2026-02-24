@@ -1,7 +1,8 @@
 from simple_launch import SimpleLauncher
 
 
-def generate_launch_description():
-    sl = SimpleLauncher()
+def launch(sl: SimpleLauncher):
     sl.include("demo", "launch.yaml")
-    return sl.launch_description()
+
+
+generate_launch_description = lambda: launch(sl := SimpleLauncher()) or sl.launch_description()
