@@ -17,6 +17,7 @@ function(custom_executable target)
     "$<INSTALL_INTERFACE:include/${PROJECT_NAME}>"
   )
   target_link_libraries(${target} PRIVATE ${ARG_DEPENDENCIES})
+  install(TARGETS ${target} DESTINATION lib/${PROJECT_NAME})
 endfunction()
 
 custom_executable(talker SOURCES
@@ -26,5 +27,10 @@ custom_executable(talker SOURCES
 custom_executable(listener SOURCES
   src/topics/listener.cpp
   DEPENDENCIES rclcpp::rclcpp ${std_msgs_TARGETS})
+
+install(DIRECTORY
+  launch
+  DESTINATION share/${PROJECT_NAME}/
+)
 
 ament_package()
