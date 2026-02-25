@@ -5,7 +5,7 @@ launch:
       name: "background_r"
       value: "200"
   - include:
-      file: "$(find-pkg-share demo)/launch/example_substitutions.yaml.include"
+      file: "$(find-pkg-share demo)/launch/include/example_substitutions.yaml"
       arg:
         - name: "turtlesim_ns"
           value: "turtlesim2"

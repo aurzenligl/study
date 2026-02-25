@@ -14,7 +14,7 @@ def generate_launch_description():
             PathJoinSubstitution([
                 FindPackageShare('demo'),
                 'launch',
-                'example_substitutions.py.include'
+                'include/example_substitutions.py'
             ]),
             launch_arguments={
                 'turtlesim_ns': 'turtlesim2',
