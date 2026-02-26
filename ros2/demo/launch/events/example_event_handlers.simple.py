@@ -24,6 +24,8 @@ def launch(sl: SimpleLauncher):
         with sl.group(when=When(spawn_turtle, OnExecutionComplete)):
             sl.log_info('Spawn finished')
             sl.set_parameters('sim', {'background_r': 120})
+
+            # TODO: this group acts as if it was added to root group rather than parent (the one from last "with" statement)
             with sl.group(when=When(delay=2.), if_condition=sl.py_eval('0 <= ', new_background_r, ' <= 255', ' and ', use_provided_red)):
                 sl.set_parameters('sim', {'background_r': new_background_r})
 
