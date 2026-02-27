@@ -9,20 +9,17 @@ int main(int argc, char **argv) {
   auto node = rclcpp::Node::make_shared("talker");
 
   size_t count = 1;
-  rclcpp::QoS qos(rclcpp::KeepLast{7});
-  auto pub = node->create_publisher<std_msgs::msg::String>("chatter", qos);
+  auto pub = node->create_publisher<std_msgs::msg::String>("chatter", rclcpp::SensorDataQoS());
 
-  auto publish_message = [&](bool log = true) {
-    auto msg = std::make_unique<std_msgs::msg::String>();
-    msg->data = "Hello World: " + std::to_string(count++);
-    if (log) {
-      RCLCPP_INFO(node->get_logger(), "Publishing: '%s'", msg->data.c_str());
-    }
+  auto publish_message = [&]() {
+    // auto msg = std::make_unique<std_msgs::msg::String>();
+    auto msg = pub->borrow_loaned_message();
+    msg.get().data = "Hello World: " + std::to_string(count++);
     pub->publish(std::move(msg));
   };
 
   while (rclcpp::ok()) {
-    publish_message(false);
+    publish_message();
   }
 
   // auto timer = node->create_wall_timer(1s, publish_message);
