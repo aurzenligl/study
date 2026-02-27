@@ -12,15 +12,17 @@ int main(int argc, char **argv) {
   rclcpp::QoS qos(rclcpp::KeepLast{7});
   auto pub = node->create_publisher<std_msgs::msg::String>("chatter", qos);
 
-  auto publish_message = [&]() {
+  auto publish_message = [&](bool log = true) {
     auto msg = std::make_unique<std_msgs::msg::String>();
     msg->data = "Hello World: " + std::to_string(count++);
-    RCLCPP_INFO(node->get_logger(), "Publishing: '%s'", msg->data.c_str());
+    if (log) {
+      RCLCPP_INFO(node->get_logger(), "Publishing: '%s'", msg->data.c_str());
+    }
     pub->publish(std::move(msg));
   };
 
   while (rclcpp::ok()) {
-    publish_message();
+    publish_message(false);
   }
 
   // auto timer = node->create_wall_timer(1s, publish_message);
