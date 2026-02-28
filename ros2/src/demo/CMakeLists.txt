@@ -6,8 +6,15 @@ set(CMAKE_CXX_STANDARD 17)
 add_compile_options(-Wall -Wextra -Wpedantic)
 
 find_package(ament_cmake REQUIRED)
+find_package(demo_msgs REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(std_msgs REQUIRED)
+
+# rosidl_generate_interfaces(demo_msgs
+#   "msg/PodSmallString.msg"
+#   "msg/PodLargeImage.msg"
+# )
+# rosidl_get_typesupport_target(cpp_typesupport_target demo_msgs rosidl_typesupport_cpp)
 
 function(custom_executable target)
   cmake_parse_arguments(ARG "" "" "SOURCES;DEPENDENCIES" ${ARGN})
@@ -22,11 +29,11 @@ endfunction()
 
 custom_executable(talker SOURCES
   src/topics/talker.cpp
-  DEPENDENCIES rclcpp::rclcpp ${std_msgs_TARGETS})
+  DEPENDENCIES rclcpp::rclcpp ${std_msgs_TARGETS} ${demo_msgs_TARGETS})
 
 custom_executable(listener SOURCES
   src/topics/listener.cpp
-  DEPENDENCIES rclcpp::rclcpp ${std_msgs_TARGETS})
+  DEPENDENCIES rclcpp::rclcpp ${std_msgs_TARGETS} ${demo_msgs_TARGETS})
 
 install(DIRECTORY
   launch
