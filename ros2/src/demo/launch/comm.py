@@ -2,13 +2,16 @@ import os
 from simple_launch import SimpleLauncher
 
 
+# usage example: PROTO=shm LOANED=0 ASYNC=0 SUBS=1 LARGE=0 ros2 launch src/demo/launch/comm.py
+
+
 def launch(sl: SimpleLauncher):
-
-    # TODO: transport: isolated node-container with 2+ nodes inside
-
     proto = os.getenv("PROTO", "shm")
-    assert proto in ("shm", "udp"), 'proto must be picked from: "shm", "udp"'
-    if proto == "udp":
+    assert proto in ("ptr", "shm", "udp"), 'proto must be picked from: "ptr", "shm", "udp"'
+    containerize = (proto == "ptr")
+    if proto == "shm":
+        os.environ["FASTDDS_BUILTIN_TRANSPORTS"] = "UDPv4"
+    elif proto == "udp":
         os.environ["FASTDDS_BUILTIN_TRANSPORTS"] = "UDPv4"
     print(f"proto: {proto}")
 
@@ -31,9 +34,15 @@ def launch(sl: SimpleLauncher):
     large = int(os.getenv("LARGE", "0"))
     print(f"async: {large}")
 
-    sl.node(package="demo", executable="talker")
-    for i in range(n_subs):
-        sl.node(package="demo", executable="listener")
+    if containerize:
+        with sl.container(name="demo_container", executable="component_container_isolated"):
+            sl.node(package="demo", plugin="Talker")
+            for i in range(n_subs):
+                sl.node(package="demo", plugin="Listener")
+    else:
+        sl.node(package="demo", executable="talker")
+        for i in range(n_subs):
+            sl.node(package="demo", executable="listener")
 
 
 generate_launch_description = lambda: launch(sl := SimpleLauncher()) or sl.launch_description()
@@ -43,7 +52,11 @@ generate_launch_description = lambda: launch(sl := SimpleLauncher()) or sl.launc
 # ROS_DISABLE_LOANED_MESSAGES=0
 # RMW_FASTRTPS_PUBLICATION_MODE=ASYNCHRONOUS
 
+
 # ASYNC=1 matters when frequency is high
 # PROTO=shm LOANED=1 matters when messages are large
-# LOANED=1 is risky as subscriber should not loan msgs yet
+# PROTO=shm ~= PROTO=udp when LOANED=0
+# LOANED=1 is supposedly risky for subscriber, thus spoke ros community
 # LOANED=x does not give much in multi subscriber scenario
+# PROTO=ptr best by a large margin
+# PROTO=ptr LOANED=1 outclasses anything else

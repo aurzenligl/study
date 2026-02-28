@@ -8,32 +8,29 @@ add_compile_options(-Wall -Wextra -Wpedantic)
 find_package(ament_cmake REQUIRED)
 find_package(demo_msgs REQUIRED)
 find_package(rclcpp REQUIRED)
+find_package(rclcpp_components REQUIRED)
 find_package(std_msgs REQUIRED)
 
-# rosidl_generate_interfaces(demo_msgs
-#   "msg/PodSmallString.msg"
-#   "msg/PodLargeImage.msg"
-# )
-# rosidl_get_typesupport_target(cpp_typesupport_target demo_msgs rosidl_typesupport_cpp)
-
-function(custom_executable target)
+macro(custom_library name plugin)
   cmake_parse_arguments(ARG "" "" "SOURCES;DEPENDENCIES" ${ARGN})
-  add_executable(${target} ${ARG_SOURCES})
-  target_include_directories(${target} PRIVATE
-    "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>"
-    "$<INSTALL_INTERFACE:include/${PROJECT_NAME}>"
+  set(library ${name}_component)
+  add_library(${library} SHARED ${ARG_SOURCES})
+  target_link_libraries(${library} PRIVATE ${ARG_DEPENDENCIES})
+  rclcpp_components_register_node(${library} PLUGIN "${plugin}" EXECUTABLE ${name})
+  install(TARGETS ${library}
+    ARCHIVE DESTINATION lib
+    LIBRARY DESTINATION lib
+    RUNTIME DESTINATION bin
   )
-  target_link_libraries(${target} PRIVATE ${ARG_DEPENDENCIES})
-  install(TARGETS ${target} DESTINATION lib/${PROJECT_NAME})
-endfunction()
+endmacro()
 
-custom_executable(talker SOURCES
+custom_library(talker "demo::Talker" SOURCES
   src/topics/talker.cpp
-  DEPENDENCIES rclcpp::rclcpp ${std_msgs_TARGETS} ${demo_msgs_TARGETS})
+  DEPENDENCIES rclcpp::rclcpp rclcpp_components::component ${std_msgs_TARGETS} ${demo_msgs_TARGETS})
 
-custom_executable(listener SOURCES
+custom_library(listener "demo::Listener" SOURCES
   src/topics/listener.cpp
-  DEPENDENCIES rclcpp::rclcpp ${std_msgs_TARGETS} ${demo_msgs_TARGETS})
+  DEPENDENCIES rclcpp::rclcpp rclcpp_components::component ${std_msgs_TARGETS} ${demo_msgs_TARGETS})
 
 install(DIRECTORY
   launch
